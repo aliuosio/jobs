@@ -25,8 +25,8 @@
 
 **Purpose**: Create project structure and scripts directory
 
-- [ ] T001 Create `scripts/` directory for infrastructure utilities
-- [ ] T002 [P] Verify Docker and Docker Compose are installed and accessible
+- [X] T001 Create `scripts/` directory for infrastructure utilities
+- [X] T002 [P] Verify Docker and Docker Compose are installed and accessible
 
 ---
 
@@ -36,9 +36,9 @@
 
 **⚠️ CRITICAL**: No user story work can begin until this phase is complete
 
-- [ ] T003 Create `.env.example` template file at repository root with all required variables per contracts/env-schema.md
-- [ ] T004 Create `scripts/init-env.sh` script to auto-generate `.env` file if missing
-- [ ] T005 Create or update `.gitignore` to exclude `.env` and `qdrant_storage/`
+- [X] T003 Create `.env.example` template file at repository root with all required variables per contracts/env-schema.md
+- [X] T004 Create `scripts/init-env.sh` script to auto-generate `.env` file if missing
+- [X] T005 Create or update `.gitignore` to exclude `.env` and `qdrant_storage/
 
 **Checkpoint**: Environment setup ready - service deployment can now begin
 
@@ -52,14 +52,14 @@
 
 ### Implementation for User Story 1
 
-- [ ] T006 [US1] Add `qdrant-db` service definition to `docker-compose.yml` with `qdrant/qdrant:latest` image
-- [ ] T007 [US1] Configure qdrant-db ports mapping (6333:6333, 6334:6334) in docker-compose.yml
-- [ ] T008 [US1] Configure qdrant-db volume mount `./qdrant_storage:/qdrant/storage` in docker-compose.yml
-- [ ] T009 [US1] Add qdrant-db TCP health check with 30s start period and 10s interval in docker-compose.yml
-- [ ] T010 [US1] Set qdrant-db restart policy to `no` per FR-011 in docker-compose.yml
-- [ ] T011 [US1] Configure qdrant-db logging driver as `none` per FR-012 in docker-compose.yml
-- [ ] T012 [US1] Add qdrant-db to `rag-network` bridge network in docker-compose.yml
-- [ ] T013 [US1] Set qdrant-db environment variable `QDRANT__LOG_LEVEL=INFO` in docker-compose.yml
+- [X] T006 [US1] Add `qdrant-db` service definition to `docker-compose.yml` with `qdrant/qdrant:latest` image
+- [X] T007 [US1] Configure qdrant-db ports mapping (6333:6333, 6334:6334) in docker-compose.yml
+- [X] T008 [US1] Configure qdrant-db volume mount `./qdrant_storage:/qdrant/storage` in docker-compose.yml
+- [X] T009 [US1] Add qdrant-db TCP health check with 30s start period and 10s interval in docker-compose.yml
+- [X] T010 [US1] Set qdrant-db restart policy to `no` per FR-011 in docker-compose.yml
+- [X] T011 [US1] Configure qdrant-db logging driver as `none` per FR-012 in docker-compose.yml
+- [X] T012 [US1] Add qdrant-db to `rag-network` bridge network in docker-compose.yml
+- [X] T013 [US1] Set qdrant-db environment variable `QDRANT__LOG_LEVEL=INFO` in docker-compose.yml
 
 **Checkpoint**: At this point, User Story 1 should be fully functional - qdrant-db should start, persist data, and be accessible at localhost:6333
 
@@ -73,14 +73,14 @@
 
 ### Implementation for User Story 2
 
-- [ ] T014 [US2] Add `api-backend` service definition to docker-compose.yml with build context `.`
-- [ ] T015 [US2] Configure api-backend port mapping (8000:8000) in docker-compose.yml
-- [ ] T016 [US2] Set api-backend dependency on qdrant-db with health condition in docker-compose.yml
-- [ ] T017 [US2] Add api-backend curl-based health check (`/health` endpoint) with 30s start period in docker-compose.yml
-- [ ] T018 [US2] Set api-backend restart policy to `no` per FR-011 in docker-compose.yml
-- [ ] T019 [US2] Configure api-backend logging driver as `none` per FR-012 in docker-compose.yml
-- [ ] T020 [US2] Add api-backend to `rag-network` bridge network in docker-compose.yml
-- [ ] T021 [US2] Configure api-backend environment variables from `.env` file (QDRANT_URL, ZAI_API_KEY, ZAI_BASE_URL) in docker-compose.yml
+- [X] T014 [US2] Add `api-backend` service definition to docker-compose.yml with build context `.`
+- [X] T015 [US2] Configure api-backend port mapping (8000:8000) in docker-compose.yml
+- [X] T016 [US2] Set api-backend dependency on qdrant-db with health condition in docker-compose.yml
+- [X] T017 [US2] Add api-backend curl-based health check (`/health` endpoint) with 30s start period in docker-compose.yml
+- [X] T018 [US2] Set api-backend restart policy to `no` per FR-011 in docker-compose.yml
+- [X] T019 [US2] Configure api-backend logging driver as `none` per FR-012 in docker-compose.yml
+- [X] T020 [US2] Add api-backend to `rag-network` bridge network in docker-compose.yml
+- [X] T021 [US2] Configure api-backend environment variables from `.env` file (QDRANT_URL, ZAI_API_KEY, ZAI_BASE_URL) in docker-compose.yml
 
 **Checkpoint**: At this point, User Stories 1 AND 2 should both work - api-backend should connect to qdrant-db and respond to health checks
 
@@ -94,9 +94,9 @@
 
 ### Implementation for User Story 3
 
-- [ ] T022 [US3] Define `rag-network` bridge network in docker-compose.yml networks section
-- [ ] T023 [US3] Verify both services (qdrant-db, api-backend) reference rag-network in their network configurations
-- [ ] T024 [US3] Validate internal DNS resolution by confirming service names match container names (qdrant-db, api-backend)
+- [X] T022 [US3] Define `rag-network` bridge network in docker-compose.yml networks section
+- [X] T023 [US3] Verify both services (qdrant-db, api-backend) reference rag-network in their network configurations
+- [X] T024 [US3] Validate internal DNS resolution by confirming service names match container names (qdrant-db, api-backend)
 
 **Checkpoint**: All user stories should now be independently functional with proper network isolation
 
@@ -106,11 +106,11 @@
 
 **Purpose**: Final validation and documentation updates
 
-- [ ] T025 [P] Update quickstart.md with validated deployment instructions
-- [ ] T026 [P] Verify all port mappings (6333, 6334, 8000) are documented in quickstart.md
-- [ ] T027 Run full deployment test: `docker-compose up` and verify both services start successfully
-- [ ] T028 Verify data persistence: restart containers and confirm qdrant_storage data persists
-- [ ] T029 Verify `qdrant_storage/` directory is created with permissions 755 and host user has write access
+- [X] T025 [P] Update quickstart.md with validated deployment instructions
+- [X] T026 [P] Verify all port mappings (6333, 6334, 8000) are documented in quickstart.md
+- [X] T027 Run full deployment test: `docker-compose up` and verify both services start successfully
+- [X] T028 Verify data persistence: restart containers and confirm qdrant_storage data persists
+- [X] T029 Verify `qdrant_storage/` directory is created with permissions 755 and host user has write access
 
 ---
 

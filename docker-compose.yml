@@ -1,0 +1,104 @@
+# ============================================
+# Docker Compose Configuration
+# Feature: 001-docker-infra
+# ============================================
+# Services:
+#   - qdrant-db: Vector database for resume embeddings
+#   - api-backend: FastAPI backend for RAG pipeline
+# Network:
+#   - rag-network: Bridge network for internal DNS resolution
+# ============================================
+
+services:
+  # ==========================================
+  # Vector Database Service
+  # ==========================================
+  qdrant-db:
+    image: qdrant/qdrant:latest
+    container_name: qdrant-db
+    
+    # Port mappings
+    # 6333: HTTP REST API + Dashboard
+    # 6334: gRPC API
+    ports:
+      - "6333:6333"
+      - "6334:6334"
+    
+    # Persistent storage for vector data
+    volumes:
+      - ./qdrant_storage:/qdrant/storage
+    
+    # Network configuration
+    networks:
+      - rag-network
+    
+    # Environment variables
+    environment:
+      - QDRANT__LOG_LEVEL=${QDRANT__LOG_LEVEL:-INFO}
+    
+    # Health check - TCP check on HTTP port
+    healthcheck:
+      test: ["CMD-SHELL", "bash -c ':> /dev/tcp/127.0.0.1/6333' || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+    
+    # Restart policy - manual restart only
+    restart: "no"
+    
+    # Logging configuration - disabled for local dev
+    logging:
+      driver: none
+
+  # ==========================================
+  # API Backend Service
+  # ==========================================
+  api-backend:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: api-backend
+    
+    # Port mapping
+    # 8000: FastAPI HTTP API
+    ports:
+      - "8000:8000"
+    
+    # Network configuration
+    networks:
+      - rag-network
+    
+    # Dependency on qdrant-db with health condition
+    depends_on:
+      qdrant-db:
+        condition: service_healthy
+    
+    # Environment variables from .env file
+    environment:
+      - QDRANT_URL=${QDRANT_URL:-http://qdrant-db:6333}
+      - ZAI_API_KEY=${ZAI_API_KEY}
+      - ZAI_BASE_URL=${ZAI_BASE_URL:-https://api.z.ai/v1}
+    
+    # Health check - HTTP endpoint
+    healthcheck:
+      test: ["CMD-SHELL", "curl -f http://localhost:8000/health || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+      start_period: 30s
+    
+    # Restart policy - manual restart only
+    restart: "no"
+    
+    # Logging configuration - disabled for local dev
+    logging:
+      driver: none
+
+# ==========================================
+# Network Configuration
+# ==========================================
+networks:
+  rag-network:
+    driver: bridge
+    name: rag-network
