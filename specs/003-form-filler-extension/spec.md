@@ -70,7 +70,7 @@ As a job applicant, I want the extension to correctly identify form fields even 
 - What happens when a field has no associated label? (Extension MUST skip the field or use placeholder text)
 - What happens when the API is unavailable? (Extension MUST display an error message to the user)
 - What happens when a field is read-only or disabled? (Extension MUST skip the field)
-- What happens when the API response is too long for the field? (Extension MUST truncate or show a warning)
+- What happens when the API response is too long for the field? (Extension MUST truncate to maxlength and show a visual warning indicator next to the field)
 - What happens on pages with dynamic form loading? (Extension MUST re-scan when DOM changes are detected)
 
 ## Requirements *(mandatory)*

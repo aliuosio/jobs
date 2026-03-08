@@ -144,7 +144,7 @@ extension/
 
 ### Contracts (contracts/)
 
-- `api-contract.md` - Extension-to-Backend API contract
+- `message-contract.md` - Extension-to-Backend message contract
 
 ### Quickstart (quickstart.md)
 

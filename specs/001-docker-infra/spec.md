@@ -86,7 +86,7 @@ As a DevOps engineer, I need services to communicate via a dedicated bridge netw
 - **FR-006**: System MUST configure the API backend to depend on the vector database service.
 - **FR-007**: System MUST create a bridge network named `rag-network` for inter-service communication.
 - **FR-008**: System MUST enable internal DNS resolution so `qdrant-db` resolves within the network.
-- **FR-009**: System MUST ensure the host user has write permissions to `./qdrant_storage` directory.
+- **FR-009**: System MUST ensure the host user has write permissions to `./qdrant_storage` directory (Unix mode 755 or 775).
 - **FR-010**: System MUST gracefully handle the case where the storage directory does not exist by creating it.
 - **FR-011**: System MUST NOT automatically restart containers on failure (restart: no policy).
 - **FR-012**: System MUST disable container logging (logging driver: none).

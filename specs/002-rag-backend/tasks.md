@@ -127,6 +127,7 @@
 - [ ] T039 Run end-to-end test: POST to `/fill-form` and verify response structure
 - [ ] T040 Verify CORS headers are returned for moz-extension:// origins
 
+- [ ] T041 Run load test with 10 concurrent requests to `/fill-form` and verify P95 latency < 10 seconds
 ---
 
 ## Dependencies & Execution Order

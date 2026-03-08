@@ -124,8 +124,10 @@
 - [ ] T038 Verify extension loads in Firefox (about:debugging → Load Temporary Add-on)
 - [ ] T039 Test on common job board sites and verify 90% field detection rate
 - [ ] T040 [P] Update quickstart.md with installation and usage instructions
+- [ ] T041 Verify single field fill completes within 3 seconds (P95 threshold)
+- [ ] T042 Verify error notification displays within 2 seconds of API failure
+- [ ] T043 Verify batch fill of 10-field form completes within 30 seconds (P95 threshold)
 
----
 
 ## Dependencies & Execution Order
 

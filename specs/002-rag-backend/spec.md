@@ -69,7 +69,7 @@ As the backend service, I need to establish a reliable connection to the vector 
 - What happens when the vector store returns no relevant context? (System MUST return a "no relevant experience found" response)
 - What happens when the inference API rate limits? (System MUST queue requests and retry with backoff)
 - What happens when the request payload exceeds size limits? (System MUST reject with a clear error message)
-- What happens when the inference API returns an error? (System MUST return a graceful fallback response)
+- What happens when the inference API returns an error? (System MUST return a graceful fallback response with `has_data: false`, `confidence: "none"`, and a user-friendly message)
 
 ## Requirements *(mandatory)*
 
@@ -97,7 +97,7 @@ As the backend service, I need to establish a reliable connection to the vector 
 
 ### Measurable Outcomes
 
-- **SC-001**: Users receive relevant answers to form field queries within 5 seconds.
+- **SC-001**: Users receive relevant answers to form field queries within 5 seconds (P95 latency threshold).
 - **SC-002**: Extension requests succeed without CORS errors from any job board domain.
 - **SC-003**: Vector store connection establishes within 10 seconds of backend startup.
 - **SC-004**: Zero fabricated experiences appear in generated answers.

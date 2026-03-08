@@ -110,6 +110,7 @@
 - [ ] T026 [P] Verify all port mappings (6333, 6334, 8000) are documented in quickstart.md
 - [ ] T027 Run full deployment test: `docker-compose up` and verify both services start successfully
 - [ ] T028 Verify data persistence: restart containers and confirm qdrant_storage data persists
+- [ ] T029 Verify `qdrant_storage/` directory is created with permissions 755 and host user has write access
 
 ---
 
