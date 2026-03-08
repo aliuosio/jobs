@@ -1,50 +1,94 @@
-# [PROJECT_NAME] Constitution
-<!-- Example: Spec Constitution, TaskFlow Constitution, etc. -->
+<!--
+============================================================================
+SYNC IMPACT REPORT
+============================================================================
+Version Change: 0.0.0 (template) → 1.0.0 (initial ratification)
+Modified Principles: N/A (initial creation)
+Added Sections:
+  - Core Principles (5 technical decrees)
+  - Infrastructure Mapping
+  - Risk Mitigation
+  - Governance
+Removed Sections: None
+Templates Requiring Updates:
+  ✅ plan-template.md - Constitution Check section compatible
+  ✅ spec-template.md - Requirements align with technical decrees
+  ✅ tasks-template.md - Phase structure compatible with principles
+Follow-up TODOs: None
+============================================================================
+-->
+
+# RAG-Automated-Form-Filler Constitution
 
 ## Core Principles
 
-### [PRINCIPLE_1_NAME]
-<!-- Example: I. Library-First -->
-[PRINCIPLE_1_DESCRIPTION]
-<!-- Example: Every feature starts as a standalone library; Libraries must be self-contained, independently testable, documented; Clear purpose required - no organizational-only libraries -->
+### I. Data Integrity
 
-### [PRINCIPLE_2_NAME]
-<!-- Example: II. CLI Interface -->
-[PRINCIPLE_2_DESCRIPTION]
-<!-- Example: Every library exposes functionality via CLI; Text in/out protocol: stdin/args → stdout, errors → stderr; Support JSON + human-readable formats -->
+All vector embeddings MUST be 1536-dimensional to ensure compatibility with the Z.ai API Standard. Embedding dimension mismatches are non-negotiable failures that MUST be caught at ingestion time.
 
-### [PRINCIPLE_3_NAME]
-<!-- Example: III. Test-First (NON-NEGOTIABLE) -->
-[PRINCIPLE_3_DESCRIPTION]
-<!-- Example: TDD mandatory: Tests written → User approved → Tests fail → Then implement; Red-Green-Refactor cycle strictly enforced -->
+**Rationale**: The Z.ai inference engine expects 1536-dimensional vectors. Any deviation will cause retrieval failures or corrupted similarity searches, breaking the core RAG pipeline.
 
-### [PRINCIPLE_4_NAME]
-<!-- Example: IV. Integration Testing -->
-[PRINCIPLE_4_DESCRIPTION]
-<!-- Example: Focus areas requiring integration tests: New library contract tests, Contract changes, Inter-service communication, Shared schemas -->
+### II. Retrieval Law
 
-### [PRINCIPLE_5_NAME]
-<!-- Example: V. Observability, VI. Versioning & Breaking Changes, VII. Simplicity -->
-[PRINCIPLE_5_DESCRIPTION]
-<!-- Example: Text I/O ensures debuggability; Structured logging required; Or: MAJOR.MINOR.BUILD format; Or: Start simple, YAGNI principles -->
+All vector store queries MUST use `Qdrant.as_retriever(search_kwargs={"k": 5})` to fetch the top 5 most relevant context chunks.
 
-## [SECTION_2_NAME]
-<!-- Example: Additional Constraints, Security Requirements, Performance Standards, etc. -->
+**Rationale**: The k=5 parameter balances context richness against token limits. Lower values risk missing relevant experience; higher values risk context overflow and degraded response quality.
 
-[SECTION_2_CONTENT]
-<!-- Example: Technology stack requirements, compliance standards, deployment policies, etc. -->
+### III. Zero Hallucination
 
-## [SECTION_3_NAME]
-<!-- Example: Development Workflow, Review Process, Quality Gates, etc. -->
+System prompts MUST explicitly forbid the creation of professional experience, skills, or qualifications not found in the context provided by the vector store. Generated answers MUST be strictly grounded in retrieved resume data.
 
-[SECTION_3_CONTENT]
-<!-- Example: Code review requirements, testing gates, deployment approval process, etc. -->
+**Rationale**: Job applications require factual accuracy. Fabricated experience damages user credibility and violates the core value proposition of an automated form-filler.
+
+### IV. CORS Policy
+
+FastAPI MUST whitelist `moz-extension://` origins via CORSMiddleware to enable secure communication between the Firefox Extension and the backend API.
+
+**Rationale**: Browser extension security models require explicit CORS configuration. Without proper whitelisting, the extension cannot communicate with the backend.
+
+### V. DOM Injection
+
+Injected form values MUST trigger both `input` and `change` events to ensure job board React/Angular state synchronization.
+
+**Rationale**: Modern SPAs use framework-specific state management that relies on event listeners. Silent value assignment without events leaves UI state inconsistent with DOM state.
+
+## Infrastructure Mapping
+
+| Component | Internal Host | External Host | Notes |
+|-----------|---------------|---------------|-------|
+| Vector Store | `qdrant-db` | N/A | Port 6333, Docker internal DNS |
+| API Backend | N/A | `localhost:8000` | Host loopback access |
+| Storage Volume | `./qdrant_storage` | N/A | Persistent volume mount |
+
+**Networking Rules**:
+- Backend interacts with Qdrant via internal Docker DNS (`qdrant-db`)
+- Firefox Extension interacts with Backend via host loopback (`localhost:8000`)
+- No direct Extension-to-Qdrant communication permitted
+
+## Risk Mitigation
+
+| Risk | Mitigation Strategy |
+|------|---------------------|
+| **Context Overflow** | Monitor token usage when k=5 for long resumes; implement chunking limits |
+| **Path Validation** | Explicitly override `base_url` for Z.ai to prevent `/v1/v1` path doubling |
+| **Permissions** | Ensure host write-access to storage volume to prevent container start failures |
 
 ## Governance
-<!-- Example: Constitution supersedes all other practices; Amendments require documentation, approval, migration plan -->
 
-[GOVERNANCE_RULES]
-<!-- Example: All PRs/reviews must verify compliance; Complexity must be justified; Use [GUIDANCE_FILE] for runtime development guidance -->
+### Amendment Procedure
 
-**Version**: [CONSTITUTION_VERSION] | **Ratified**: [RATIFICATION_DATE] | **Last Amended**: [LAST_AMENDED_DATE]
-<!-- Example: Version: 2.1.1 | Ratified: 2025-06-13 | Last Amended: 2025-07-16 -->
+1. Proposed changes MUST be documented with rationale
+2. Impact analysis MUST assess downstream effects on templates and runtime code
+3. Version increment MUST follow semantic versioning:
+   - **MAJOR**: Backward incompatible principle removals or redefinitions
+   - **MINOR**: New principles or materially expanded guidance
+   - **PATCH**: Clarifications, typo fixes, non-semantic refinements
+4. All PRs MUST verify compliance with constitution principles
+
+### Compliance Review
+
+- Code reviews MUST verify adherence to all five core principles
+- Complexity introduced without necessity MUST be justified in writing
+- Runtime development guidance maintained in project documentation
+
+**Version**: 1.0.0 | **Ratified**: 2026-03-08 | **Last Amended**: 2026-03-08
