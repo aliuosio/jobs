@@ -19,12 +19,10 @@
 
 **Purpose**: Create project structure and install dependencies
 
-- [ ] T001 Create project directory structure per plan.md (src/, tests/, src/api/, src/services/, src/utils/, tests/unit/, tests/integration/)
-- [ ] T002 Initialize Python project with requirements.txt containing: fastapi, uvicorn, qdrant-client, openai, httpx, pydantic-settings, tenacity, pytest, pytest-asyncio
-- [ ] T003 [P] Create .env.example file with all environment variables from data-model.md Settings entity
-- [ ] T004 [P] Create .gitignore file for Python project
-
-**Checkpoint**: Project skeleton ready for development
+- [X] T001 Create project directory structure per plan.md (src/, tests/, src/api/, src/services/, src/utils/, tests/unit/, tests/integration/)
+- [X] T002 Initialize Python project with requirements.txt containing: fastapi, uvicorn, qdrant-client, openai, httpx, pydantic-settings, tenacity, pytest, pytest-asyncio
+- [X] T003 [P] Create .env.example file with all environment variables from data-model.md Settings entity
+- [X] T004 [P] Create .gitignore file for Python project
 
 ---
 
@@ -34,19 +32,17 @@
 
 **⚠️ CRITICAL**: No user story work can begin until this phase is complete
 
-- [ ] T005 Create src/__init__.py with package initialization
-- [ ] T006 [P] Create src/config.py with Settings class using pydantic-settings per research.md section 2
-- [ ] T007 [P] Create src/api/__init__.py with package initialization
-- [ ] T008 [P] Create src/api/schemas.py with AnswerRequest, AnswerResponse, HealthResponse, ErrorResponse Pydantic models per data-model.md
-- [ ] T009 [P] Create src/services/__init__.py with package initialization
-- [ ] T010 [P] Create src/utils/__init__.py with package initialization
-- [ ] T011 Create src/main.py with basic FastAPI app instance and logging configuration per research.md section 1
-- [ ] T012 [P] Create tests/__init__.py with package initialization
-- [ ] T013 [P] Create tests/conftest.py with pytest fixtures and AsyncClient setup per research.md section 7
-- [ ] T014 Implement /health endpoint in src/api/routes.py returning HealthResponse per contracts/openapi.yaml
-- [ ] T015 Register router in src/main.py and include /health endpoint
-
-**Checkpoint**: Foundation ready - user story implementation can begin
+- [X] T005 Create src/__init__.py with package initialization
+- [X] T006 [P] Create src/config.py with Settings class using pydantic-settings per research.md section 2
+- [X] T007 [P] Create src/api/__init__.py with package initialization
+- [X] T008 [P] Create src/api/schemas.py with AnswerRequest, AnswerResponse, HealthResponse, ErrorResponse Pydantic models per data-model.md
+- [X] T009 [P] Create src/services/__init__.py with package initialization
+- [X] T010 [P] Create src/utils/__init__.py with package initialization
+- [X] T011 Create src/main.py with basic FastAPI app instance and logging configuration per research.md section 1
+- [X] T012 [P] Create tests/__init__.py with package initialization
+- [X] T013 [P] Create tests/conftest.py with pytest fixtures and AsyncClient setup per research.md section 7
+- [X] T014 Implement /health endpoint in src/api/routes.py returning HealthResponse per contracts/openapi.yaml
+- [X] T015 Register router in src/main.py and include /health endpoint
 
 ---
 
@@ -60,14 +56,11 @@
 
 ### Implementation for User Story 3
 
-- [ ] T016 [US3] Create src/services/retriever.py with RetrieverService class using AsyncQdrantClient per research.md section 3
-- [ ] T017 [US3] Implement async connect() and close() methods in RetrieverService
-- [ ] T018 [US3] Implement search() method with k=5 parameter in RetrieverService (Constitution II compliance)
-- [ ] T019 [US3] Add lifespan context manager in src/main.py for RetrieverService and EmbedderService connection lifecycle
-- [ ] T020 [US3] Add connection retry logic with exponential backoff using tenacity in src/services/retriever.py
-
-**Checkpoint**: Vector database connection functional - can retrieve embeddings
-
+- [X] T016 [US3] Create src/services/retriever.py with RetrieverService class using AsyncQdrantClient per research.md section 3
+- [X] T017 [US3] Implement async connect() and close() methods in RetrieverService
+- [X] T018 [US3] Implement search() method with k=5 parameter in RetrieverService (Constitution II compliance)
+- [X] T019 [US3] Add lifespan context manager in src/main.py for RetrieverService and EmbedderService connection lifecycle
+- [X] T020 [US3] Add connection retry logic with exponential backoff using tenacity in src/services/retriever.py
 ---
 
 ## Phase 4: User Story 1 - Generate Contextual Answers (Priority: P1) 🎯 MVP
@@ -78,19 +71,16 @@
 
 ### Implementation for User Story 1
 
-- [ ] T021 [US1] Create src/services/embedder.py with EmbedderService class and embed() method using AsyncOpenAI with dimensions=1536 (Constitution I compliance) per research.md section 6
-- [ ] T022 [P] [US1] Create src/services/generator.py with GeneratorService class and generate_answer() method with anti-hallucination system prompt (Constitution III compliance) per research.md section 4
-- [ ] T023 [P] [US1] Create src/utils/retry.py with retry_qdrant and retry_llm decorators using tenacity per research.md section 5
-- [ ] T024 [US1] Apply retry decorators to retriever and generator service methods
-- [ ] T025 [US1] Implement /fill-form POST endpoint in src/api/routes.py with full RAG pipeline
-- [ ] T026 [US1] Add confidence level calculation in /fill-form: high (avg score >= 0.8), medium (>= 0.5), low (< 0.5), none (0 chunks)
-- [ ] T027 [US1] Add context assembly logic to format retrieved chunks into prompt string for generator
-- [ ] T028 [US1] Add error handling for edge cases: no context found, API errors, rate limiting
-- [ ] T028a [US1] Add request payload size validation (10KB limit) in src/api/routes.py returning 413 error per spec edge case
-- [ ] T029 [US1] Add request/response logging in /fill-form endpoint (FR-010 compliance)
-
-
-**Checkpoint**: Core RAG pipeline functional - can generate contextual answers
+- [X] T021 [US1] Create src/services/embedder.py with EmbedderService class and embed() method using AsyncOpenAI with dimensions=1536 (Constitution I compliance) per research.md section 6
+- [X] T022 [P] [US1] Create src/services/generator.py with GeneratorService class and generate_answer() method with anti-hallucination system prompt (Constitution III compliance) per research.md section 4
+- [X] T023 [P] [US1] Create src/utils/retry.py with retry_qdrant and retry_llm decorators using tenacity per research.md section 5
+- [X] T024 [US1] Apply retry decorators to retriever and generator service methods
+- [X] T025 [US1] Implement /fill-form POST endpoint in src/api/routes.py with full RAG pipeline
+- [X] T026 [US1] Add confidence level calculation in /fill-form: high (avg score >= 0.8), medium (>= 0.5), low (< 0.5), none (0 chunks)
+- [X] T027 [US1] Add context assembly logic to format retrieved chunks into prompt string for generator
+- [X] T028 [US1] Add error handling for edge cases: no context found, API errors, rate limiting
+- [X] T028a [US1] Add request payload size validation (10KB limit) in src/api/routes.py returning 413 error per spec edge case
+- [X] T029 [US1] Add request/response logging in /fill-form endpoint (FR-010 compliance)
 
 ---
 
@@ -102,12 +92,9 @@
 
 ### Implementation for User Story 2
 
-- [ ] T031 [US2] Add CORSMiddleware to FastAPI app in src/main.py with allow_origins for moz-extension://* and localhost per research.md section 1
-- [ ] T032 [US2] Configure CORS allow_credentials=True, allow_methods=["*"], allow_headers=["*"]
-- [ ] T033 [US2] Verify preflight OPTIONS request handling works correctly
-
-**Checkpoint**: Extension can communicate with backend without CORS errors
-
+- [X] T031 [US2] Add CORSMiddleware to FastAPI app in src/main.py with allow_origins for moz-extension://* and localhost per research.md section 1
+- [X] T032 [US2] Configure CORS allow_credentials=True, allow_methods=["*"], allow_headers=["*"]
+- [X] T033 [US2] Verify preflight OPTIONS request handling works correctly
 ---
 
 ## Phase 6: Polish & Cross-Cutting Concerns
@@ -123,10 +110,9 @@
 
 ### Final Validation
 
-- [ ] T038 Validate all quickstart.md scenarios work correctly
-- [ ] T039 Add comprehensive error response handling per contracts/openapi.yaml (400, 413, 500, 503)
-- [ ] T040 Verify all Constitution principles are implemented (I-V)
-
+- [X] T038 Validate all quickstart.md scenarios work correctly
+- [X] T039 Add comprehensive error response handling per contracts/openapi.yaml (400, 413, 500, 503)
+- [X] T040 Verify all Constitution principles are implemented (I-V)
 ---
 
 ## Dependencies & Execution Order
