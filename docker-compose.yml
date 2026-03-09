@@ -69,6 +69,10 @@ services:
     networks:
       - rag-network
     
+    # Source code volume mount for development
+    volumes:
+      - ./src:/app/src
+    
     # Dependency on qdrant-db with health condition
     depends_on:
       qdrant-db:

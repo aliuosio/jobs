@@ -131,24 +131,4 @@ extension/
 
 ---
 *Plan created: 2026-03-08 | Status: Phase 1 Complete - Ready for /speckit.tasks*
-## Phase 1: Design Artifacts
 
-*To be generated after research.md completion.*
-
-### Data Model (data-model.md)
-
-- Form field entity
-- Label-input pair entity
-- Fill request/response entities
-- Extension state management
-
-### Contracts (contracts/)
-
-- `message-contract.md` - Extension-to-Backend message contract
-
-### Quickstart (quickstart.md)
-
-Step-by-step extension installation and usage guide.
-
----
-*Plan created: 2026-03-08 | Status: Phase 0 Research In Progress*

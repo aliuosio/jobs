@@ -14,12 +14,22 @@
 - Q: What fill mode should the extension support? → A: `Batch fill` (fill all detected fields with one action)
 - Q: How should the extension detect dynamically loaded forms? → A: `MutationObserver` (detect DOM changes automatically)
 - Q: How should the API endpoint URL be configured? → A: `http://localhost:8000` (fixed to match docker-compose config)
+- Q: How should password fields be handled? → A: Skip password fields entirely (security - avoid credential exposure)
+- Q: What fill order/concurrency strategy for batch fills? → A: Sequential with 50-100ms delay (stability - avoid overwhelming forms/API)
+- Q: What is the API request timeout? → A: 10 seconds (balanced - allows RAG processing while maintaining responsiveness)
+- Q: How should select/checkbox/radio fields be handled? → A: Skip these fields (MVP scope - focus on text-based inputs)
+- Q: What maximum distance for proximity-based label detection? → A: 50 pixels (balanced - reasonable default without false positives)
+- Q: What happens when a field has no associated label or placeholder? → A: Skip field entirely (no fallback - prevents false positives)
+- Q: How should users trigger single-field vs batch fill? → A: Popup-only UI (no per-field buttons injected into page)
+- Q: What defines high/medium/low confidence for label detection? → A: By detection method (high: for-id/wrapper, medium: aria-labelledby, low: proximity)
+- Q: What percentile for timing thresholds (SC-001, SC-005)? → A: P95 (95% of operations must meet threshold)
+- Q: Should API requests retry on timeout/failure? → A: No retry - fail immediately and notify user (prevents unpredictable delays)
 
 ## User Scenarios & Testing *(mandatory)*
 
 ### User Story 1 - Fill Single Form Field (Priority: P1)
 
-As a job applicant, I want to click a button next to a form field and have it automatically filled with relevant information from my resume so that I can complete applications faster.
+As a job applicant, I want to trigger auto-fill via the extension popup and have a form field automatically filled with relevant information from my resume so that I can complete applications faster.
 
 **Why this priority**: This is the core user interaction that delivers immediate value.
 
@@ -67,29 +77,35 @@ As a job applicant, I want the extension to correctly identify form fields even 
 
 ### Edge Cases
 
-- What happens when a field has no associated label? (Extension MUST skip the field or use placeholder text)
+- What happens when a field has no associated label? (Extension MUST skip the field entirely - no fallback)
 - What happens when the API is unavailable? (Extension MUST display an error message to the user)
 - What happens when a field is read-only or disabled? (Extension MUST skip the field)
 - What happens when the API response is too long for the field? (Extension MUST truncate to maxlength and show a visual warning indicator next to the field)
 - What happens on pages with dynamic form loading? (Extension MUST re-scan when DOM changes are detected)
+- What happens when a field is a password input? (Extension MUST skip password fields for security reasons)
 
 ## Requirements *(mandatory)*
 
 ### Functional Requirements
 
 - **FR-001**: Extension MUST scan the current page for form field and label pairings.
-- **FR-002**: Extension MUST extract label text from `<label>` elements associated with `<input>`, `<textarea>`, and `<select>` elements.
+- **FR-002**: Extension MUST extract label text from `<label>` elements associated with `<input type="text">`, `<input type="email">`, `<input type="tel">`, `<input type="url">`, `<input type="number">`, and `<textarea>` elements.
 - **FR-003**: Extension MUST send label text to the backend API via HTTP POST.
 - **FR-004**: Extension MUST populate form fields with API responses.
 - **FR-005**: Extension MUST dispatch `input` and `change` events with `bubbles: true` after setting values.
 - **FR-006**: Extension MUST provide a popup/panel UI for triggering form filling.
 - **FR-007**: Extension MUST handle API errors gracefully and notify the user.
-- **FR-008**: Extension MUST skip fields that are read-only, disabled, or hidden.
+- **FR-008**: Extension MUST skip fields that are read-only, disabled, hidden, or password type.
 - **FR-009**: Extension MUST work on pages with client-side rendered forms (React, Angular, Vue).
 - **FR-010**: Extension MUST only communicate with the configured API endpoint (`http://localhost:8000`).
 - **FR-011**: Extension MUST support batch fill mode to fill all detected form fields with one action.
 - **FR-012**: Extension MUST use MutationObserver to detect dynamically loaded forms.
 - **FR-013**: Extension MUST use Manifest V3 for Firefox extension configuration.
+- **FR-014**: Extension MUST fill fields sequentially in DOM order with 50-100ms delay between fills during batch operations.
+- **FR-015**: Extension MUST timeout API requests after 10 seconds with no retry, and notify the user of the failure.
+- **FR-016**: Extension MUST skip `<select>`, `<input type="checkbox">`, and `<input type="radio">` fields (out of MVP scope).
+- **FR-017**: Extension MUST use a maximum distance of 50 pixels for proximity-based label detection.
+- **FR-018**: Extension MUST assign confidence levels based on detection method: high (for-id, wrapper), medium (aria-labelledby), low (proximity).
 
 ### Key Entities
 
@@ -102,11 +118,11 @@ As a job applicant, I want the extension to correctly identify form fields even 
 
 ### Measurable Outcomes
 
-- **SC-001**: Users can fill a single form field with one click within 3 seconds.
+- **SC-001**: Users can fill a single form field with one click within 3 seconds (P95).
 - **SC-002**: Form fields on React/Angular applications show filled values in the UI after injection.
 - **SC-003**: Users are notified within 2 seconds when the API is unavailable.
 - **SC-004**: At least 90% of labeled form fields on common job boards are correctly identified.
-- **SC-005**: Batch fill completes a 10-field form within 30 seconds.
+- **SC-005**: Batch fill completes a 10-field form within 30 seconds (P95).
 
 ## Assumptions
 

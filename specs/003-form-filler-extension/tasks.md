@@ -58,9 +58,9 @@
 
 ### Implementation for User Story 1
 
-- [ ] T010 [US1] Create `extension/content/form-scanner.js` with detectForIdLabels() function for for/id association
-- [ ] T011 [US1] Add detectWrapperLabels() function for label wrapping input pattern in `extension/content/form-scanner.js`
-- [ ] T012 [US1] Implement scanForm() function to detect all form fields and return FormField[] in `extension/content/form-scanner.js`
+- [ ] T010 [US1] Create `extension/content/form-scanner.js` with detectForIdLabels() function for for/id association (confidence: high)
+- [ ] T011 [US1] Add detectWrapperLabels() function for label wrapping input pattern in `extension/content/form-scanner.js` (confidence: high)
+- [ ] T012 [US1] Implement scanForm() function to detect all form fields and return FormField[] with confidence levels in `extension/content/form-scanner.js`
 - [ ] T013 [US1] Create `extension/content/field-filler.js` with setFormValue() using native setter pattern
 - [ ] T014 [US1] Implement fillField() function that dispatches input and change events with bubbles: true in `extension/content/field-filler.js`
 - [ ] T015 [US1] Handle React's _valueTracker in setFormValue() in `extension/content/field-filler.js`
@@ -105,7 +105,7 @@
 
 - [ ] T029 [US3] Add detectProximityLabels() function for proximity heuristic detection in `extension/content/form-scanner.js`
 - [ ] T030 [US3] Add detectAriaLabels() function for aria-labelledby detection in `extension/content/form-scanner.js`
-- [ ] T031 [US3] Add detectPlaceholderFallback() for fields with no label in `extension/content/form-scanner.js`
+- [ ] T031 [US3] ~~Add detectPlaceholderFallback()~~ REMOVED - per clarification, fields without labels are skipped (no fallback)
 - [ ] T032 [US3] Implement confidence level assignment (high/medium/low) based on detection method in `extension/content/form-scanner.js`
 - [ ] T033 [US3] Add MutationObserver for dynamic form detection in `extension/content/content.js`
 - [ ] T034 [US3] Implement debounced mutation handling (300ms) in `extension/content/content.js`

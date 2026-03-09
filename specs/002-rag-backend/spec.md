@@ -130,3 +130,33 @@ As the backend service, I need to establish a reliable connection to the vector 
 - The Docker network provides internal DNS resolution for service discovery.
 - Request payloads are under 10KB in size.
 - API is only accessible within the Docker bridge network; no external exposure required.
+
+## Deployment
+
+This feature deploys to the infrastructure defined in [001-docker-infra](../001-docker-infra/spec.md) as the `api-backend` container.
+
+### Container Configuration
+
+The `api-backend` container in `docker-compose.yml` is configured as follows:
+
+| Setting | Value | Purpose |
+|---------|-------|---------|
+| Build Context | `.` | Builds from local Dockerfile |
+| Port | `8000` | FastAPI HTTP API |
+| Network | `rag-network` | Bridge network for internal DNS |
+| Dependency | `qdrant-db` (service_healthy) | Waits for vector DB to be ready |
+| Health Check | `curl -f http://localhost:8000/health` | Container health monitoring |
+| Restart Policy | `no` | Manual restart only |
+| Logging | `none` | Disabled for local development |
+
+### Environment Variables
+
+Required environment variables (see [env-schema.md](../001-docker-infra/contracts/env-schema.md)):
+
+- `QDRANT_URL`: Connection URL for Qdrant (default: `http://qdrant-db:6333`)
+- `ZAI_API_KEY`: Authentication key for Z.ai API (required)
+- `ZAI_BASE_URL`: Base URL for Z.ai API (default: `https://api.z.ai/v1`)
+
+### API Contract
+
+The API contract is defined in [openapi.yaml](./contracts/openapi.yaml).
