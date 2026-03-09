@@ -40,11 +40,11 @@
 
 **⚠️ CRITICAL**: No user story work can begin until this phase is complete
 
-- [ ] T006 Create `extension/background/background.js` with browser.runtime.onMessage listener for message routing
-- [ ] T007 Create `extension/content/api-client.js` with `fetchToBackend()` function for POST to `http://localhost:8000/fill-form` with 10s timeout
-- [ ] T008 Add error handling for API_UNAVAILABLE, API_ERROR, INVALID_RESPONSE in `extension/content/api-client.js`
-- [ ] T009 Implement `handleFillForm()` in `extension/background/background.js` to call backend API and return FillResponse
-- [ ] T010 Implement `handleGetStatus()` in `extension/background/background.js` to check API connectivity
+- [X] T006 Create `extension/background/background.js` with browser.runtime.onMessage listener for message routing
+- [X] T007 Create `extension/content/api-client.js` with `fetchToBackend()` function for POST to `http://localhost:8000/fill-form` with 10s timeout
+- [X] T008 Add error handling for API_UNAVAILABLE, API_ERROR, INVALID_RESPONSE in `extension/content/api-client.js`
+- [X] T009 Implement `handleFillForm()` in `extension/background/background.js` to call backend API and return FillResponse
+- [X] T010 Implement `handleGetStatus()` in `extension/background/background.js` to check API connectivity
 
 **Checkpoint**: Background messaging ready - content script implementation can begin
 

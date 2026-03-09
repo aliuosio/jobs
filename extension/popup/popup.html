@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Job Forms Helper</title>
+  <link rel="stylesheet" href="popup.css">
+</head>
+<body>
+  <div class="popup-container">
+    <header class="popup-header">
+      <h1 class="popup-title">Job Forms Helper</h1>
+      <div class="status-section">
+        <div class="status-row">
+          <span class="status-label">Status:</span>
+          <span id="status-value" class="status-value">Ready</span>
+        </div>
+        <div class="status-row">
+          <span class="status-label">Fields:</span>
+          <span id="field-count">0</span>
+        </div>
+        <div class="status-row">
+          <span class="status-label">API:</span>
+          <span id="api-indicator" class="status-indicator status-checking">●</span>
+          <span id="api-status" class="status-value status-checking">Checking...</span>
+        </div>
+      </div>
+    </header>
+    
+    <div class="section">
+      <button id="scan-btn" class="btn btn-primary">Scan Page</button>
+      <button id="fill-all-btn" class="btn btn-primary" disabled>Fill All Fields</button>
+    </div>
+    
+    <div class="section fields-section">
+      <h3>Detected Fields</h3>
+      <div id="fields-list" class="fields-list">
+        <p class="no-fields">No fields detected. Click "Scan Page" to detect form fields.</p>
+      </div>
+    </div>
+    
+    <div class="section progress-section" id="progress-section" style="display: none;">
+      <h3>Progress</h3>
+      <div class="progress-bar">
+        <div id="progress-fill" class="progress-fill" style="width: 0%"></div>
+      </div>
+      <div id="progress-text" class="progress-text">Filling 0/0 fields...</div>
+    </div>
+    
+    <div class="section actions-section">
+      <button id="clear-btn" class="btn btn-secondary">Clear Indicators</button>
+    </div>
+  </div>
+
+  <script src="popup.js"></script>
+</body>
+</html>
