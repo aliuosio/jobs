@@ -14,6 +14,18 @@
 
 
 - Q: What should be the validation endpoint path? → A: `/validate` (simple, RESTful endpoint at root)
+- Q: Should the `/validate` endpoint require authentication? → A: No authentication required (publicly accessible, suitable for dev/diag tools)
+- Q: What level of detail should validation response include? → A: Standard (check name, status, error message on failure)
+- Q: Should validation results be logged? → A: Log validation runs with summary outcomes (pass/fail/timeout)
+
+
+### Session 2026-03-09
+
+#N9|- Q: Should concurrent validation calls be allowed? → A: Allow concurrent calls (each runs independently, no locking)
+- Q: Should URL format check also make a test API call? → A: Format validation AND test API call (comprehensive validation catches both config errors and runtime issues)
+- Q: Should embedding check validate fresh embeddings or also check stored vectors? → A: Fresh test embedding only (no stored vector check, ensures validation works in fresh deployments)
+- Q: Should the validation endpoint have rate limiting? → A: No rate limiting (rely on network-level access control, dev/diag tool)
+- Q: What log level should be used for validation runs? → A: INFO for all validation runs (consistent, searchable logs for debugging)
 
 ## User Scenarios & Testing *(mandatory)*
 
@@ -77,7 +89,7 @@ As a developer, I need to verify that the embedding model is configured to produ
 
 1. **Given** the embedding model is loaded, **When** it generates an embedding, **Then** the vector has exactly 1536 dimensions.
 2. **Given** a configuration validation check, **When** it tests embedding generation, **Then** it reports the actual dimension count.
-3. **Given** vectors stored in the database, **When** their dimensions are checked, **Then** all are 1536-dimensional.
+3. **Given** the embedding API is available, **When** a test query is embedded, **Then** the resulting vector has 1536 dimensions (fresh test embedding only, stored vectors not checked).
 
 ---
 
@@ -86,7 +98,7 @@ As a developer, I need to verify that the embedding model is configured to produ
 - What happens when internal DNS fails to resolve? (Validation MUST report the specific hostname that failed)
 - What happens when the external port is blocked by a firewall? (Validation MUST detect and report connectivity issues)
 - What happens when the base URL has trailing slashes? (Validation MUST normalize and report the corrected format)
-- What happens when embeddings were created with a different model? (Validation MUST detect dimension mismatches in stored data)
+- What happens when the embedding model produces wrong dimensions? (Validation MUST detect and report the actual vs expected dimensions)
 
 ## Requirements *(mandatory)*
 
@@ -95,12 +107,18 @@ As a developer, I need to verify that the embedding model is configured to produ
 - **FR-001**: System MUST expose a validation endpoint at `/validate` (HTTP GET) that runs all configuration checks and returns results.
 - **FR-002**: Validation MUST verify the backend can reach the vector database via internal DNS (`qdrant-db:6333`).
 - **FR-003**: Validation MUST verify external clients can reach the backend via `localhost:8000`.
-- **FR-004**: Validation MUST check that the inference API base URL does not result in path duplication.
-- **FR-005**: Validation MUST verify all embeddings are 1536-dimensional.
+- **FR-004**: Validation MUST check that the inference API base URL does not result in path duplication AND make a test API call to verify connectivity.
+- **FR-005**: Validation MUST verify the embedding model produces 1536-dimensional vectors (fresh test embedding, stored vectors not checked).
 - **FR-006**: Validation MUST report clear success/failure status for each check.
 - **FR-007**: Validation MUST provide actionable error messages when checks fail.
 - **FR-008**: Validation MUST be runnable without side effects (read-only checks).
 - **FR-009**: Validation MUST apply a 10-second timeout per check. When a check times out, the timed-out check reports `status: "timeout"`, independent checks continue, and dependent checks are skipped with reason documented.
+- **FR-010**: Validation endpoint MUST NOT require authentication (network-level access control sufficient for dev/diag tool).
+- **FR-011**: Validation response MUST include check name, status (pass/fail/timeout), and actionable error message on failure (no stack traces or raw response snippets).
+- **FR-012**: Validation runs MUST be logged at INFO level with summary outcomes (check names and pass/fail/timeout status) for debugging/audit purposes.
+- **FR-013**: Validation endpoint MUST allow concurrent calls without locking (each request executes independently).
+- **FR-014**: Validation endpoint MUST NOT implement rate limiting (network-level access control is sufficient for dev/diag tool).
+- **FR-015**: Embedding dimension check MUST generate a fresh test embedding (not check stored vectors) to verify model configuration.
 
 ### Key Entities
 

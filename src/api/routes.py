@@ -13,6 +13,7 @@ from src.api.schemas import (
     ConfidenceLevel,
     ErrorResponse,
     HealthResponse,
+    ValidationReport,
 )
 
 logger = logging.getLogger(__name__)
@@ -65,6 +66,16 @@ async def health_check() -> HealthResponse:
         HealthResponse: Service health status.
     """
     return HealthResponse(status="healthy")
+
+
+@router.get("/validate", response_model=ValidationReport, tags=["validation"])
+async def validate_configuration() -> ValidationReport:
+    from src.services.validation import run_all_checks
+
+    return await run_all_checks()
+
+
+
 
 
 @router.post(
