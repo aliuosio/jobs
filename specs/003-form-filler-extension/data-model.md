@@ -89,23 +89,25 @@ interface FillRequest {
 
 ### FillResponse
 
-Response from the backend API.
+Response from the backend API. See [002-rag-backend](../002-rag-backend/spec.md) for API contract.
 
 ```typescript
 interface FillResponse {
   answer: string;                // Generated answer text
-  sources: SourceDocument[];     // Source documents used
   has_data: boolean;             // Whether relevant data was found
   confidence: 'high' | 'medium' | 'low' | 'none';
-  processing_time_ms: number;    // Processing time in ms
-}
-
-interface SourceDocument {
-  content: string;
-  metadata: Record<string, unknown>;
-  relevance_score?: number;
+  context_chunks: number;        // Number of context chunks retrieved (0-5)
 }
 ```
+
+**Confidence Levels** (determined by backend based on similarity scores):
+
+| Level | Meaning |
+|-------|--------|
+| `high` | Multiple relevant chunks with clear match |
+| `medium` | Some relevant context found |
+| `low` | Weak or ambiguous matches |
+| `none` | No relevant context retrieved |
 
 ---
 

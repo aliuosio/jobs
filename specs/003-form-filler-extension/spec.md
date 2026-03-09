@@ -18,71 +18,53 @@
 - Q: What fill order/concurrency strategy for batch fills? → A: Sequential with 50-100ms delay (stability - avoid overwhelming forms/API)
 - Q: What is the API request timeout? → A: 10 seconds (balanced - allows RAG processing while maintaining responsiveness)
 - Q: How should select/checkbox/radio fields be handled? → A: Skip these fields (MVP scope - focus on text-based inputs)
-- Q: What maximum distance for proximity-based label detection? → A: 50 pixels (balanced - reasonable default without false positives)
-- Q: What happens when a field has no associated label or placeholder? → A: Skip field entirely (no fallback - prevents false positives)
-- Q: How should users trigger single-field vs batch fill? → A: Popup-only UI (no per-field buttons injected into page)
-- Q: What defines high/medium/low confidence for label detection? → A: By detection method (high: for-id/wrapper, medium: aria-labelledby, low: proximity)
-- Q: What percentile for timing thresholds (SC-001, SC-005)? → A: P95 (95% of operations must meet threshold)
-- Q: Should API requests retry on timeout/failure? → A: No retry - fail immediately and notify user (prevents unpredictable delays)
 
-## User Scenarios & Testing *(mandatory)*
+### Session 2026-03-09 (Checklist Resolution)
 
-### User Story 1 - Fill Single Form Field (Priority: P1)
-
-As a job applicant, I want to trigger auto-fill via the extension popup and have a form field automatically filled with relevant information from my resume so that I can complete applications faster.
-
-**Why this priority**: This is the core user interaction that delivers immediate value.
-
-**Independent Test**: Navigate to a job application page with a labeled input field, activate the extension, and verify the field is populated with relevant content.
-
-**Acceptance Scenarios**:
-
-1. **Given** a form field with an associated label, **When** the user triggers auto-fill for that field, **Then** the extension extracts the label text and sends it to the API.
-2. **Given** the API returns a valid answer, **When** the extension receives the response, **Then** the input field is populated with the answer text.
-3. **Given** a populated field on a React/Angular page, **When** the value is set, **Then** the framework's state is updated (field appears filled in UI).
+- Q: What confidence levels for each detection method? → A: `for-id=high, wrapper=high, aria=high, proximity=medium` (explicit mapping)
+- Q: What exact delay between batch fills? → A: `75ms` (mid-range of 50-100ms for stability)
+- Q: What percentile for 3-second fill timing? → A: `P95` (95% of fills complete within 3 seconds)
+- Q: Which job boards for 90% detection testing? → A: `Indeed + LinkedIn` (two largest platforms)
+- Q: How to handle `has_data: false` API responses? → A: Show 'no data' visual indicator on field
+- Q: How to handle truncated values exceeding maxlength? → A: Append ⚠ warning icon after field value
+- Q: How to handle fields with no label but with name/id attribute? → A: Use name/id as fallback label text
+- Q: How to handle `contenteditable` elements? → A: Fill with innerText and dispatch input event
+- Q: How to handle API errors during batch fill? → A: Show toast notification and continue with remaining fields
+- Q: Maximum wait time for dynamic form detection? → A: 10 seconds before considering scan complete
+- Q: How to handle select dropdowns? → A: Match option text to API response (case-insensitive substring)
 
 ---
 
-### User Story 2 - Batch Fill All Form Fields (Priority: P2)
+## User Stories *(mandatory)*
 
-As a job applicant, I want to fill all form fields on a page at once so that I can complete entire applications with a single action.
+### User Story 1: Fill Single Form Field (Priority: P1) 🎯 MVP
 
-**Why this priority**: Batch filling improves efficiency but depends on single-field filling working correctly first.
+As a job applicant, I want to automatically fill a single form field with relevant information from my resume so that I can quickly complete job applications.
 
-**Independent Test**: Navigate to a job application form with multiple fields, trigger batch fill, and verify all fields are populated.
+**Acceptance Scenarios:**
+1. **Given** a page with a labeled input field, **When** I activate the extension, **Then** the field is populated with relevant content.
+2. **Given** a filled field, **When** the extension populates it, **Then** the value is visible in the UI (not just in the DOM).
+3. **Given** a React/Angular form field, **When** the extension fills it, **Then** the framework's state is updated correctly.
 
-**Acceptance Scenarios**:
+### User Story 2: Batch Fill All Form Fields (Priority: P2)
 
-1. **Given** a page with multiple form fields and labels, **When** the user triggers batch fill, **Then** all labeled fields are identified and queued for filling.
-2. **Given** multiple API requests in progress, **When** responses arrive, **Then** each field is populated independently without blocking others.
-3. **Given** some fields fail to fill, **When** batch fill completes, **Then** the user is notified of successful and failed fields.
+As a job applicant, I want to fill all form fields on a page at once so that I can complete applications efficiently.
+
+**Acceptance Scenarios:**
+1. **Given** a page with multiple form fields, **When** I trigger batch fill, **Then** all fields are populated independently without blocking.
+2. **Given** a batch fill in progress, **When** API responses arrive, **Then** each field is populated as soon as its response is received.
+3. **Given** some fields fail to fill, **When** batch fill completes, **Then** I am notified of successful and failed fields.
+
+### User Story 3: Handle Complex Form Structures (Priority: P3)
+
+As a job applicant, I want the extension to correctly identify form fields even when labels and inputs are not directly associated so that I can fill non-standard forms.
+
+**Acceptance Scenarios:**
+1. **Given** a form with labels using `for`/`id` attributes, **When** the extension scans the form, **Then** all pairings are correctly identified.
+2. **Given** a form with labels wrapping inputs, **When** the extension scans the form, **Then** all pairings are correctly identified.
+3. **Given** a form with no standard label association, **When** the extension scans the form, **Then** best-guess pairing is attempted.
 
 ---
-
-### User Story 3 - Handle Complex Form Structures (Priority: P3)
-
-As a job applicant, I want the extension to correctly identify form fields even when labels and inputs are not directly associated so that all relevant fields can be filled.
-
-**Why this priority**: Edge case handling improves reliability but is not essential for MVP.
-
-**Independent Test**: Test on a form with non-standard label-input associations and verify fields are still identified.
-
-**Acceptance Scenarios**:
-
-1. **Given** a label and input connected by `for`/`id` attributes, **When** the extension scans the form, **Then** the pairing is correctly identified.
-2. **Given** a label wrapping an input element, **When** the extension scans the form, **Then** the pairing is correctly identified.
-3. **Given** a label and input in proximity but not formally associated, **When** the extension scans the form, **Then** a best-guess pairing is made.
-
----
-
-### Edge Cases
-
-- What happens when a field has no associated label? (Extension MUST skip the field entirely - no fallback)
-- What happens when the API is unavailable? (Extension MUST display an error message to the user)
-- What happens when a field is read-only or disabled? (Extension MUST skip the field)
-- What happens when the API response is too long for the field? (Extension MUST truncate to maxlength and show a visual warning indicator next to the field)
-- What happens on pages with dynamic form loading? (Extension MUST re-scan when DOM changes are detected)
-- What happens when a field is a password input? (Extension MUST skip password fields for security reasons)
 
 ## Requirements *(mandatory)*
 
@@ -101,11 +83,17 @@ As a job applicant, I want the extension to correctly identify form fields even 
 - **FR-011**: Extension MUST support batch fill mode to fill all detected form fields with one action.
 - **FR-012**: Extension MUST use MutationObserver to detect dynamically loaded forms.
 - **FR-013**: Extension MUST use Manifest V3 for Firefox extension configuration.
-- **FR-014**: Extension MUST fill fields sequentially in DOM order with 50-100ms delay between fills during batch operations.
+- **FR-014**: Extension MUST fill fields sequentially in DOM order with 75ms delay between fills during batch operations.
 - **FR-015**: Extension MUST timeout API requests after 10 seconds with no retry, and notify the user of the failure.
-- **FR-016**: Extension MUST skip `<select>`, `<input type="checkbox">`, and `<input type="radio">` fields (out of MVP scope).
+- **FR-016**: Extension MUST support `<select>` dropdowns by matching option text to API response (case-insensitive substring match).
 - **FR-017**: Extension MUST use a maximum distance of 50 pixels for proximity-based label detection.
-- **FR-018**: Extension MUST assign confidence levels based on detection method: high (for-id, wrapper), medium (aria-labelledby), low (proximity).
+- **FR-018**: Extension MUST assign confidence levels: high (for-id, wrapper, aria-labelledby), medium (proximity, name/id fallback).
+- **FR-019**: Extension MUST use a 10-second maximum wait time for dynamic form detection before considering scan complete.
+- **FR-020**: Extension MUST display a 'no data' indicator on fields where API returns `has_data: false`.
+- **FR-021**: Extension MUST append a ⚠ warning icon after field values that were truncated due to maxlength.
+- **FR-022**: Extension MUST support `contenteditable` elements by setting innerText and dispatching input event.
+- **FR-023**: Extension MUST show a toast notification for API errors during batch fill and continue with remaining fields.
+- **FR-024**: Extension MUST use the `name` or `id` attribute as fallback label text when no label element is associated.
 
 ### Key Entities
 
@@ -121,7 +109,7 @@ As a job applicant, I want the extension to correctly identify form fields even 
 - **SC-001**: Users can fill a single form field with one click within 3 seconds (P95).
 - **SC-002**: Form fields on React/Angular applications show filled values in the UI after injection.
 - **SC-003**: Users are notified within 2 seconds when the API is unavailable.
-- **SC-004**: At least 90% of labeled form fields on common job boards are correctly identified.
+- **SC-004**: At least 90% of labeled form fields on Indeed and LinkedIn job boards are correctly identified.
 - **SC-005**: Batch fill completes a 10-field form within 30 seconds (P95).
 
 ## Assumptions

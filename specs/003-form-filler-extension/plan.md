@@ -1,6 +1,6 @@
 # Implementation Plan: Form Filler Browser Extension
 
-**Branch**: `003-form-filler-extension` | **Date**: 2026-03-08 | **Spec**: [spec.md](./spec.md)
+**Branch**: `003-form-filler-extension` | **Date**: 2026-03-08 | **Updated**: 2026-03-09 | **Spec**: [spec.md](./spec.md)
 **Input**: Feature specification from `/specs/003-form-filler-extension/spec.md`
 
 ## Summary
@@ -15,13 +15,28 @@ Firefox WebExtension that scans job application forms, extracts label text, send
 **Testing**: Manual testing on job board sites, Jest for unit tests
 **Target Platform**: Firefox Browser (desktop)
 **Project Type**: Browser Extension (Firefox WebExtension)
-**Performance Goals**: Fill single field < 3 seconds, batch 10 fields < 30 seconds
+**Performance Goals**: Fill single field < 3 seconds (P95), batch 10 fields < 30 seconds (P95)
 **Constraints**: Must work with SPA frameworks (React, Angular, Vue), Manifest V3 only
 **Scale/Scope**: Single browser extension, unlimited form fields
 
+### Resolved Clarifications (2026-03-09)
+
+| Aspect | Resolution |
+|--------|------------|
+| Batch fill delay | 75ms (exact value) |
+| Confidence levels | high: for-id, wrapper, aria; medium: proximity, name/id |
+| No-label fallback | Use name/id attribute as label |
+| Dynamic form timeout | 10 seconds max wait |
+| Truncated values | Append ⚠ icon suffix |
+| has_data: false | Show 'no data' indicator on field |
+| API errors in batch | Toast notification + continue |
+| contenteditable | Fill with innerText + dispatch input |
+| select dropdowns | Match option text to API response |
+| Test job boards | Indeed + LinkedIn |
+
 ## Constitution Check
 
-*GATE: Must pass before Phase 0 research. Re-check after Phase 1 design.*
+*GATE: Must pass before Phase 0 research. Re-checked after Phase 1 design.*
 
 | Principle | Status | Evidence |
 |-----------|--------|----------|
@@ -48,6 +63,9 @@ specs/003-form-filler-extension/
 ├── data-model.md        # Phase 1 output
 ├── quickstart.md        # Phase 1 output
 ├── contracts/           # Phase 1 output
+│   └── message-contract.md
+├── checklists/          # Implementation gate
+│   └── implementation-ready.md
 └── tasks.md             # Phase 2 output
 ```
 
@@ -88,8 +106,9 @@ extension/
 | Aspect | Complexity | Justification |
 |--------|------------|---------------|
 | DOM Injection | Medium | Native setter + event dispatch pattern |
-| Form Detection | Medium | Label-input pairing heuristics |
+| Form Detection | Medium | Label-input pairing heuristics + name/id fallback |
 | API Integration | Low | Simple POST to localhost:8000 |
+| Batch Fill | Low | Sequential with 75ms delay |
 
 ## Phase 0: Research Summary
 
@@ -100,7 +119,7 @@ extension/
 - [x] What is the Manifest V3 structure for Firefox? → Standard action/background/content_scripts structure
 - [x] How to properly dispatch events for React/Angular? → Native setter + input/change events with bubbles: true
 - [x] What label-input detection patterns work best? → for/id attributes + wrapper detection + proximity heuristics
-- [x] How to handle MutationObserver for dynamic forms? → Debounced observer with WeakSet tracking
+- [x] How to handle MutationObserver for dynamic forms? → Debounced observer (300ms) with WeakSet tracking
 
 ## Phase 1: Design Artifacts
 
@@ -114,21 +133,26 @@ extension/
 | Data Model | [data-model.md](./data-model.md) | ✅ Complete |
 | Contracts | [contracts/message-contract.md](./contracts/message-contract.md) | ✅ Complete |
 | Quickstart | [quickstart.md](./quickstart.md) | ✅ Complete |
+| Tasks | [tasks.md](./tasks.md) | ✅ Complete |
+| Checklist | [checklists/implementation-ready.md](./checklists/implementation-ready.md) | ✅ All 38 items pass |
 
-## Constitution Check (Post-Design)
+## Phase 2: Implementation Status
 
-*Re-evaluation after Phase 1 design*
+**Status**: Ready to implement
 
-| Principle | Status | Evidence |
-|-----------|--------|----------|
-| I. Data Integrity | ✅ N/A | Extension layer only |
-| II. Retrieval Law | ✅ N/A | Extension layer only |
-| III. Zero Hallucination | ✅ N/A | Extension layer only |
-| IV. CORS Policy | ✅ Pass | moz-extension:// to localhost:8000 |
-| V. DOM Injection | ✅ Pass | input/change events with bubbles: true + native setters |
+### Prerequisites Met
+- ✅ All design artifacts complete
+- ✅ Checklist passes (38/38)
+- ✅ Constitution check passes
+- ✅ Tasks.md has 43 implementation tasks
 
-**Infrastructure Mapping**: All requirements satisfied.
+### Implementation Order (from tasks.md)
+1. **Phase 1: Setup** (T001-T005) - Extension structure
+2. **Phase 2: Foundational** (T006-T009) - Messaging infrastructure
+3. **Phase 3: US1 - Single Field Fill** (T010-T022) - MVP core
+4. **Phase 4: US2 - Batch Fill** (T023-T028) - Multi-field
+5. **Phase 5: US3 - Complex Forms** (T029-T035) - Edge cases
+6. **Phase 6: Polish** (T036-T043) - Validation & docs
 
 ---
-*Plan created: 2026-03-08 | Status: Phase 1 Complete - Ready for /speckit.tasks*
-
+*Plan created: 2026-03-08 | Updated: 2026-03-09 | Status: Ready for Implementation*
