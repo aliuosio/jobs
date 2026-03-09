@@ -1,108 +1,191 @@
-# ============================================
-# Docker Compose Configuration
-# Feature: 001-docker-infra
-# ============================================
-# Services:
-#   - qdrant-db: Vector database for resume embeddings
-#   - api-backend: FastAPI backend for RAG pipeline
-# Network:
-#   - rag-network: Bridge network for internal DNS resolution
-# ============================================
+volumes:
+  n8n_data:
+  postgres_data:
+  redis_data:
+  mongodb_data:
+  chrome_data:
+  qdrant_storage:
+  crawl4ai_data:
+  ollama_data:
+
+
+networks:
+  jobs:
+
+
+x-n8n: &service-n8n
+  image: n8nio/n8n:latest
+  pull_policy: always
 
 services:
-  # ==========================================
-  # Vector Database Service
-  # ==========================================
-  qdrant-db:
-    image: qdrant/qdrant:latest
-    container_name: qdrant-db
-    
-    # Port mappings
-    # 6333: HTTP REST API + Dashboard
-    # 6334: gRPC API
+  n8n:
+    <<: *service-n8n
+    hostname: n8n
+    container_name: ${NAMESPACE}_n8n
+    user: "${UID}:${GID}"
+    env_file:
+      - .env
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    volumes:
+      - n8n_data:${MAIN_WORKDIR}
+      - /home/krusty/Obsidian/Osio/Prompts/jobs:/home/node/.n8n-files/Prompts/jobs
     ports:
-      - "6333:6333"
-      - "6334:6334"
-    
-    # Persistent storage for vector data
+      - 5678:5678
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    networks:
+      - jobs
+
+  task-runners:
+    image: n8nio/runners:latest
+    container_name: ${NAMESPACE}_task-runners
+    pull_policy: always
+    env_file:
+      - .env
+    depends_on:
+      n8n:
+        condition: service_started
+    networks:
+      - jobs
+
+  postgres:
+    container_name: ${NAMESPACE}_postgres
+    image: postgres:${POSTGRES_VERSION}
+    pull_policy: always
+    env_file:
+      - .env
+    hostname: postgres
+    ports:
+      - 5432:5432
+    healthcheck:
+      test: [ 'CMD-SHELL', 'pg_isready -h localhost -U ${POSTGRES_USER} -d ${POSTGRES_DB}' ]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 90s
+    volumes:
+      - postgres_data:/var/lib/postgresql/18/docker
+      - ./.docker/postgres/init-scripts:/docker-entrypoint-initdb.d/
+    networks:
+      - jobs
+
+  redis:
+    container_name: ${NAMESPACE}_redis
+    image: redis:${REDIS_VERSION}
+    pull_policy: always
+    env_file:
+      - .env
+    expose:
+      - 6379
+    healthcheck:
+      test: [ "CMD", "redis-cli", "ping" ]
+      interval: 5s
+      timeout: 3s
+      retries: 3
+      start_period: 5s
+    command: >
+      redis-server --port 6379 --appendonly no --maxmemory 2GB --maxmemory-policy allkeys-lru
+    deploy:
+      resources:
+        limits:
+          cpus: '4.0'
+          memory: 2GB
+        reservations:
+          cpus: '2.0'
+          memory: 2GB
+    networks:
+      - jobs
+
+  searxng_app:
+    image: searxng/searxng:${SEARXNG_VERSION}
+    container_name: ${NAMESPACE}_searxng
+    pull_policy: always
+    volumes:
+      - ./.docker/searxng/settings.yml:/etc/searxng/settings.yml
+      - ./.docker/searxng/limiter.toml:/etc/searxng/limiter.toml
+    env_file:
+      - .env
+    expose:
+      - 8080
+    networks:
+      - jobs
+
+  # Reverse proxy in front of SearXNG to set X-Real-IP / X-Forwarded-For.
+  # This avoids the noisy "X-Forwarded-For nor X-Real-IP header is set!" log
+  # when accessing SearXNG directly (no proxy).
+  searxng_proxy:
+    image: nginx:${NGINX_VERSION}
+    container_name: ${NAMESPACE}_searxng_proxy
+    pull_policy: always
+    depends_on:
+      - searxng_app
+    ports:
+      - "8080:8080"
+    networks:
+      jobs:
+      default:
+        aliases:
+          - searxng
+    volumes:
+      - ./.docker/nginx/searxng.conf:/etc/nginx/conf.d/default.conf:ro
+
+  crawl4ai:
+    image: unclecode/crawl4ai:latest
+    container_name: ${NAMESPACE}_crawl4ai
+    pull_policy: always
+    ports:
+      - "11235:11235"
+    volumes:
+      - crawl4ai_data:/root/.crawl4ai
+    env_file:
+      - .env
+    networks:
+      - jobs
+
+  qdrant:
+    image: qdrant/qdrant
+    pull_policy: always
+    hostname: qdrant
+    container_name: ${NAMESPACE}_qdrant
+    env_file:
+      - .env
+    ports:
+      - 6333:6333
     volumes:
       - ./qdrant_storage:/qdrant/storage
-    
-    # Network configuration
-    networks:
-      - rag-network
-    
-    # Environment variables
-    environment:
-      - QDRANT__LOG_LEVEL=${QDRANT__LOG_LEVEL:-INFO}
-    
-    # Health check - TCP check on HTTP port
     healthcheck:
-      test: ["CMD-SHELL", "bash -c ':> /dev/tcp/127.0.0.1/6333' || exit 1"]
+      test: [ "CMD-SHELL", "bash -c ':> /dev/tcp/127.0.0.1/6333' || exit 1" ]
       interval: 10s
       timeout: 5s
       retries: 5
       start_period: 30s
-    
-    # Restart policy - manual restart only
-    restart: "no"
-    
-    # Logging configuration - disabled for local dev
-    logging:
-      driver: none
+    networks:
+      - jobs
 
-  # ==========================================
-  # API Backend Service
-  # ==========================================
   api-backend:
     build:
       context: .
       dockerfile: Dockerfile
-    container_name: api-backend
-    
-    # Port mapping
-    # 8000: FastAPI HTTP API
+    pull_policy: always
+    container_name: ${NAMESPACE}_api-backend
+    env_file:
+      - .env
     ports:
       - "8000:8000"
-    
-    # Network configuration
-    networks:
-      - rag-network
-    
-    # Source code volume mount for development
     volumes:
       - ./src:/app/src
-    
-    # Dependency on qdrant-db with health condition
     depends_on:
-      qdrant-db:
+      qdrant:
         condition: service_healthy
-    
-    # Environment variables from .env file
-    environment:
-      - QDRANT_URL=${QDRANT_URL:-http://qdrant-db:6333}
-      - ZAI_API_KEY=${ZAI_API_KEY}
-      - ZAI_BASE_URL=${ZAI_BASE_URL:-https://api.z.ai/v1}
-    
-    # Health check - HTTP endpoint
     healthcheck:
       test: ["CMD-SHELL", "curl -f http://localhost:8000/health || exit 1"]
       interval: 10s
       timeout: 5s
       retries: 3
       start_period: 30s
-    
-    # Restart policy - manual restart only
-    restart: "no"
-    
-    # Logging configuration - disabled for local dev
-    logging:
-      driver: none
-
-# ==========================================
-# Network Configuration
-# ==========================================
-networks:
-  rag-network:
-    driver: bridge
-    name: rag-network
+    networks:
+      - jobs
