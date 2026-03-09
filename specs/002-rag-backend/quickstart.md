@@ -1,256 +1,195 @@
 # Quickstart: RAG Backend API
 
-**Feature**: 002-rag-backend | **Date**: 2026-03-08
+Get the RAG Backend running in 5 minutes.
 
 ## Prerequisites
 
-- Python 3.11+
-- Docker and Docker Compose running
-- Qdrant vector store (from 001-docker-infra)
-- Z.ai API credentials
-
----
+- Docker & Docker Compose
+- Z.ai API key
+- Resume embeddings already indexed in Qdrant (see 001-docker-infra)
 
 ## Quick Start
 
-### 1. Set Up Environment
+### 1. Configure Environment
 
 ```bash
-# Navigate to project root
-cd /home/krusty/projects/job-forms
-
-# Create .env file (if not exists)
+# Copy the example environment file
 cp .env.example .env
 
-# Edit .env with your credentials
-nano .env
+# Edit and add your Z.ai API key
+# ZAI_API_KEY=your-api-key-here
 ```
 
-Required environment variables:
+### 2. Start Services
+
 ```bash
-ZAI_API_KEY=your_api_key_here
-ZAI_BASE_URL=https://api.z.ai/v1
-QDRANT_URL=http://qdrant-db:6333
+# Start the backend and Qdrant
+docker-compose up -d
+
+# Check logs
+docker-compose logs -f backend
 ```
 
-### 2. Start Infrastructure
+### 3. Verify Health
 
 ```bash
-# Start Qdrant vector database
-docker-compose up -d qdrant-db
-
-# Verify Qdrant is running
-curl http://localhost:6333/healthz
-```
-
-### 3. Install Dependencies
-
-```bash
-cd backend
-python -m venv venv
-source venv/bin/activate  # On Windows: venv\Scripts\activate
-pip install -r requirements.txt
-```
-
-### 4. Run the API
-
-```bash
-# Development mode with auto-reload
-uvicorn src.main:app --reload --host 0.0.0.0 --port 8000
-
-# Or via Docker
-docker-compose up -d api-backend
-```
-
-### 5. Test the API
-
-```bash
-# Health check
 curl http://localhost:8000/health
+# Expected: {"status": "healthy"}
+```
 
-# Generate an answer
+### 4. Test Form Filling
+
+```bash
 curl -X POST http://localhost:8000/fill-form \
   -H "Content-Type: application/json" \
   -d '{"label": "Years of Python experience"}'
 ```
 
----
+Expected response:
+```json
+{
+  "answer": "5 years of professional Python experience",
+  "has_data": true,
+  "confidence": "high",
+  "context_chunks": 3
+}
+```
 
 ## API Endpoints
 
 | Endpoint | Method | Purpose |
 |----------|--------|---------|
+| `/health` | GET | Service health check |
 | `/fill-form` | POST | Generate answer for form field |
-| `/health` | GET | Health check with service status |
 
----
+## Request/Response Examples
 
-## Request Examples
+### Generate Answer
 
-### Generate Form Answer
-
+**Request**:
 ```bash
-curl -X POST http://localhost:8000/fill-form \
-  -H "Content-Type: application/json" \
-  -d '{
-    "label": "Years of Python experience",
-    "context_hints": "Looking for backend development"
-  }'
+POST /fill-form
+Content-Type: application/json
+
+{
+  "label": "What is your highest degree?"
+}
 ```
 
-**Response (200):**
+**Response (success)**:
 ```json
 {
-  "answer": "5 years of Python experience in backend development",
-  "sources": [
-    {
-      "content": "Worked as Python Developer...",
-      "metadata": {"company": "TechCorp"},
-      "relevance_score": 0.92
-    }
-  ],
+  "answer": "Bachelor of Science in Computer Science from MIT, 2020",
   "has_data": true,
   "confidence": "high",
-  "processing_time_ms": 1250
+  "context_chunks": 2
 }
 ```
 
-### Health Check
-
-```bash
-curl http://localhost:8000/health
-```
-
-**Response (200):**
+**Response (no data)**:
 ```json
 {
-  "status": "healthy",
-  "version": "1.0.0",
-  "checks": {
-    "vector_store": {"status": "healthy", "latency_ms": 12},
-    "llm": {"status": "healthy", "latency_ms": 180}
-  }
+  "answer": "I don't have information about that in the resume.",
+  "has_data": false,
+  "confidence": "none",
+  "context_chunks": 0
 }
 ```
 
----
+## Configuration
 
-## Development Workflow
+| Variable | Default | Description |
+|----------|---------|-------------|
+| `QDRANT_URL` | `http://qdrant-db:6333` | Qdrant connection URL |
+| `QDRANT_COLLECTION` | `resumes` | Vector collection name |
+| `ZAI_API_KEY` | **Required** | Z.ai API key |
+| `ZAI_BASE_URL` | `https://api.z.ai/v1` | Z.ai API endpoint |
+| `EMBEDDING_DIMENSION` | `1536` | Vector dimensions |
+| `RETRIEVAL_K` | `5` | Context chunks to retrieve |
 
-### Project Structure
+## Common Issues
 
+### CORS Errors from Extension
+
+**Symptom**: Browser extension requests fail with CORS errors.
+
+**Solution**: Ensure backend is running with CORS middleware:
+```python
+# Already configured in src/main.py
+allow_origins=["moz-extension://*", "http://localhost"]
 ```
-backend/
-├── src/
-│   ├── main.py              # FastAPI app entry
-│   ├── config.py            # Configuration/settings
-│   ├── api/
-│   │   ├── routes.py        # API endpoints
-│   │   └── schemas.py       # Request/response models
-│   ├── services/
-│   │   ├── rag.py           # RAG pipeline
-│   │   └── vector_store.py  # Qdrant connection
-│   └── prompts/
-│       └── system.py        # Anti-hallucination prompts
-└── tests/
-    ├── test_api.py
-    ├── test_rag.py
-    └── test_vector_store.py
+
+### Vector Store Connection Failed
+
+**Symptom**: `Connection refused to qdrant-db:6333`
+
+**Solution**: 
+1. Ensure Qdrant container is running: `docker-compose ps`
+2. Check network: `docker network ls | grep rag-network`
+3. Verify DNS: `docker exec backend ping qdrant-db`
+
+### No Relevant Context Found
+
+**Symptom**: All queries return `has_data: false`
+
+**Solution**: 
+1. Verify Qdrant has embeddings: `curl http://localhost:6333/collections/resumes`
+2. Check collection has points: `curl http://localhost:6333/collections/resumes/points/count`
+3. Re-index resume if needed (see 001-docker-infra)
+
+### API Rate Limiting
+
+**Symptom**: 429 errors from Z.ai API
+
+**Solution**: The backend implements exponential backoff (1s, 2s, 4s, 8s). Wait and retry automatically.
+
+## Development
+
+### Run Locally (without Docker)
+
+```bash
+# Install dependencies
+pip install -r requirements.txt
+
+# Set environment
+export ZAI_API_KEY=your-key
+export QDRANT_URL=http://localhost:6333
+
+# Run server
+uvicorn src.main:app --reload --port 8000
 ```
 
 ### Run Tests
 
 ```bash
-# Run all tests
-pytest
+# Unit tests
+pytest tests/unit/
 
-# Run with coverage
-pytest --cov=src --cov-report=term-missing
+# Integration tests (requires running services)
+pytest tests/integration/
 
-# Run specific test file
-pytest tests/test_api.py -v
+# All tests with coverage
+pytest --cov=src tests/
 ```
 
-### Development Server
+## Architecture
 
-```bash
-# Start with auto-reload
-uvicorn src.main:app --reload --host 0.0.0.0 --port 8000
-
-# With debug logging
-uvicorn src.main:app --reload --log-level debug
 ```
-
----
-
-## Configuration
-
-### Environment Variables
-
-| Variable | Required | Default | Description |
-|----------|----------|---------|-------------|
-| `ZAI_API_KEY` | Yes | - | Z.ai API key |
-| `ZAI_BASE_URL` | No | `https://api.z.ai/v1` | Z.ai API base URL |
-| `QDRANT_URL` | No | `http://qdrant-db:6333` | Qdrant connection URL |
-| `QDRANT_COLLECTION` | No | `resume_embeddings` | Collection name |
-| `EMBEDDING_DIMENSION` | No | `1536` | Embedding dimensions |
-| `RETRIEVAL_K` | No | `5` | Number of documents to retrieve |
-| `MAX_RESPONSE_TIME_MS` | No | `5000` | Max processing time |
-
-### CORS Configuration
-
-The API is configured to accept requests from:
-- `moz-extension://*` (Firefox extensions)
-- `http://localhost:*` (Local development)
-
----
-
-## Troubleshooting
-
-### Qdrant Connection Failed
-
-```bash
-# Check Qdrant is running
-docker-compose ps qdrant-db
-
-# Check Qdrant logs
-docker-compose logs qdrant-db
-
-# Verify connectivity
-curl http://localhost:6333/healthz
+┌──────────────────┐     ┌──────────────────┐
+│ Firefox Extension│────▶│  Backend API     │
+│ (moz-extension)  │     │  localhost:8000  │
+└──────────────────┘     └────────┬─────────┘
+                                  │
+                    ┌─────────────┴─────────────┐
+                    ▼                           ▼
+           ┌────────────────┐         ┌────────────────┐
+           │  Qdrant DB     │         │  Z.ai API      │
+           │  qdrant-db:6333│         │  (inference)   │
+           └────────────────┘         └────────────────┘
 ```
-
-### No Relevant Context Found
-
-This is expected behavior when the resume doesn't contain the requested information:
-```json
-{
-  "answer": "This information is not available in the resume.",
-  "has_data": false,
-  "confidence": "none"
-}
-```
-
-### LLM Rate Limiting
-
-The API automatically retries with exponential backoff:
-- Retry 1: 1 second delay
-- Retry 2: 2 second delay
-- Retry 3: 4 second delay
-- Retry 4: 8 second delay
-- Retry 5: 16 second delay (max)
-
-### Slow Response Time
-
-If responses exceed 5 seconds:
-1. Check Qdrant latency: `curl http://localhost:6333/metrics`
-2. Check LLM API latency
-3. Reduce `RETRIEVAL_K` if using too many documents
-
----
 
 ## Next Steps
 
-1. **Populate vector store** with resume embeddings (separate ingestion pipeline)
-2. **Test with Firefox extension** (feature 003-form-filler-extension)
-3. **Monitor performance** with health endpoint metrics
+1. **Index Resume**: Use the ingestion pipeline to add your resume to Qdrant
+2. **Configure Extension**: Point the Firefox extension to `http://localhost:8000`
+3. **Test End-to-End**: Fill a job application form using the extension

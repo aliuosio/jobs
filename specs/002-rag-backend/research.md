@@ -1,280 +1,368 @@
 # Research: RAG Backend API
 
-**Feature**: 002-rag-backend | **Date**: 2026-03-08
+**Feature**: 002-rag-backend  
+**Date**: 2026-03-09
 
-## Summary
+## 1. FastAPI Application Structure
 
-Research consolidated from librarian and explore agents to resolve all technical unknowns for the RAG Backend API implementation.
+### Decision: Single-file main.py with service modules
 
----
+**Rationale**: The API has only 2 endpoints (`/fill-form`, `/health`). A modular structure with separate services keeps code organized without over-engineering.
 
-## 1. LangChain + FastAPI Integration
-
-### Decision
-Use **dependency injection pattern** with FastAPI for LangChain components.
-
-### Rationale
-- Clean separation of concerns
-- Easy testing with mock dependencies
-- Singleton pattern for vector store connections
-- Native async support for streaming responses
-
-### Configuration
+**Implementation Pattern**:
 ```python
-from fastapi import Depends
-from langchain_openai import ChatOpenAI
-from langchain_qdrant import QdrantVectorStore
-
-def get_llm():
-    return ChatOpenAI(
-        model="gpt-4-turbo-preview",
-        temperature=0.1,  # Low for RAG
-        streaming=True
-    )
-
-def get_vector_store():
-    return QdrantVectorStore.from_existing_collection(
-        embeddings=embeddings,
-        collection_name="resume_embeddings",
-        url="http://qdrant-db:6333"
-    )
-```
-
-### Alternatives Considered
-| Option | Rejected Because |
-|--------|------------------|
-| Global variables | Harder testing, no lifecycle management |
-| Factory pattern per request | Connection overhead, no pooling |
-
----
-
-## 2. Qdrant Vector Store Integration
-
-### Decision
-Use **langchain-qdrant** package with official Qdrant Python client.
-
-### Rationale
-- Native LangChain integration
-- Hybrid search support (dense + sparse)
-- gRPC support for better performance
-- Already clarified: use `qdrant-client` library
-
-### Configuration
-```python
-from langchain_qdrant import QdrantVectorStore
-from qdrant_client import QdrantClient
-
-client = QdrantClient(
-    url="http://qdrant-db:6333",
-    grpc_port=6334,
-    prefer_grpc=True,
-    timeout=30
-)
-
-vector_store = QdrantVectorStore(
-    client=client,
-    collection_name="resume_embeddings",
-    embedding=embeddings
-)
-
-retriever = vector_store.as_retriever(
-    search_kwargs={"k": 5}  # Constitution requirement
-)
-```
-
----
-
-## 3. OpenAI-Compatible Client Configuration
-
-### Decision
-Use **ChatOpenAI** with custom `base_url` for Z.ai API.
-
-### Rationale
-- Supports any OpenAI-compatible endpoint
-- Avoids path doubling issues (Constitution Risk Mitigation)
-- Native streaming support
-
-### Configuration
-```python
-from langchain_openai import ChatOpenAI
-
-llm = ChatOpenAI(
-    base_url=os.getenv("ZAI_BASE_URL", "https://api.z.ai/v1"),
-    api_key=os.getenv("ZAI_API_KEY"),
-    model="z-ai-model",
-    temperature=0.1,
-    streaming=True
-)
-```
-
-### Path Validation (Constitution Risk Mitigation)
-- Set `base_url` explicitly to `https://api.z.ai/v1`
-- Do NOT append `/v1` again in calls - LangChain handles this
-
----
-
-## 4. Anti-Hallucination System Prompts
-
-### Decision
-Use **strict grounding prompts** with explicit rules and verification.
-
-### Rationale
-- Constitution Principle III requires zero hallucination
-- Explicit rules reduce fabrication risk
-- Citation requirements add accountability
-
-### System Prompt Template
-```python
-RAG_SYSTEM_PROMPT = """You are a precise assistant answering questions based on resume data.
-
-CRITICAL RULES:
-1. ONLY use information from the provided context
-2. If context doesn't contain the answer, say: "This information is not available in the resume."
-3. NEVER fabricate experience, skills, or qualifications
-4. Cite context using [Source] notation
-5. Acknowledge uncertainties explicitly
-
-Context: {context}
-
-Remember: Accuracy over completeness. Say "not available" rather than guessing."""
-```
-
----
-
-## 5. CORS Configuration for Firefox Extensions
-
-### Decision
-Use **regex pattern** with explicit extension ID validation.
-
-### Rationale
-- `moz-extension://*` wildcard doesn't work (only matches scheme)
-- Need full origin with extension ID
-- Production requires whitelisting specific IDs
-
-### Configuration
-```python
+# src/main.py
+from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from src.api.routes import router
+from src.config import settings
 
+app = FastAPI(title="RAG Backend API")
+
+# CORS Configuration (Constitution IV)
 app.add_middleware(
     CORSMiddleware,
-    allow_origin_regex=r"^moz-extension://[a-f0-9\-]+$",
+    allow_origins=["moz-extension://*", "http://localhost", "http://localhost:8000"],
     allow_credentials=True,
-    allow_methods=["GET", "POST", "OPTIONS"],
-    allow_headers=["Content-Type", "Authorization"],
-    max_age=86400
+    allow_methods=["*"],
+    allow_headers=["*"],
 )
+
+app.include_router(router)
+
+@app.get("/health")
+async def health():
+    return {"status": "healthy"}
 ```
 
-### Security Note
-For production, add middleware to validate specific extension IDs against whitelist.
+**Alternatives Considered**:
+- FastAPI routers in separate files - Rejected: Overkill for 2 endpoints
+- Class-based views - Rejected: Functional endpoints sufficient for this scope
 
 ---
 
-## 6. Exponential Backoff Configuration
+## 2. Configuration Management
 
-### Decision
-Use **tenacity** library with exponential backoff for retries.
+### Decision: pydantic-settings with .env file
 
-### Rationale
-- Already clarified: exponential backoff (1s, 2s, 4s, 8s...)
-- Standard pattern for API rate limiting
-- Tenacity integrates well with async
+**Rationale**: pydantic-settings provides type-safe configuration with automatic .env loading and validation.
 
-### Configuration
+**Implementation Pattern**:
 ```python
-from tenacity import retry, stop_after_attempt, wait_exponential
+# src/config.py
+from pydantic_settings import BaseSettings
 
-@retry(
-    stop=stop_after_attempt(5),
-    wait=wait_exponential(multiplier=1, min=1, max=32)
+class Settings(BaseSettings):
+    QDRANT_URL: str = "http://qdrant-db:6333"
+    QDRANT_COLLECTION: str = "resumes"
+    ZAI_API_KEY: str
+    ZAI_BASE_URL: str = "https://api.z.ai/v1"
+    EMBEDDING_DIMENSION: int = 1536
+    RETRIEVAL_K: int = 5
+    MAX_RETRIES: int = 4
+    RETRY_BASE_DELAY: float = 1.0
+
+    class Config:
+        env_file = ".env"
+        env_file_encoding = "utf-8"
+
+settings = Settings()
+```
+
+**Alternatives Considered**:
+- python-dotenv directly - Rejected: No type validation
+- Environment variables only - Rejected: No defaults or validation
+
+---
+
+## 3. Qdrant Client Integration
+
+### Decision: AsyncQdrantClient with lifespan management
+
+**Rationale**: Async client matches FastAPI's async nature. Lifespan pattern ensures proper connection pooling.
+
+**Implementation Pattern**:
+```python
+# src/services/retriever.py
+from qdrant_client import AsyncQdrantClient
+from qdrant_client.models import SearchRequest
+from src.config import settings
+
+class RetrieverService:
+    def __init__(self):
+        self.client: AsyncQdrantClient | None = None
+    
+    async def connect(self):
+        self.client = AsyncQdrantClient(url=settings.QDRANT_URL)
+    
+    async def search(self, query_vector: list[float], k: int = 5) -> list[dict]:
+        """Search for top-k similar vectors (Constitution II: k=5)"""
+        results = await self.client.search(
+            collection_name=settings.QDRANT_COLLECTION,
+            query_vector=query_vector,
+            limit=k
+        )
+        return [{"id": r.id, "score": r.score, "payload": r.payload} for r in results]
+    
+    async def close(self):
+        if self.client:
+            await self.client.close()
+
+# Lifespan management in main.py
+from contextlib import asynccontextmanager
+
+retriever = RetrieverService()
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    await retriever.connect()
+    yield
+    await retriever.close()
+
+app = FastAPI(lifespan=lifespan)
+```
+
+**Key Decisions**:
+- Use `AsyncQdrantClient` for non-blocking I/O
+- Lifespan context manager for connection lifecycle
+- Direct `search()` method (Constitution II mandates k=5)
+
+**Alternatives Considered**:
+- LangChain Qdrant wrapper - Rejected: Adds abstraction layer without benefit
+- Synchronous client - Rejected: Blocks event loop
+
+---
+
+## 4. OpenAI-Compatible Client
+
+### Decision: OpenAI Python SDK with custom base_url
+
+**Rationale**: Official SDK handles streaming, retries, and type safety. Custom base_url enables Z.ai compatibility.
+
+**Implementation Pattern**:
+```python
+# src/services/generator.py
+from openai import AsyncOpenAI
+from src.config import settings
+
+class GeneratorService:
+    def __init__(self):
+        self.client = AsyncOpenAI(
+            api_key=settings.ZAI_API_KEY,
+            base_url=settings.ZAI_BASE_URL  # Constitution risk mitigation
+        )
+    
+    async def generate_answer(self, context: str, question: str) -> str:
+        """Generate grounded answer (Constitution III: Zero Hallucination)"""
+        response = await self.client.chat.completions.create(
+            model="gpt-4o-mini",  # Or Z.ai equivalent
+            messages=[
+                {
+                    "role": "system",
+                    "content": """You are a helpful assistant that answers questions about a job applicant's resume.
+CRITICAL RULES:
+1. ONLY use information from the provided context
+2. If the context doesn't contain relevant information, say "I don't have information about that in the resume"
+3. NEVER fabricate or infer experience not explicitly stated
+4. Keep answers concise and factual"""
+                },
+                {
+                    "role": "user",
+                    "content": f"Context from resume:\n{context}\n\nQuestion: {question}"
+                }
+            ],
+            temperature=0.3  # Lower temperature for factual responses
+        )
+        return response.choices[0].message.content
+
+generator = GeneratorService()
+```
+
+**Key Decisions**:
+- Explicit `base_url` override prevents path doubling (Constitution risk mitigation)
+- Strong anti-hallucination system prompt (Constitution III)
+- Low temperature (0.3) for factual responses
+
+**Alternatives Considered**:
+- httpx direct API calls - Rejected: SDK provides retry logic and type safety
+- LangChain chat models - Rejected: Unnecessary abstraction
+
+---
+
+## 5. Exponential Backoff Retry
+
+### Decision: tenacity library with async support
+
+**Rationale**: tenacity is battle-tested, supports async, and provides clean decorators.
+
+**Implementation Pattern**:
+```python
+# src/utils/retry.py
+from tenacity import (
+    retry,
+    stop_after_attempt,
+    wait_exponential,
+    retry_if_exception_type
 )
-async def call_with_retry(func, *args):
-    return await func(*args)
+from openai import RateLimitError, APIConnectionError
+from qdrant_client.http.exceptions import UnexpectedResponse
+
+# For Qdrant operations
+retry_qdrant = retry(
+    stop=stop_after_attempt(4),  # 4 attempts
+    wait=wait_exponential(multiplier=1, min=1, max=8),  # 1s, 2s, 4s, 8s
+    retry=retry_if_exception_type((APIConnectionError, UnexpectedResponse)),
+    reraise=True
+)
+
+# For LLM operations
+retry_llm = retry(
+    stop=stop_after_attempt(4),
+    wait=wait_exponential(multiplier=1, min=1, max=8),
+    retry=retry_if_exception_type((RateLimitError, APIConnectionError)),
+    reraise=True
+)
 ```
+
+**Usage**:
+```python
+@retry_qdrant
+async def search_with_retry(query_vector: list[float]) -> list[dict]:
+    return await retriever.search(query_vector)
+
+@retry_llm
+async def generate_with_retry(context: str, question: str) -> str:
+    return await generator.generate_answer(context, question)
+```
+
+**Alternatives Considered**:
+- Manual implementation - Rejected: More code, less tested
+- backoff library - Rejected: tenacity has better async support
+- No retry - Rejected: Network failures are inevitable
 
 ---
 
-## 7. API Endpoints Structure
+## 6. Embedding Query Generation
 
-### Decision
-Two endpoints: `/fill-form` (POST) and `/health` (GET).
+### Decision: Use same embedding model as ingestion (text-embedding-3-small)
 
-### Rationale
-- Already clarified in spec clarifications
-- Simple, focused API surface
-- Health endpoint for Docker health checks
+**Rationale**: Query embedding must match document embedding dimension (Constitution I: 1536-dim).
 
-### Endpoints
-| Endpoint | Method | Purpose |
-|----------|--------|---------|
-| `/fill-form` | POST | Generate answer from form label |
-| `/health` | GET | Health check with DB connectivity |
+**Implementation Pattern**:
+```python
+# src/services/embedder.py
+from openai import AsyncOpenAI
+from src.config import settings
+
+class EmbedderService:
+    def __init__(self):
+        self.client = AsyncOpenAI(
+            api_key=settings.ZAI_API_KEY,
+            base_url=settings.ZAI_BASE_URL
+        )
+    
+    async def embed(self, text: str) -> list[float]:
+        """Generate 1536-dim embedding (Constitution I)"""
+        response = await self.client.embeddings.create(
+            model="text-embedding-3-small",
+            input=text,
+            dimensions=1536
+        )
+        return response.data[0].embedding
+
+embedder = EmbedderService()
+```
+
+**Key Decisions**:
+- Explicit `dimensions=1536` ensures compatibility (Constitution I)
+- Same client configuration as generator for consistency
 
 ---
 
-## 8. Project Dependencies
+## 7. Testing Strategy
 
-### Core Dependencies
-```
-fastapi>=0.100.0
-uvicorn[standard]>=0.23.0
-langchain>=0.1.0
-langchain-openai>=0.0.5
-langchain-qdrant>=0.1.0
-qdrant-client>=1.7.0
-pydantic>=2.0.0
-pydantic-settings>=2.0.0
-python-dotenv>=1.0.0
-tenacity>=8.2.0
+### Decision: pytest + pytest-asyncio + httpx AsyncClient
+
+**Rationale**: Standard async testing stack for FastAPI.
+
+**Test Structure**:
+```python
+# tests/conftest.py
+import pytest
+from httpx import AsyncClient
+from src.main import app
+
+@pytest.fixture
+async def client():
+    async with AsyncClient(app=app, base_url="http://test") as ac:
+        yield ac
+
+# tests/integration/test_api.py
+@pytest.mark.asyncio
+async def test_fill_form_endpoint(client):
+    response = await client.post("/fill-form", json={"label": "Years of Python experience"})
+    assert response.status_code == 200
+    data = response.json()
+    assert "answer" in data
+    assert "has_data" in data
+    assert "confidence" in data
+    assert "context_chunks" in data
+
+# tests/unit/test_retriever.py
+@pytest.mark.asyncio
+async def test_retriever_returns_k_results(mock_qdrant):
+    results = await retriever.search(query_vector=[...], k=5)
+    assert len(results) == 5
 ```
 
-### Development Dependencies
-```
-pytest>=7.0.0
-pytest-asyncio>=0.21.0
-httpx>=0.24.0
-```
+**Alternatives Considered**:
+- TestClient (sync) - Rejected: Doesn't test async paths properly
+- unittest - Rejected: pytest fixtures more flexible
 
 ---
 
-## 9. Codebase State Assessment
+## 8. Logging Strategy
 
-### Current State
-- **Greenfield project** - no Python implementation exists
-- Existing `docker-compose.yml` defines infrastructure
-- Environment variable contract defined in 001-docker-infra
+### Decision: Python logging module with structured format
 
-### Files to Create
-| File | Purpose |
-|------|---------|
-| `backend/requirements.txt` | Python dependencies |
-| `backend/src/main.py` | FastAPI app entry |
-| `backend/src/config.py` | Settings/configuration |
-| `backend/src/api/routes.py` | API endpoints |
-| `backend/src/api/schemas.py` | Pydantic models |
-| `backend/src/services/rag.py` | RAG pipeline |
-| `backend/src/services/vector_store.py` | Qdrant connection |
-| `backend/src/prompts/system.py` | System prompts |
-| `backend/tests/` | Test suite |
+**Rationale**: Built-in, no dependencies, structured logs for debugging.
+
+**Implementation Pattern**:
+```python
+# src/main.py
+import logging
+import sys
+
+logging.basicConfig(
+    level=logging.INFO,
+    format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
+    handlers=[logging.StreamHandler(sys.stdout)]
+)
+
+logger = logging.getLogger(__name__)
+
+# In route handler
+@app.post("/fill-form")
+async def fill_form(request: AnswerRequest):
+    logger.info(f"Received query: {request.label}")
+    # ...
+    logger.info(f"Retrieved {len(context)} chunks")
+    logger.info(f"Generated answer with confidence: {confidence}")
+```
+
+**FR-010 Compliance**: All requests and errors logged for debugging.
 
 ---
 
-## 10. Constitution Compliance Summary
+## Summary of Key Decisions
 
-| Principle | Implementation |
-|-----------|----------------|
-| I. Data Integrity | OpenAIEmbeddings with 1536 dimensions |
-| II. Retrieval Law | `as_retriever(search_kwargs={"k": 5})` |
-| III. Zero Hallucination | Strict system prompt with grounding rules |
-| IV. CORS Policy | `moz-extension://` whitelisted via regex |
-| V. DOM Injection | N/A (backend layer) |
-
----
-
-## References
-
-- [FastAPI CORS Documentation](https://fastapi.tiangolo.com/tutorial/cors/)
-- [LangChain Qdrant Integration](https://qdrant.tech/documentation/frameworks/langchain/)
-- [LangChain OpenAI Integration](https://python.langchain.com/docs/integrations/llms/openai/)
-- [Tenacity Retry Library](https://tenacity.readthedocs.io/)
-- [Firefox Extension IDs](https://extensionworkshop.com/documentation/develop/extensions-and-the-add-on-id/)
+| Area | Decision | Constitution Alignment |
+|------|----------|----------------------|
+| API Framework | FastAPI with async | ✅ |
+| Config | pydantic-settings + .env | ✅ |
+| Vector DB | AsyncQdrantClient | ✅ Constitution II (k=5) |
+| LLM Client | OpenAI SDK with base_url | ✅ Constitution III (anti-hallucination) |
+| Retry | tenacity exponential backoff | ✅ Spec requirement |
+| Embeddings | text-embedding-3-small (1536-dim) | ✅ Constitution I |
+| CORS | moz-extension://* + localhost | ✅ Constitution IV |
+| Testing | pytest + pytest-asyncio | ✅ |

@@ -1,230 +1,240 @@
 # Tasks: RAG Backend API
 
 **Input**: Design documents from `/specs/002-rag-backend/`
-**Prerequisites**: plan.md, spec.md, research.md, data-model.md, contracts/api-contract.md
+**Prerequisites**: plan.md ✓, spec.md ✓, research.md ✓, data-model.md ✓, contracts/openapi.yaml ✓
 
-**Tests**: Not explicitly requested - implementation tasks only.
+**Tests**: Not explicitly requested in spec. Test tasks included as optional in Polish phase.
 
-**Organization**: Tasks are grouped by user story to enable independent implementation and testing of each story.
+**Organization**: Tasks grouped by user story for independent implementation and testing.
 
 ## Format: `[ID] [P?] [Story] Description`
 
 - **[P]**: Can run in parallel (different files, no dependencies)
-- **[Story]**: Which user story this task belongs to (e.g., US1, US2, US3)
+- **[Story]**: Which user story this task belongs to (US1, US2, US3)
 - Include exact file paths in descriptions
 
-## Path Conventions
+---
 
-- **Backend module**: `backend/src/` at repository root
-- **API layer**: `backend/src/api/`
-- **Services layer**: `backend/src/services/`
-- **Prompts**: `backend/src/prompts/`
-- **Tests**: `backend/tests/`
+## Phase 1: Setup (Project Initialization)
+
+**Purpose**: Create project structure and install dependencies
+
+- [ ] T001 Create project directory structure per plan.md (src/, tests/, src/api/, src/services/, src/utils/, tests/unit/, tests/integration/)
+- [ ] T002 Initialize Python project with requirements.txt containing: fastapi, uvicorn, qdrant-client, openai, httpx, pydantic-settings, tenacity, pytest, pytest-asyncio
+- [ ] T003 [P] Create .env.example file with all environment variables from data-model.md Settings entity
+- [ ] T004 [P] Create .gitignore file for Python project
+
+**Checkpoint**: Project skeleton ready for development
 
 ---
 
-## Phase 1: Setup (Project Structure)
+## Phase 2: Foundational (Blocking Prerequisites)
 
-**Purpose**: Create backend project structure and initialize dependencies
-
-- [ ] T001 Create `backend/` directory structure with `src/` and `tests/` subdirectories
-- [ ] T002 Create `backend/requirements.txt` with core dependencies (fastapi, uvicorn, langchain, langchain-openai, langchain-qdrant, qdrant-client, pydantic, pydantic-settings, python-dotenv, tenacity)
-- [ ] T003 [P] Create `backend/src/__init__.py` (empty init file)
-- [ ] T004 [P] Create `backend/src/api/__init__.py` (empty init file)
-- [ ] T005 [P] Create `backend/src/services/__init__.py` (empty init file)
-- [ ] T006 [P] Create `backend/src/prompts/__init__.py` (empty init file)
-- [ ] T007 [P] Create `backend/tests/__init__.py` (empty init file)
-- [ ] T008 Create `backend/Dockerfile` for api-backend service
-
----
-
-## Phase 2: Foundational (Configuration & Core Infrastructure)
-
-**Purpose**: Core configuration and shared infrastructure that MUST be complete before user stories
+**Purpose**: Core infrastructure that MUST be complete before ANY user story implementation
 
 **⚠️ CRITICAL**: No user story work can begin until this phase is complete
 
-- [ ] T009 Create `backend/src/config.py` with Settings class (pydantic-settings) loading from environment variables
-- [ ] T010 [P] Create `backend/src/api/schemas.py` with FillFormRequest Pydantic model
-- [ ] T011 [P] Add FillFormResponse, SourceDocument models to `backend/src/api/schemas.py`
-- [ ] T012 [P] Add HealthResponse model to `backend/src/api/schemas.py`
-- [ ] T013 [P] Add ErrorResponse model to `backend/src/api/schemas.py`
-- [ ] T014 Create `backend/src/prompts/system.py` with RAG_SYSTEM_PROMPT for zero-hallucination
+- [ ] T005 Create src/__init__.py with package initialization
+- [ ] T006 [P] Create src/config.py with Settings class using pydantic-settings per research.md section 2
+- [ ] T007 [P] Create src/api/__init__.py with package initialization
+- [ ] T008 [P] Create src/api/schemas.py with AnswerRequest, AnswerResponse, HealthResponse, ErrorResponse Pydantic models per data-model.md
+- [ ] T009 [P] Create src/services/__init__.py with package initialization
+- [ ] T010 [P] Create src/utils/__init__.py with package initialization
+- [ ] T011 Create src/main.py with basic FastAPI app instance and logging configuration per research.md section 1
+- [ ] T012 [P] Create tests/__init__.py with package initialization
+- [ ] T013 [P] Create tests/conftest.py with pytest fixtures and AsyncClient setup per research.md section 7
+- [ ] T014 Implement /health endpoint in src/api/routes.py returning HealthResponse per contracts/openapi.yaml
+- [ ] T015 Register router in src/main.py and include /health endpoint
 
-**Checkpoint**: Foundation ready - user story implementation can now begin
+**Checkpoint**: Foundation ready - user story implementation can begin
 
 ---
 
-## Phase 3: User Story 3 - Connect to Vector Database (Priority: P1) 🎯
+## Phase 3: User Story 3 - Connect to Vector Database (Priority: P1)
 
-**Goal**: Establish a reliable connection to the vector database so that resume embeddings can be retrieved for answer generation.
+**Goal**: Establish reliable connection to Qdrant vector database for resume embedding retrieval
 
 **Independent Test**: Start the backend and verify it can ping the vector database health endpoint and retrieve sample embeddings.
 
-**Why First**: The RAG pipeline (US1) cannot function without vector database connectivity.
+**Why this order**: US1 (answer generation) depends on vector DB connectivity, so US3 must complete first.
 
 ### Implementation for User Story 3
 
-- [ ] T015 [US3] Create `backend/src/services/vector_store.py` with VectorStoreConnection dataclass
-- [ ] T016 [US3] Implement QdrantClient initialization with retry logic using tenacity in `backend/src/services/vector_store.py`
-- [ ] T017 [US3] Implement connection health check method in `backend/src/services/vector_store.py`
-- [ ] T018 [US3] Implement get_retriever() method with k=5 search_kwargs per Constitution II in `backend/src/services/vector_store.py`
-- [ ] T019 [US3] Add get_vector_count() utility method for health monitoring in `backend/src/services/vector_store.py`
+- [ ] T016 [US3] Create src/services/retriever.py with RetrieverService class using AsyncQdrantClient per research.md section 3
+- [ ] T017 [US3] Implement async connect() and close() methods in RetrieverService
+- [ ] T018 [US3] Implement search() method with k=5 parameter in RetrieverService (Constitution II compliance)
+- [ ] T019 [US3] Add lifespan context manager in src/main.py for RetrieverService and EmbedderService connection lifecycle
+- [ ] T020 [US3] Add connection retry logic with exponential backoff using tenacity in src/services/retriever.py
 
-**Checkpoint**: At this point, User Story 3 should be fully functional - backend can connect to Qdrant with retry logic
+**Checkpoint**: Vector database connection functional - can retrieve embeddings
 
 ---
 
-## Phase 4: User Story 2 - Cross-Origin Access for Extension (Priority: P1)
+## Phase 4: User Story 1 - Generate Contextual Answers (Priority: P1) 🎯 MVP
 
-**Goal**: Enable the browser extension to communicate with the backend API without CORS errors.
+**Goal**: Generate accurate answers based on resume data for form field labels
+
+**Independent Test**: Send a POST request with a form label (e.g., "Years of Python experience") and receive an answer derived from the resume vector store.
+
+### Implementation for User Story 1
+
+- [ ] T021 [US1] Create src/services/embedder.py with EmbedderService class and embed() method using AsyncOpenAI with dimensions=1536 (Constitution I compliance) per research.md section 6
+- [ ] T022 [P] [US1] Create src/services/generator.py with GeneratorService class and generate_answer() method with anti-hallucination system prompt (Constitution III compliance) per research.md section 4
+- [ ] T023 [P] [US1] Create src/utils/retry.py with retry_qdrant and retry_llm decorators using tenacity per research.md section 5
+- [ ] T024 [US1] Apply retry decorators to retriever and generator service methods
+- [ ] T025 [US1] Implement /fill-form POST endpoint in src/api/routes.py with full RAG pipeline
+- [ ] T026 [US1] Add confidence level calculation in /fill-form: high (avg score >= 0.8), medium (>= 0.5), low (< 0.5), none (0 chunks)
+- [ ] T027 [US1] Add context assembly logic to format retrieved chunks into prompt string for generator
+- [ ] T028 [US1] Add error handling for edge cases: no context found, API errors, rate limiting
+- [ ] T028a [US1] Add request payload size validation (10KB limit) in src/api/routes.py returning 413 error per spec edge case
+- [ ] T029 [US1] Add request/response logging in /fill-form endpoint (FR-010 compliance)
+
+
+**Checkpoint**: Core RAG pipeline functional - can generate contextual answers
+
+---
+
+## Phase 5: User Story 2 - Cross-Origin Access for Extension (Priority: P1)
+
+**Goal**: Enable Firefox extension communication without CORS errors
 
 **Independent Test**: From a Firefox extension context, make a fetch request to the API health endpoint and receive a successful response.
 
 ### Implementation for User Story 2
 
-- [ ] T020 [US2] Create `backend/src/main.py` with FastAPI app instance
-- [ ] T021 [US2] Add CORSMiddleware with `moz-extension://` regex pattern in `backend/src/main.py`
-- [ ] T022 [US2] Configure CORS to allow localhost origins in `backend/src/main.py`
-- [ ] T023 [US2] Set CORS allow_credentials=True and appropriate headers in `backend/src/main.py`
+- [ ] T031 [US2] Add CORSMiddleware to FastAPI app in src/main.py with allow_origins for moz-extension://* and localhost per research.md section 1
+- [ ] T032 [US2] Configure CORS allow_credentials=True, allow_methods=["*"], allow_headers=["*"]
+- [ ] T033 [US2] Verify preflight OPTIONS request handling works correctly
 
-**Checkpoint**: At this point, User Story 2 should be fully functional - extension can make CORS requests
-
----
-
-## Phase 5: User Story 1 - Generate Contextual Answers (Priority: P1)
-
-**Goal**: Generate accurate answers based on resume data so that form fields can be filled with relevant, truthful information.
-
-**Independent Test**: Send a POST request with a form label (e.g., "Years of Python experience") to `/fill-form` and receive an answer derived from the resume vector store.
-
-### Implementation for User Story 1
-
-- [ ] T024 [US1] Create `backend/src/services/rag.py` with RAGPipeline dataclass
-- [ ] T025 [US1] Implement ChatOpenAI client with custom base_url for Z.ai API in `backend/src/services/rag.py`
-- [ ] T026 [US1] Implement create_rag_chain() method with RetrievalQA pattern in `backend/src/services/rag.py`
-- [ ] T027 [US1] Implement generate_answer() async method with context retrieval and LLM generation in `backend/src/services/rag.py`
-- [ ] T028 [US1] Add exponential backoff retry logic for LLM calls in `backend/src/services/rag.py`
-- [ ] T029 [US1] Create `backend/src/api/routes.py` with APIRouter instance
-- [ ] T030 [US1] Implement POST `/fill-form` endpoint with FillFormRequest/Response in `backend/src/api/routes.py`
-- [ ] T031 [US1] Implement GET `/health` endpoint with HealthResponse in `backend/src/api/routes.py`
-- [ ] T032 [US1] Add error handling for validation, service unavailable, and timeout in `backend/src/api/routes.py`
-- [ ] T033 [US1] Register API router and include routes in `backend/src/main.py`
-- [ ] T034 [US1] Add request logging middleware in `backend/src/main.py`
-- [ ] T035 [US1] Configure Uvicorn server startup in `backend/src/main.py`
-
-**Checkpoint**: At this point, User Story 1 should be fully functional - full RAG pipeline operational
+**Checkpoint**: Extension can communicate with backend without CORS errors
 
 ---
 
-## Phase 6: Polish & Integration
+## Phase 6: Polish & Cross-Cutting Concerns
 
-**Purpose**: Final integration, validation, and documentation updates
+**Purpose**: Testing, validation, and final improvements
 
-- [ ] T036 [P] Update `backend/requirements.txt` with development dependencies (pytest, pytest-asyncio, httpx)
-- [ ] T037 Verify all endpoints work with `docker-compose up api-backend`
-- [ ] T038 [P] Update quickstart.md with validated API usage examples
-- [ ] T039 Run end-to-end test: POST to `/fill-form` and verify response structure
-- [ ] T040 Verify CORS headers are returned for moz-extension:// origins
+### Optional Tests (if requested)
 
-- [ ] T041 Run load test with 10 concurrent requests to `/fill-form` and verify P95 latency < 5 seconds (per SC-001)
+- [ ] T034 [P] Create tests/unit/test_retriever.py with mocked AsyncQdrantClient
+- [ ] T035 [P] Create tests/unit/test_generator.py with mocked AsyncOpenAI
+- [ ] T036 [P] Create tests/integration/test_api.py for /fill-form endpoint
+- [ ] T037 [P] Create tests/integration/test_health.py for /health endpoint
+
+### Final Validation
+
+- [ ] T038 Validate all quickstart.md scenarios work correctly
+- [ ] T039 Add comprehensive error response handling per contracts/openapi.yaml (400, 413, 500, 503)
+- [ ] T040 Verify all Constitution principles are implemented (I-V)
+
 ---
 
 ## Dependencies & Execution Order
 
 ### Phase Dependencies
 
-- **Setup (Phase 1)**: No dependencies - can start immediately
-- **Foundational (Phase 2)**: Depends on Setup completion - BLOCKS all user stories
-- **User Stories (Phase 3-5)**: All depend on Foundational phase completion
-  - US3 (Vector DB) should complete first - US1 depends on it
-  - US2 (CORS) is independent - can run in parallel with US3
-  - US1 (RAG) depends on US3 completion
-- **Polish (Phase 6)**: Depends on all user stories being complete
+- **Setup (Phase 1)**: No dependencies - start immediately
+- **Foundational (Phase 2)**: Depends on Setup - BLOCKS all user stories
+- **US3 (Phase 3)**: Depends on Foundational - Vector DB connection
+- **US1 (Phase 4)**: Depends on US3 - Needs DB for answer generation
+- **US2 (Phase 5)**: Depends on Foundational only - CORS is independent
+- **Polish (Phase 6)**: Depends on all user stories
 
 ### User Story Dependencies
 
-- **User Story 3 (P1)**: Can start after Foundational (Phase 2) - No dependencies
-- **User Story 2 (P1)**: Can start after Foundational (Phase 2) - No dependencies (parallel with US3)
-- **User Story 1 (P1)**: Depends on US3 (VectorStoreConnection) being complete
+```
+Foundational ──┬──▶ US3 (Vector DB) ──▶ US1 (Answers)
+               │
+               └──▶ US2 (CORS) [parallel with US3]
+```
 
-### Within Each User Story
-
-- Service layer before API layer
-- Core implementation before error handling
-- Integration after all components ready
+- **US3 (Vector DB)**: Foundational only - no story dependencies
+- **US1 (Answers)**: Depends on US3 - needs vector DB
+- **US2 (CORS)**: Foundational only - independent, can parallel with US3
 
 ### Parallel Opportunities
 
-- T003-T007 can all run in parallel (empty init files)
-- T010-T013 can all run in parallel (different Pydantic models)
-- US2 and US3 can run in parallel after Foundational phase
-- T036 and T038 can run in parallel (different files)
+**Within Setup (Phase 1)**:
+- T003, T004 can run in parallel (different files)
+
+**Within Foundational (Phase 2)**:
+- T006, T007, T008, T009, T010, T012, T013 can all run in parallel (different files)
+
+**Within US1 (Phase 4)**:
+- T022, T023 can run in parallel (different files: generator.py, retry.py)
+
+**Within Polish (Phase 6)**:
+- T034, T035, T036, T037 can run in parallel (different test files)
+
+**Across User Stories**:
+- US2 (CORS) can run in parallel with US3 (Vector DB) after Foundational completes
 
 ---
 
 ## Parallel Example: Foundational Phase
 
 ```bash
-# These tasks can be done together (different files):
-Task: "Create backend/src/config.py with Settings class"
-Task: "Create backend/src/api/schemas.py with FillFormRequest model"
-Task: "Add FillFormResponse models to backend/src/api/schemas.py"
-Task: "Create backend/src/prompts/system.py with RAG_SYSTEM_PROMPT"
+# Launch all independent foundational tasks together:
+Task: "Create src/config.py with Settings class"
+Task: "Create src/api/schemas.py with Pydantic models"
+Task: "Create tests/conftest.py with pytest fixtures"
+
+# Then sequentially:
+Task: "Create src/main.py with FastAPI app"
+Task: "Implement /health endpoint"
+```
+
+## Parallel Example: User Story 1
+
+```bash
+# Launch all independent service files together:
+Task: "Create src/services/embedder.py with EmbedderService"
+Task: "Create src/services/generator.py with GeneratorService"
+Task: "Create src/utils/retry.py with retry decorators"
+
+# Then sequentially:
+Task: "Implement /fill-form endpoint with full pipeline"
+Task: "Add error handling and logging"
 ```
 
 ---
 
 ## Implementation Strategy
 
-### MVP First (User Story 3 Only)
+### MVP First (Recommended)
 
 1. Complete Phase 1: Setup
-2. Complete Phase 2: Foundational (CRITICAL - blocks all stories)
-3. Complete Phase 3: User Story 3 (Vector DB connection)
-4. **STOP and VALIDATE**: Test Qdrant connection with health check
-5. Backend can connect to vector store - foundational capability ready
+2. Complete Phase 2: Foundational (CRITICAL)
+3. Complete Phase 3: US3 (Vector DB Connection)
+4. Complete Phase 4: US1 (Answer Generation) ← **MVP READY**
+5. **STOP and VALIDATE**: Test answer generation end-to-end
+6. Complete Phase 5: US2 (CORS) if extension integration needed
+7. Complete Phase 6: Polish as needed
 
-### Core Functionality (US3 + US1)
+### Incremental Delivery
 
-1. Complete Setup + Foundational → Configuration ready
-2. Add User Story 3 → Vector DB connected
-3. Add User Story 1 → Full RAG pipeline operational
-4. Test `/fill-form` endpoint end-to-end
-5. Core value delivered: form-filling answers
+1. **Foundation** (Phase 1-2): Basic API with /health endpoint
+2. **MVP** (Phase 3-4): Full RAG pipeline generating answers
+3. **Extension-Ready** (Phase 5): CORS enabled for Firefox extension
+4. **Production-Ready** (Phase 6): Tests, validation, error handling
 
-### Full Feature (All Stories)
+### Suggested MVP Scope
 
-1. Complete US3 + US1 → RAG pipeline ready
-2. Add User Story 2 → CORS configured
-3. Extension can communicate with backend
-4. All P1 stories complete
-
-### Single Developer Strategy
-
-Recommended order for one developer:
-
-1. T001-T008: Setup (15 min)
-2. T009-T014: Foundational (30 min)
-3. T015-T019: User Story 3 - Vector DB (30 min)
-4. T020-T023: User Story 2 - CORS (15 min)
-5. T024-T035: User Story 1 - RAG Pipeline (60 min)
-6. T036-T040: Polish (20 min)
-
-**Total estimated time**: ~170 minutes (~3 hours)
+**Minimum Viable Product = Phase 1 + Phase 2 + Phase 3 + Phase 4**
+- Project structure and dependencies
+- Configuration management
+- Health endpoint
+- Vector database connection
+- Full RAG answer generation pipeline
 
 ---
 
 ## Notes
 
-- [P] tasks = different files, no dependencies
-- [Story] label maps task to specific user story for traceability
-- Each user story should be independently completable and testable
-- US3 (Vector DB) is foundational for US1 (RAG) - must complete first
-- US2 (CORS) is independent and can parallelize with US3
-- Stop at any checkpoint to validate story independently
-- Constitution compliance built into tasks:
-  - k=5 retrieval (Constitution II) in T018
-  - 1536 dimensions via OpenAIEmbeddings (Constitution I) in T025
-  - Zero-hallucination prompt (Constitution III) in T014
-  - moz-extension:// CORS (Constitution IV) in T021
+- All [P] tasks work on different files with no dependencies
+- [Story] labels map tasks to specific user stories for traceability
+- US3 must complete before US1 (dependency)
+- US2 is independent and can be done in parallel with US3
+- Tests are optional - only implement if requested
+- Commit after each task or logical group
+- Verify Constitution compliance (I-V) at each checkpoint

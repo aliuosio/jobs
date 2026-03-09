@@ -11,8 +11,16 @@
 
 - Q: Which Qdrant client library should be used for vector store operations? → A: `qdrant-client` (use official Qdrant Python client library)
 - Q: How should rate limiting be handled? → A: `exponential backoff` (retry with increasing delays 1s, 2s, 4s, 8s...)
-- Q: What endpoints should be exposed? → A: `/fill-form` + `/health` + `/health` (two endpoints: fill-form and health)
+- Q: What endpoints should be exposed? → A: `/fill-form` + `/health` (two endpoints: fill-form and health)
 - Q: How should configuration be managed? → A: `.env` + `.env.example` (use .env with .env.example as template)
+
+### Session 2026-03-09
+
+- Q: How should API authentication be handled? → A: None (rely on Docker bridge network isolation)
+- Q: What is the Answer Response JSON schema? → A: `{answer: string, has_data: bool, confidence: string, context_chunks: int}`
+- Q: What is the Qdrant collection name for resume embeddings? → A: `resumes`
+- Q: What is the Answer Request JSON schema? → A: `{label: string}`
+- Q: What is the Health Response JSON schema? → A: `{status: "healthy"}`
 
 ## User Scenarios & Testing *(mandatory)*
 
@@ -86,12 +94,24 @@ As the backend service, I need to establish a reliable connection to the vector 
 - **FR-009**: System MUST handle connection failures to the vector database with retry logic.
 - **FR-010**: System MUST log all requests and errors for debugging purposes.
 
+### Non-Functional Requirements
+
+#### Security
+- **NFR-SEC-001**: System MUST rely on Docker bridge network (`rag-network`) for access control; no API authentication required for internal service communication.
+
 ### Key Entities
 
-- **Answer Request**: Contains the form field label and optional context hints.
-- **Answer Response**: Contains the generated answer text and metadata about retrieval.
-- **Vector Store Connection**: Configuration for connecting to the Qdrant instance.
+- **Answer Request**: JSON object with schema:
+  - `label` (string): The form field label text to generate an answer for
+- **Answer Response**: JSON object with schema:
+  - `answer` (string): Generated answer text
+  - `has_data` (bool): Whether relevant context was found
+  - `confidence` (string): Confidence level ("high", "medium", "low", "none")
+  - `context_chunks` (int): Number of context chunks retrieved
+- **Vector Store Connection**: Configuration for connecting to the Qdrant instance, targeting the `resumes` collection.
 - **Inference Client**: OpenAI-compatible client configured with custom base URL.
+- **Health Response**: JSON object with schema:
+  - `status` (string): Always `"healthy"` when service is running
 
 ## Success Criteria *(mandatory)*
 
@@ -109,3 +129,4 @@ As the backend service, I need to establish a reliable connection to the vector 
 - The inference API credentials are configured via environment variables.
 - The Docker network provides internal DNS resolution for service discovery.
 - Request payloads are under 10KB in size.
+- API is only accessible within the Docker bridge network; no external exposure required.

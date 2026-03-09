@@ -1,0 +1,215 @@
+openapi: 3.1.0
+info:
+  title: RAG Backend API
+  description: |
+    FastAPI backend implementing a RAG pipeline for job form filling.
+    
+    ## Features
+    - Accepts form field labels and generates contextual answers
+    - Retrieves relevant context from Qdrant vector store (k=5)
+    - Generates grounded answers using Z.ai API
+    - CORS-enabled for Firefox extension communication
+    
+    ## Constitution Compliance
+    - **I. Data Integrity**: 1536-dimensional embeddings
+    - **II. Retrieval Law**: k=5 for vector search
+    - **III. Zero Hallucination**: Anti-hallucination prompts
+    - **IV. CORS Policy**: moz-extension://* whitelisted
+  version: 1.0.0
+  contact:
+    name: RAG Backend Team
+
+servers:
+  - url: http://localhost:8000
+    description: Local development server
+
+tags:
+  - name: form-filling
+    description: Answer generation endpoints
+  - name: health
+    description: Service health checks
+
+paths:
+  /fill-form:
+    post:
+      summary: Generate answer for form field
+      description: |
+        Accepts a form field label and returns a generated answer based on 
+        resume data stored in the vector database.
+        
+        **Process**:
+        1. Converts label to 1536-dim embedding
+        2. Retrieves top 5 relevant context chunks
+        3. Generates grounded answer via LLM
+        4. Returns answer with confidence metadata
+        
+      operationId: fillForm
+      tags:
+        - form-filling
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AnswerRequest'
+            examples:
+              experience:
+                summary: Experience query
+                value:
+                  label: "Years of Python experience"
+              skills:
+                summary: Skills query
+                value:
+                  label: "List your technical skills"
+              education:
+                summary: Education query
+                value:
+                  label: "Highest level of education"
+      responses:
+        '200':
+          description: Successful answer generation
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AnswerResponse'
+              examples:
+                success:
+                  summary: Successful response with data
+                  value:
+                    answer: "5 years of professional Python experience"
+                    has_data: true
+                    confidence: "high"
+                    context_chunks: 3
+                no_data:
+                  summary: No relevant data found
+                  value:
+                    answer: "I don't have information about that in the resume."
+                    has_data: false
+                    confidence: "none"
+                    context_chunks: 0
+        '400':
+          description: Invalid request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              example:
+                detail: "Label field is required and cannot be empty"
+        '413':
+          description: Payload too large
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              example:
+                detail: "Request payload exceeds 10KB limit"
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              example:
+                detail: "Failed to connect to vector database"
+        '503':
+          description: Service unavailable (external API error)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              example:
+                detail: "Inference API temporarily unavailable"
+
+  /health:
+    get:
+      summary: Health check
+      description: |
+        Returns the health status of the API service.
+        
+        Used by:
+        - Docker health checks
+        - Load balancers
+        - Monitoring systems
+      operationId: healthCheck
+      tags:
+        - health
+      responses:
+        '200':
+          description: Service is healthy
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HealthResponse'
+              example:
+                status: "healthy"
+
+components:
+  schemas:
+    AnswerRequest:
+      type: object
+      required:
+        - label
+      properties:
+        label:
+          type: string
+          description: The form field label text to generate an answer for
+          minLength: 1
+          maxLength: 1000
+          examples:
+            - "Years of Python experience"
+            - "What is your highest degree?"
+            - "Describe your leadership experience"
+
+    AnswerResponse:
+      type: object
+      required:
+        - answer
+        - has_data
+        - confidence
+        - context_chunks
+      properties:
+        answer:
+          type: string
+          description: Generated answer text grounded in resume context
+          examples:
+            - "5 years of professional Python experience, including 3 years with Django framework."
+        has_data:
+          type: boolean
+          description: Whether relevant context was found in the vector store
+        confidence:
+          type: string
+          description: Confidence level of the generated answer
+          enum:
+            - high
+            - medium
+            - low
+            - none
+        context_chunks:
+          type: integer
+          description: Number of context chunks retrieved (0-5)
+          minimum: 0
+          maximum: 5
+
+    HealthResponse:
+      type: object
+      required:
+        - status
+      properties:
+        status:
+          type: string
+          description: Health status of the service
+          enum:
+            - healthy
+
+    ErrorResponse:
+      type: object
+      required:
+        - detail
+      properties:
+        detail:
+          type: string
+          description: Error message
+
+  securitySchemes: {}
+  
+security: []

@@ -1,41 +1,54 @@
 # Implementation Plan: RAG Backend API
 
-**Branch**: `002-rag-backend` | **Date**: 2026-03-08 | **Spec**: [spec.md](./spec.md)
+**Branch**: `002-rag-backend` | **Date**: 2026-03-09 | **Spec**: [spec.md](./spec.md)
 **Input**: Feature specification from `/specs/002-rag-backend/spec.md`
 
 ## Summary
 
-FastAPI backend with LangChain RAG pipeline for generating form-filling answers from resume embeddings stored in Qdrant. Includes CORS configuration for Firefox extension communication and Z.ai API integration.
+FastAPI backend implementing a RAG (Retrieval-Augmented Generation) pipeline that:
+- Accepts form field labels via `/fill-form` endpoint
+- Retrieves relevant context from Qdrant vector store (`resumes` collection, k=5)
+- Generates grounded answers using Z.ai API (OpenAI-compatible)
+- Returns JSON responses with answer, confidence, and metadata
+- Supports CORS for Firefox extension communication
 
 ## Technical Context
 
-**Language/Version**: Python 3.11+, FastAPI 0.100+
-**Primary Dependencies**: LangChain, qdrant-client, OpenAI SDK, FastAPI, Uvicorn
-**Storage**: Qdrant vector database (via Docker internal DNS)
-**Testing**: pytest for unit tests, pytest-asyncio for async tests
+**Language/Version**: Python 3.11+
+**Primary Dependencies**: FastAPI, qdrant-client, httpx (async HTTP client), openai (OpenAI-compatible client)
+**Storage**: Qdrant vector database (via Docker internal DNS: `qdrant-db:6333`)
+**Testing**: pytest + pytest-asyncio + httpx (async test client)
 **Target Platform**: Linux server (Docker container)
-**Project Type**: Web service (REST API)
-**Performance Goals**: Response time < 5 seconds, 10 concurrent requests
-**Constraints**: 1536-dimensional embeddings, k=5 retrieval, zero hallucination
-**Scale/Scope**: Single user form-filling session, 10 concurrent requests max
+**Project Type**: web-service (REST API)
+**Performance Goals**: P95 latency < 5 seconds, 10 concurrent requests
+**Constraints**: Docker bridge network isolation, 1536-dim embeddings, no API authentication
+**Scale/Scope**: Single-user local development, single resume collection
 
 ## Constitution Check
 
 *GATE: Must pass before Phase 0 research. Re-check after Phase 1 design.*
 
-| Principle | Status | Evidence |
-|-----------|--------|----------|
-| I. Data Integrity | ✅ Pass | FR-007 specifies 1536-dimensional embeddings |
-| II. Retrieval Law | ✅ Pass | FR-002 specifies k=5 retrieval |
-| III. Zero Hallucination | ✅ Pass | FR-004 specifies anti-hallucination system prompt |
-| IV. CORS Policy | ✅ Pass | FR-005 specifies moz-extension:// whitelist |
-| V. DOM Injection | ✅ N/A | Backend layer - no DOM interaction |
+| Principle | Status | Compliance Plan |
+|-----------|--------|-----------------|
+| **I. Data Integrity** (1536-dim embeddings) | ✅ PASS | Spec mandates FR-007: 1536-dimensional embeddings. Qdrant collection configured for this dimension. |
+| **II. Retrieval Law** (k=5) | ✅ PASS | Spec mandates FR-002: query with k=5. Implementation will use `search_kwargs={"k": 5}`. |
+| **III. Zero Hallucination** | ✅ PASS | Spec mandates FR-004: system prompt forbids fabrication. Prompt engineering required. |
+| **IV. CORS Policy** | ✅ PASS | Spec mandates FR-005: whitelist `moz-extension://*` and `localhost`. FastAPI CORSMiddleware configured. |
+| **V. DOM Injection** | ⚪ N/A | This principle applies to browser extension, not backend API. |
 
-**Infrastructure Mapping Compliance**:
-- ✅ Vector Store: `qdrant-db` via internal DNS (FR-006)
-- ✅ API Backend: `localhost:8000` (already defined in 001-docker-infra)
-- ✅ Storage Volume: `./qdrant_storage`
-- ✅ No direct Extension-to-Qdrant path enforced by architecture
+**Gate Status**: ✅ ALL GATES PASSED
+
+### Post-Design Re-evaluation (Phase 1 Complete)
+
+| Principle | Design Artifact | Verification |
+|-----------|-----------------|---------------|
+| **I. Data Integrity** | data-model.md: `EMBEDDING_DIMENSION: 1536` in Settings entity | ✅ Verified in config entity |
+| **II. Retrieval Law** | data-model.md: `RETRIEVAL_K: 5`, contracts/openapi.yaml: `context_chunks` max 5 | ✅ Verified in data model and API contract |
+| **III. Zero Hallucination** | research.md: Anti-hallucination system prompt in GeneratorService | ✅ Verified in research decisions |
+| **IV. CORS Policy** | quickstart.md: CORS middleware documentation, research.md: `allow_origins` | ✅ Verified in implementation pattern |
+| **V. DOM Injection** | N/A - Backend service only | ⚪ Not applicable |
+
+**Post-Design Gate Status**: ✅ ALL GATES PASSED
 
 ## Project Structure
 
@@ -43,89 +56,48 @@ FastAPI backend with LangChain RAG pipeline for generating form-filling answers 
 
 ```text
 specs/002-rag-backend/
-├── spec.md              # Feature specification
 ├── plan.md              # This file
 ├── research.md          # Phase 0 output
 ├── data-model.md        # Phase 1 output
 ├── quickstart.md        # Phase 1 output
-├── contracts/           # Phase 1 output
-└── tasks.md             # Phase 2 output
+├── contracts/           # Phase 1 output (API contracts)
+└── tasks.md             # Phase 2 output (/speckit.tasks command)
 ```
 
 ### Source Code (repository root)
 
 ```text
-backend/
-├── src/
+src/
+├── __init__.py
+├── main.py              # FastAPI app entry point
+├── config.py            # Settings via pydantic-settings
+├── api/
 │   ├── __init__.py
-│   ├── main.py              # FastAPI app entry point
-│   ├── config.py            # Configuration management
-│   ├── api/
-│   │   ├── __init__.py
-│   │   ├── routes.py        # API endpoints (/fill-form, /health)
-│   │   └── schemas.py       # Pydantic request/response models
-│   ├── services/
-│   │   ├── __init__.py
-│   │   ├── rag.py           # RAG pipeline service
-│   │   └── vector_store.py  # Qdrant connection service
-│   └── prompts/
-│       └── system.py         # System prompts for zero-hallucination
-└── tests/
+│   ├── routes.py        # /fill-form and /health endpoints
+│   └── schemas.py       # Pydantic request/response models
+├── services/
+│   ├── __init__.py
+│   ├── retriever.py     # Qdrant vector store operations
+│   ├── embedder.py     # Query embedding generation
+│   └── generator.py    # LLM inference client
+
+└── utils/
     ├── __init__.py
+    └── retry.py         # Exponential backoff utilities
+
+tests/
+├── __init__.py
+├── conftest.py          # Fixtures and test configuration
+├── unit/
+│   ├── test_retriever.py
+│   └── test_generator.py
+└── integration/
     ├── test_api.py
-    ├── test_rag.py
-    └── test_vector_store.py
+    └── test_health.py
 ```
 
-**Structure Decision**: Backend module structure following FastAPI best practices. Separated concerns: API routes, services, configuration, prompts.
+**Structure Decision**: Single project structure (Option 1). This is a backend-only service with no frontend. The extension is a separate repository.
 
 ## Complexity Tracking
 
-> No violations - all requirements align with constitution principles.
-
-| Aspect | Complexity | Justification |
-|--------|------------|---------------|
-| RAG Pipeline | Medium | Standard LangChain pattern with custom prompts |
-| CORS Config | Low | Standard FastAPI middleware |
-| Vector Store | Low | Single Qdrant instance, no clustering |
-
-## Phase 0: Research Summary
-
-✅ **COMPLETE** - See [research.md](./research.md)
-
-### Resolved Questions
-
-- [x] What LangChain version and components to use? → langchain-openai, langchain-qdrant, qdrant-client
-- [x] How to configure OpenAI-compatible client with custom base URL? → ChatOpenAI with base_url parameter
-- [x] What is the best RAG chain pattern for form-filling use case? → RetrievalQA with custom prompt
-- [x] How to implement exponential backoff for retries? → tenacity library with wait_exponential
-
-## Phase 1: Design Artifacts
-
-✅ **COMPLETE**
-
-### Generated Artifacts
-
-| Artifact | Path | Status |
-|----------|------|--------|
-| Research | [research.md](./research.md) | ✅ Complete |
-| Data Model | [data-model.md](./data-model.md) | ✅ Complete |
-| Contracts | [contracts/api-contract.md](./contracts/api-contract.md) | ✅ Complete |
-| Quickstart | [quickstart.md](./quickstart.md) | ✅ Complete |
-
-## Constitution Check (Post-Design)
-
-*Re-evaluation after Phase 1 design*
-
-| Principle | Status | Evidence |
-|-----------|--------|----------|
-| I. Data Integrity | ✅ Pass | OpenAIEmbeddings with 1536 dimensions |
-| II. Retrieval Law | ✅ Pass | as_retriever(search_kwargs={"k": 5}) |
-| III. Zero Hallucination | ✅ Pass | Strict system prompt with grounding rules |
-| IV. CORS Policy | ✅ Pass | moz-extension:// whitelisted via regex |
-| V. DOM Injection | ✅ N/A | Backend layer only |
-
-**Infrastructure Mapping**: All requirements satisfied.
-
----
-*Plan created: 2026-03-08 | Status: Phase 1 Complete - Ready for /speckit.tasks*
+> No constitution violations requiring justification.

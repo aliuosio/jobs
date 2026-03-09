@@ -77,6 +77,7 @@
 - [ ] T012 [US2] Implement check_external_endpoint() async function in `backend/src/services/validation.py`
 - [ ] T013 [US2] Add httpx GET request to `http://localhost:8000/health` in check_external_endpoint()
 - [ ] T014 [US2] Handle connection_refused, timeout, http_error with error details in check_external_endpoint()
+- [ ] T014b [US2] Verify CORS headers (`moz-extension://*`, `localhost`) are present on `/validate` endpoint in `backend/src/api/routes.py`
 
 **Checkpoint**: At this point, User Stories 1 AND 2 should both work - network connectivity validated
 

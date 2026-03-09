@@ -26,8 +26,8 @@ tests/
 ## Recent Changes
 - 004-config-validation: Added Python 3.11+ (aligned with 002-rag-backend) + FastAPI, httpx (async HTTP client), qdrant-client, langchain-openai (embedding validation)
 - 004-config-validation: Added [if applicable, e.g., PostgreSQL, CoreData, files or N/A]
+- 004-config-validation: Added Python 3.11+ (aligned with 002-rag-backend) + FastAPI, httpx (async HTTP client), qdrant-client, langchain-openai (embedding validation)
 
-- 004-config-validation: Added
 
 <!-- MANUAL ADDITIONS START -->
 <!-- MANUAL ADDITIONS END -->

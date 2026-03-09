@@ -10,13 +10,11 @@
 ### Session 2026-03-08
 
 - Q: How should developers invoke configuration validation? → A: API endpoint (HTTP endpoint exposed on the backend)
-- Q: What happens when a validation check times out? → A: Fail entire validation if any check times out
+- Q: What happens when a validation check times out? → A: Timed-out check reports status, independent checks continue, dependent checks are skipped
 
-- Q: What structure should the the validation response? → A: `JSON` format with individual check results
-- Q: What structure should the the validation response? → A: `JSON` format with individual check results
+
 - Q: What should be the validation endpoint path? → A: `/validate` (simple, RESTful endpoint at root)
-- Q: What format should the validation response be in? → A: JSON with per-check status (structured format with individual check results)
-- Q: What should be the validation endpoint path? → A: `/validate` (simple, RESTful endpoint at root)
+
 ## User Scenarios & Testing *(mandatory)*
 
 ### User Story 1 - Validate Internal Service Communication (Priority: P1)
@@ -102,7 +100,7 @@ As a developer, I need to verify that the embedding model is configured to produ
 - **FR-006**: Validation MUST report clear success/failure status for each check.
 - **FR-007**: Validation MUST provide actionable error messages when checks fail.
 - **FR-008**: Validation MUST be runnable without side effects (read-only checks).
-- **FR-009**: Validation MUST fail entirely if any individual check times out (10 second limit per check).
+- **FR-009**: Validation MUST apply a 10-second timeout per check. When a check times out, the timed-out check reports `status: "timeout"`, independent checks continue, and dependent checks are skipped with reason documented.
 
 ### Key Entities
 
@@ -126,4 +124,4 @@ As a developer, I need to verify that the embedding model is configured to produ
 - Docker networking is functioning correctly for internal DNS resolution.
 - The host machine allows loopback connections to published container ports.
 - API credentials are valid for testing connectivity.
-- At least one document is indexed in the vector store for dimension verification.
+- Embedding API credentials are valid for generating test embeddings (dimension check uses a fresh "test" query, not stored vectors).
