@@ -1,0 +1,161 @@
+# SearXNG settings - Bot Detection Safe
+use_default_settings: true
+
+engines:
+  remove:
+    - ahmia
+    - torch
+
+# Disable bot detection for SearXNG but allow trusted proxies (keep Tor for outbound anonymity)
+botdetection:
+  enabled: false
+  ip_suspicious: false
+  user_agent: false
+  filter_robots: false
+  pass_searxng: true
+  # Allow local Docker network connections without proxy headers
+  trusted_proxies:
+    - "127.0.0.1"
+    - "172.18.0.0/16"
+    - "::1"
+
+general:
+  debug: false
+  instance_name: "SearXNG"
+  contact_url: false
+  enable_metrics: false
+
+search:
+  safe_search: 0
+  autocomplete: 'duckduckgo'
+  default_lang: "de"
+  max_page: 1
+  formats:
+    - html
+    - json
+
+server:
+  secret_key: "e2e2631eafcd49dda1c91bddd086d6e1fad0e16a50ac1e9d7d8bee6a925de5ff"
+  limiter: false
+  image_proxy: true
+  base_url: false
+  method: "GET"
+  public_instance: false
+  default_http_headers:
+    X-Content-Type-Options: nosniff
+    X-Download-Options: noopen
+    X-Robots-Tag: noindex, nofollow
+    Referrer-Policy: no-referrer
+
+redis:
+  url: redis://redis:6379/2
+
+ui:
+  static_use_hash: true
+  default_locale: "de"
+  query_in_title: false
+  infinite_scroll: false
+  center_alignment: false
+  default_theme: simple
+
+engines:
+  # Disable Google
+  - name: google
+    disabled: true
+    proxies:
+      http: http://privoxy:8118
+      https: http://privoxy:8118
+    weight: 0.3
+    timeout: 20.0
+    
+  - name: google images
+    disabled: true
+    
+  - name: google news
+    disabled: true
+    
+  - name: google videos
+    disabled: true
+    
+  - name: google scholar
+    disabled: true
+    
+  # Disable problematic engines
+  - name: wikidata
+    disabled: true
+    
+  - name: yahoo
+    disabled: false
+    
+  # Disable DuckDuckGo due to persistent CAPTCHA issues
+  - name: duckduckgo
+    disabled: true
+    
+  - name: brave
+    disabled: true
+    proxies:
+      http: http://privoxy:8118
+      https: http://privoxy:8118
+    weight: 0.5
+    timeout: 15.0
+    
+  - name: bing
+    disabled: true
+    
+  - name: qwant
+    disabled: true
+    
+  - name: startpage
+    disabled: false
+    weight: 0.7
+    timeout: 10.0
+    
+  - name: wikipedia
+    disabled: true
+    
+  - name: reddit
+    disabled: true
+    
+  - name: github
+    disabled: true
+    
+  - name: stackoverflow
+    disabled: true
+    
+  - name: youtube
+    engine: youtube_noapi
+    disabled: true
+
+outgoing:
+  using_tor_proxy: false
+  extra_proxy_timeout: 15
+  max_request_timeout: 15.0
+  useragent_suffix: ""
+  pool_connections: 100
+  pool_maxsize: 20
+  enable_http2: true
+  retries: 1
+  useragents:
+    - "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36"
+    - "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:133.0) Gecko/20100101 Firefox/133.0"
+    - "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36"
+    - "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/18.2 Safari/605.1.15"
+    - "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36"
+    - "Mozilla/5.0 (X11; Linux x86_64; rv:133.0) Gecko/20100101 Firefox/133.0"
+    - "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"
+    - "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.1 Safari/605.1.15"
+    - "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:109.0) Gecko/20100101 Firefox/121.0"
+  source_ips: []
+
+# Fixed: Removed 'Ahmia blacklist' plugin
+enabled_plugins:
+  - 'Hash plugin'
+  - 'Self Information'
+  - 'Tracker URL remover'
+
+hostname_replace:
+  '(.*\.)?youtube\.com$': 'invidious.fdn.fr'
+  '(.*\.)?youtu\.be$': 'invidious.fdn.fr'
+  '(.*\.)?reddit\.com$': 'libredd.it'
+  '(.*\.)?redd\.it$': 'libredd.it'
+  '(www\.)?twitter\.com$': 'nitter.net'
