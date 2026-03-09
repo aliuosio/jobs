@@ -27,12 +27,11 @@
 
 **Purpose**: Create extension directory structure and manifest configuration
 
-- [ ] T001 Create `extension/` directory structure with `popup/`, `content/`, `background/`, `icons/`, `tests/fixtures/` subdirectories
-- [ ] T002 Create `extension/manifest.json` with Manifest V3 configuration (permissions: activeTab, storage, scripting)
-- [ ] T003 [P] Create `extension/content/content.css` for content script styles (field highlighting, indicators)
-- [ ] T004 [P] Create extension icons: `extension/icons/icon-16.png`, `icon-32.png`, `icon-48.png`, `icon-128.png`
-- [ ] T005 [P] Create `extension/tests/fixtures/sample-form.html` for testing various form structures
-
+- [X] T001 Create `extension/` directory structure with `popup/`, `content/`, `background/`, `icons/`, `tests/fixtures/` subdirectories
+- [X] T002 Create `extension/manifest.json` with Manifest V3 configuration (permissions: activeTab, storage, scripting)
+- [X] T003 [P] Create `extension/content/content.css` for content script styles (field highlighting, indicators)
+- [X] T004 [P] Create extension icons: `extension/icons/icon-16.png`, `icon-32.png`, `icon-48.png`, `icon-128.png`
+- [X] T005 [P] Create `extension/tests/fixtures/sample-form.html` for testing various form structures
 ---
 
 ## Phase 2: Foundational (Background Script & API Client)
