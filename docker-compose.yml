@@ -181,21 +181,3 @@ services:
       start_period: 30s
     networks:
       - jobs
-  ftp:
-    image: stilliard/pure-ftpd:latest
-    container_name: ${NAMESPACE}_ftp
-    pull_policy: always
-    env_file:
-      - .env
-    environment:
-      - PURE_FTP_PASSIVE_IP=0.0.0.0
-      - PURE_FTP_PASSIVE_PORT_RANGE=30000:30009
-      - FTP_USER=${FTP_USER}
-      - FTP_PASS=${FTP_PASS}
-    ports:
-      - "21:21"
-      - "30000-30009:30000-30009"
-    volumes:
-      - ./.docker/ftp/shared:/home/ftpuser
-    networks:
-      - jobs
