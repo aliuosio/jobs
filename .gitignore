@@ -88,3 +88,6 @@ out/
 *.tmp
 *.temp
 .cache/
+
+.shared/*
+!.shared/.gitkeep
