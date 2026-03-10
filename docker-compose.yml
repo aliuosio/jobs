@@ -23,7 +23,7 @@ services:
       - "host.docker.internal:host-gateway"
     volumes:
       - n8n_data:${MAIN_WORKDIR}
-      - /home/krusty/Obsidian/Osio/Prompts/jobs:/home/node/.n8n-files/Prompts/jobs
+      - ${PROMPTS_FOLDER_JOBS}:/home/node/.n8n-files/Prompts/jobs
     ports:
       - 5678:5678
     depends_on:
