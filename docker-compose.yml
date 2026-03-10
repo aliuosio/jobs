@@ -1,13 +1,7 @@
 volumes:
   n8n_data:
   postgres_data:
-  redis_data:
-  mongodb_data:
-  chrome_data:
-  qdrant_storage:
   crawl4ai_data:
-  ollama_data:
-
 
 networks:
   jobs:
@@ -167,9 +161,7 @@ services:
       - jobs
 
   api-backend:
-    build:
-      context: .
-      dockerfile: Dockerfile
+    image: osioaliu/job-api-backend:latest
     pull_policy: always
     container_name: ${NAMESPACE}_api-backend
     env_file:
