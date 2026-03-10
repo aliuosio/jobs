@@ -1,10 +1,8 @@
 #!/bin/bash
 
-# Ensure Docker Buildx is set up
 docker buildx create --use
 docker buildx inspect --bootstrap
 
-# Build and push the PHP service image
 docker buildx build \
   --file Dockerfile \
   --platform "linux/amd64,linux/arm64" -t "osioaliu/job-api-backend:latest" \
