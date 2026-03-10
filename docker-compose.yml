@@ -24,6 +24,7 @@ services:
     volumes:
       - n8n_data:${MAIN_WORKDIR}
       - ${PROMPTS_FOLDER_JOBS}:/home/node/.n8n-files/Prompts/jobs
+      - ./.shared/:/home/node/.n8n-files/.shared
     ports:
       - 5678:5678
     depends_on:
