@@ -13,6 +13,7 @@ Required JSON Schema:
 - tech: array of strings
 - role: "Developer" | "Team Lead" | "Maintainer"
 - is_lead_role: boolean
+- company: string | null
 - language: "en" | "de"
 - start_year: integer | null
 - end_year: integer | null
@@ -41,7 +42,8 @@ Output Example:
 		"domain": "backend",  
 		"tech": ["Node.js", "PostgreSQL", "Docker"],  
 		"role": "Developer",  
-		"is_lead_role": false,  
+		"is_lead_role": false,
+        "company": "Codemonks",
 		"language": "en",  
 		"years_exp": 5 years,  
 	},  
@@ -50,7 +52,8 @@ Output Example:
 		"domain": "e-commerce",  
 		"tech": ["Magento", "PHP", "MySQL"],  
 		"role": "Maintainer",  
-		"is_lead_role": true,  
+		"is_lead_role": true,
+        "company": "IBM"
 		"language": "en",  
 		"years_exp": 4 years
 	}  
