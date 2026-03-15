@@ -34,5 +34,6 @@ Invoke Think to:
 - Matched Skills: [list]
 - Skill Gaps: [list]
 - Recommendation: Apply / Consider / Skip
+- Tools & technologies
 - Reasoning: 2-3 sentences
 ```
