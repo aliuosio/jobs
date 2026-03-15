@@ -2,7 +2,7 @@ import { workflow, node, links } from '@n8n-as-code/transformer';
 
 // <workflow-map>
 // Workflow : 2.Job Offers Research
-// Nodes   : 13  |  Connections: 14
+// Nodes   : 17  |  Connections: 19
 //
 // NODE INDEX
 // ──────────────────────────────────────────────────────────────────
@@ -15,11 +15,15 @@ import { workflow, node, links } from '@n8n-as-code/transformer';
 // Wait                               wait
 // OffersResearch                     postgres                   [creds]
 // SubmitCrawlJob                     httpRequest
-// Wait5Seconds                       wait
 // CheckCrawlStatus                   httpRequest
 // IsCompleted                        if
 // Json                               code
 // CallJobOffersStore                 executeWorkflow
+// Wait30Seconds                      wait
+// InitRetryCount                     set
+// WaitRetry                          wait
+// MaxRetriesExceeded                 if
+// IncrementRetry                     set
 //
 // ROUTING MAP
 // ──────────────────────────────────────────────────────────────────
@@ -31,13 +35,18 @@ import { workflow, node, links } from '@n8n-as-code/transformer';
 //            → CallJobOffersStore
 //         .out(1) → EditFields
 //            → SubmitCrawlJob
-//              → Wait5Seconds
-//                → CheckCrawlStatus
-//                  → IsCompleted
-//                    → Json
-//                      → Wait
-//                        → Loop (↩ loop)
-//                   .out(1) → Loop (↩ loop)
+//              → InitRetryCount
+//                → Wait30Seconds
+//                  → CheckCrawlStatus
+//                    → IsCompleted
+//                      → Json
+//                        → Wait
+//                          → Loop (↩ loop)
+//                     .out(1) → MaxRetriesExceeded
+//                        → IncrementRetry
+//                          → WaitRetry
+//                            → CheckCrawlStatus (↩ loop)
+//                       .out(1) → Loop (↩ loop)
 // </workflow-map>
 
 // =====================================================================
@@ -191,6 +200,14 @@ export class _2JobOffersResearchWorkflow {
     })
     OffersResearch = {
         operation: 'executeQuery',
+        schema: {
+            mode: 'name',
+            value: 'public',
+        },
+        table: {
+            mode: 'name',
+            value: 'job_offers',
+        },
         query: `SELECT 
 	jo.id,
     jo.title,
@@ -264,19 +281,6 @@ IN(
     };
 
     @node({
-        id: 'cd7a9fa3-b35b-4121-9293-15c7f1d74560',
-        webhookId: 'b24b87df-49d0-468d-bf23-4587689f61fe',
-        name: 'Wait 5 Seconds',
-        type: 'n8n-nodes-base.wait',
-        version: 1,
-        position: [448, 192],
-    })
-    Wait5Seconds = {
-        amount: 5,
-        unit: 'seconds',
-    };
-
-    @node({
         id: '1c45380d-9ddd-4af0-8c1a-f583fa58115a',
         name: 'Check Crawl Status',
         type: 'n8n-nodes-base.httpRequest',
@@ -284,7 +288,7 @@ IN(
         position: [672, 192],
     })
     CheckCrawlStatus = {
-        url: '=http://crawl4ai:11235/task/{{$json["task_id"]}}',
+        url: '=http://crawl4ai:11235/crawl/job/{{$json["task_id"]}}',
         options: {},
     };
 
@@ -349,25 +353,129 @@ IN(
         options: {},
     };
 
+    @node({
+        id: 'cd7a9fa3-b35b-4121-9293-15c7f1d74560',
+        webhookId: 'b24b87df-49d0-468d-bf23-4587689f61fe',
+        name: 'Wait 30 Seconds',
+        type: 'n8n-nodes-base.wait',
+        version: 1,
+        position: [448, 192],
+    })
+    Wait30Seconds = {
+        amount: 30,
+        unit: 'seconds',
+    };
+
+    @node({
+        id: 'a1b2c3d4-1234-5678-9abc-def012345678',
+        name: 'Init Retry Count',
+        type: 'n8n-nodes-base.set',
+        version: 3.4,
+        position: [336, 192],
+    })
+    InitRetryCount = {
+        assignments: {
+            assignments: [
+                {
+                    id: 'retry-count-001',
+                    name: 'retry_count',
+                    type: 'number',
+                    value: '={{ 0 }}',
+                },
+                {
+                    id: 'retry-task-id',
+                    name: 'task_id',
+                    type: 'string',
+                    value: '={{ $json.task_id }}',
+                },
+            ],
+        },
+        options: {},
+    };
+
+    @node({
+        id: 'e5f6g7h8-1234-5678-9abc-def012345679',
+        webhookId: 'w8i9j0k1-2345-6789-abcd-ef012345678a',
+        name: 'Wait Retry',
+        type: 'n8n-nodes-base.wait',
+        version: 1,
+        position: [1100, 450],
+    })
+    WaitRetry = {
+        amount: 30,
+        unit: 'seconds',
+    };
+
+    @node({
+        id: 'l2m3n4o5-3456-789a-bcde-f0123456789b',
+        name: 'Max Retries Exceeded?',
+        type: 'n8n-nodes-base.if',
+        version: 1,
+        position: [1000, 400],
+    })
+    MaxRetriesExceeded = {
+        conditions: {
+            number: [
+                {
+                    value1: '={{ $json.retry_count }}',
+                    operation: 'smaller',
+                    value2: 5,
+                },
+            ],
+        },
+    };
+
+    @node({
+        id: 'p6q7r8s9-4567-89ab-cdef-0123456789c',
+        name: 'Increment Retry',
+        type: 'n8n-nodes-base.set',
+        version: 3.4,
+        position: [1100, 550],
+    })
+    IncrementRetry = {
+        assignments: {
+            assignments: [
+                {
+                    id: 'incr-retry-001',
+                    name: 'retry_count',
+                    type: 'number',
+                    value: '={{ $json.retry_count + 1 }}',
+                },
+                {
+                    id: 'keep-task-id',
+                    name: 'task_id',
+                    type: 'string',
+                    value: '={{ $json.task_id }}',
+                },
+            ],
+        },
+        options: {},
+    };
+
     // =====================================================================
     // ROUTAGE ET CONNEXIONS
     // =====================================================================
 
     @links()
     defineRouting() {
+        this.WhenClickingExecuteWorkflow.out(0).to(this.Setappvars.in(0));
+        this.Setappvars.out(0).to(this.OffersResearch.in(0));
+        this.OffersResearch.out(0).to(this.Loop.in(0));
         this.Loop.out(0).to(this.AddProcessToOutput.in(0));
         this.Loop.out(1).to(this.EditFields.in(0));
         this.AddProcessToOutput.out(0).to(this.CallJobOffersStore.in(0));
-        this.WhenClickingExecuteWorkflow.out(0).to(this.Setappvars.in(0));
         this.EditFields.out(0).to(this.SubmitCrawlJob.in(0));
-        this.Setappvars.out(0).to(this.OffersResearch.in(0));
-        this.Wait.out(0).to(this.Loop.in(0));
-        this.OffersResearch.out(0).to(this.Loop.in(0));
-        this.SubmitCrawlJob.out(0).to(this.Wait5Seconds.in(0));
-        this.Wait5Seconds.out(0).to(this.CheckCrawlStatus.in(0));
+        this.SubmitCrawlJob.out(0).to(this.InitRetryCount.in(0));
+        this.InitRetryCount.out(0).to(this.Wait30Seconds.in(0));
+        this.Wait30Seconds.out(0).to(this.CheckCrawlStatus.in(0));
         this.CheckCrawlStatus.out(0).to(this.IsCompleted.in(0));
         this.IsCompleted.out(0).to(this.Json.in(0));
-        this.IsCompleted.out(1).to(this.Loop.in(0));
+        this.IsCompleted.out(1).to(this.MaxRetriesExceeded.in(0));
         this.Json.out(0).to(this.Wait.in(0));
+        this.Wait.out(0).to(this.Loop.in(0));
+        this.MaxRetriesExceeded.out(0).to(this.IncrementRetry.in(0));
+        this.MaxRetriesExceeded.out(1).to(this.Loop.in(0));
+        this.IncrementRetry.out(0).to(this.WaitRetry.in(0));
+        this.WaitRetry.out(0).to(this.CheckCrawlStatus.in(0));
     }
 }
