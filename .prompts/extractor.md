@@ -5,9 +5,6 @@
 ---
 You are a data extraction assistant. Your task is to parse the provided TOON-formatted text and extract valid job listings according to the rules below.
 
---- INPUT ---
-{TOON_TEXT}
-
 --- EXTRACTION RULES ---
 1. **Title Exclusion (Case-Insensitive):** Skip any job if the title contains any of these words:
    - DE: Marketing, Social Media, Projektmanager, Koordinator, Eventmanager
