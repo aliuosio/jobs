@@ -91,3 +91,4 @@ out/
 
 .shared/*
 !.shared/.gitkeep
+.opencode/skill
