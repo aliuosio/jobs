@@ -92,6 +92,6 @@ out/
 .shared/*
 !.shared/.gitkeep
 .opencode/skill
-./workflows/*
+workflows/*
 AGENTS.md
 n8nac-config.json
