@@ -17,8 +17,11 @@ class Settings(BaseSettings):
     ZAI_API_KEY: str  # Required - no default
     ZAI_BASE_URL: str = "https://api.z.ai/v1"
 
-    # Embedding Configuration (Constitution I compliance)
-    EMBEDDING_DIMENSION: int = 1536
+    # Mistral Embedding Configuration
+    MISTRAL_API_KEY: str  # Required for embeddings
+    MISTRAL_BASE_URL: str = "https://api.mistral.ai/v1"
+    MISTRAL_EMBEDDING_MODEL: str = "mistral-embed"
+    EMBEDDING_DIMENSION: int = 1024  # mistral-embed uses 1024 dimensions
 
     # Retrieval Configuration (Constitution II compliance)
     RETRIEVAL_K: int = 5
