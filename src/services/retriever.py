@@ -64,18 +64,28 @@ class RetrieverService:
             f"Searching for top {k} results in collection {settings.QDRANT_COLLECTION}"
         )
 
-        results = await self.client.search(
-            collection_name=settings.QDRANT_COLLECTION,
-            query_vector=query_vector,
-            limit=k,
-        )
+        try:
+            response = await self.client.query_points(
+                collection_name=settings.QDRANT_COLLECTION,
+                query=query_vector,
+                limit=k,
+                with_payload=True,
+            )
 
-        search_results = [
-            {"id": str(r.id), "score": r.score, "payload": r.payload or {}}
-            for r in results
-        ]
-        logger.info(f"Retrieved {len(search_results)} chunks")
-        return search_results
+            search_results = [
+                {"id": str(p.id), "score": p.score, "payload": p.payload or {}}
+                for p in response.points
+            ]
+            logger.info(f"Retrieved {len(search_results)} chunks")
+            return search_results
+        except Exception as e:
+            # Handle missing collection gracefully - return empty results
+            if "doesn't exist" in str(e) or "Not found" in str(e):
+                logger.warning(
+                    f"Collection {settings.QDRANT_COLLECTION} not found, returning empty results"
+                )
+                return []
+            raise
 
     async def health_check(self) -> bool:
         """Check if Qdrant connection is healthy.

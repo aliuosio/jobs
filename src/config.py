@@ -11,7 +11,7 @@ class Settings(BaseSettings):
 
     # Qdrant Configuration
     QDRANT_URL: str = "http://qdrant:6333"
-    QDRANT_COLLECTION: str = "resumes"
+    QDRANT_COLLECTION: str = "resume"
 
     # Z.ai API Configuration
     ZAI_API_KEY: str  # Required - no default
