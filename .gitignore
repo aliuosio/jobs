@@ -92,3 +92,5 @@ out/
 .shared/*
 !.shared/.gitkeep
 .opencode/skill
+workflows/
+n8nac-config.json
