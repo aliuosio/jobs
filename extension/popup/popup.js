@@ -146,7 +146,7 @@ async function handleFillAllClick() {
     // Prepare field data for batch fill
     const fields = detectedFields.map(field => ({
       field_id: field.id,
-      label: field.labelText,
+      label: field.label,
       field_type: field.type,
       signals: field.signals || null
     }));
@@ -214,8 +214,8 @@ function renderFieldsList(fields) {
   
   const html = fields.map(field => `
     <div class="field-item">
-      <span class="field-confidence ${field.labelConfidence}"></span>
-      <span class="field-label" title="${field.labelText}">${field.labelText}</span>
+      <span class="field-confidence ${field.confidence}"></span>
+      <span class="field-label" title="${field.label}">${field.label}</span>
       <span class="field-type">${field.type}</span>
     </div>
   `).join('');
