@@ -123,7 +123,8 @@ async function handleDetectFields() {
       label: field.labelText,
       type: field.type,
       confidence: field.labelConfidence,
-      is_fillable: field.isFillable
+      is_fillable: field.isFillable,
+      signals: field.signals || null
     }));
     
     return {

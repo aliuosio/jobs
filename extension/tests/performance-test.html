@@ -1,0 +1,273 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Signal Extractor Performance Test</title>
+  <style>
+    body { font-family: system-ui, sans-serif; max-width: 1200px; margin: 20px auto; padding: 20px; }
+    h1, h2 { color: #333; }
+    .test-form { background: #f5f5f5; padding: 20px; border-radius: 8px; margin-bottom: 20px; }
+    .form-group { margin-bottom: 12px; }
+    label { display: block; font-weight: 500; margin-bottom: 4px; }
+    input, select { width: 100%; padding: 8px; border: 1px solid #ccc; border-radius: 4px; }
+    pre { background: #1e1e1e; color: #d4d4d4; padding: 16px; border-radius: 8px; overflow-x: auto; }
+    .pass { color: #4caf50; font-weight: bold; }
+    .fail { color: #f44336; font-weight: bold; }
+    button { background: #2196f3; color: white; border: none; padding: 10px 20px; border-radius: 4px; cursor: pointer; font-size: 16px; margin: 5px; }
+    button:hover { background: #1976d2; }
+    #results { margin-top: 20px; }
+    table { border-collapse: collapse; width: 100%; margin-top: 10px; }
+    th, td { border: 1px solid #ddd; padding: 8px; text-align: left; }
+    th { background-color: #f2f2f2; }
+    .metric { font-family: monospace; }
+  </style>
+</head>
+<body>
+  <h1>Signal Extractor Performance Test</h1>
+  <p>This test measures the performance of signal extraction to verify FR-013 (&lt;5ms per field) and SC-002 (&lt;50ms total for 50 fields).</p>
+  
+  <div class="test-form" id="test-form">
+    <h2>Test Form (50 fields)</h2>
+    <div id="fields-container"></div>
+  </div>
+  
+  <button id="run-perf-test">Run Performance Test</button>
+  <button id="run-memory-test">Run Memory Test</button>
+  
+  <div id="results"></div>
+
+  <script src="../content/signal-extractor.js"></script>
+  <script>
+    // Generate 50 test fields
+    const container = document.getElementById('fields-container');
+    const fieldTypes = [
+      { type: 'text', autocomplete: 'name', label: 'Full Name', placeholder: 'John Doe' },
+      { type: 'email', autocomplete: 'email', label: 'Email Address', placeholder: 'john@example.com' },
+      { type: 'tel', autocomplete: 'tel', label: 'Phone Number', placeholder: '+1 555-123-4567' },
+      { type: 'text', autocomplete: 'given-name', label: 'First Name', placeholder: 'John' },
+      { type: 'text', autocomplete: 'family-name', label: 'Last Name', placeholder: 'Doe' },
+      { type: 'url', autocomplete: 'url', label: 'Website', placeholder: 'https://example.com' },
+      { type: 'text', autocomplete: 'organization', label: 'Company', placeholder: 'Acme Inc.' },
+      { type: 'text', autocomplete: 'organization-title', label: 'Job Title', placeholder: 'Software Engineer' },
+      { type: 'text', autocomplete: 'street-address', label: 'Street Address', placeholder: '123 Main St' },
+      { type: 'text', autocomplete: 'address-level2', label: 'City', placeholder: 'San Francisco' },
+    ];
+
+    for (let i = 0; i < 50; i++) {
+      const config = fieldTypes[i % fieldTypes.length];
+      const div = document.createElement('div');
+      div.className = 'form-group';
+      div.innerHTML = `
+        <label for="field-${i}">${config.label} ${i + 1}</label>
+        <input type="${config.type}" id="field-${i}" name="field_${i}" 
+               autocomplete="${config.autocomplete}" 
+               placeholder="${config.placeholder}"
+               aria-label="${config.label}">
+      `;
+      container.appendChild(div);
+    }
+
+    // Performance test
+    document.getElementById('run-perf-test').addEventListener('click', () => {
+      const results = [];
+      const fields = document.querySelectorAll('input');
+      let totalTime = 0;
+      let maxTime = 0;
+      let minTime = Infinity;
+      
+      // Warm-up run (3 iterations)
+      for (let warmup = 0; warmup < 3; warmup++) {
+        fields.forEach(field => {
+          buildFieldSignals(field, { text: field.previousElementSibling?.textContent, confidence: 'high', source: 'for-id' });
+        });
+      }
+      
+      // Measured run (10 iterations)
+      const iterations = 10;
+      for (let iter = 0; iter < iterations; iter++) {
+        fields.forEach((field, index) => {
+          const start = performance.now();
+          const signals = buildFieldSignals(field, { 
+            text: field.previousElementSibling?.textContent, 
+            confidence: 'high', 
+            source: 'for-id' 
+          });
+          const elapsed = performance.now() - start;
+          
+          if (iter === 0) {
+            results.push({
+              index: index,
+              id: field.id,
+              time: elapsed,
+              signalCount: countSignals(signals)
+            });
+          }
+          
+          totalTime += elapsed;
+          maxTime = Math.max(maxTime, elapsed);
+          minTime = Math.min(minTime, elapsed);
+        });
+      }
+      
+      const avgTime = totalTime / (fields.length * iterations);
+      const avgPerField = totalTime / iterations;
+      
+      // Verify requirements
+      const avgPass = avgTime < 5;
+      const maxPass = maxTime < 5;
+      const totalPass = avgPerField < 50;
+      
+      const resultsHtml = `
+        <h2>Performance Test Results</h2>
+        
+        <h3>Summary</h3>
+        <table>
+          <tr>
+            <th>Metric</th>
+            <th>Value</th>
+            <th>Target</th>
+            <th>Status</th>
+          </tr>
+          <tr>
+            <td>Average time per field</td>
+            <td class="metric">${avgTime.toFixed(3)}ms</td>
+            <td>&lt;5ms</td>
+            <td class="${avgPass ? 'pass' : 'fail'}">${avgPass ? 'PASS' : 'FAIL'}</td>
+          </tr>
+          <tr>
+            <td>Max time per field</td>
+            <td class="metric">${maxTime.toFixed(3)}ms</td>
+            <td>&lt;5ms</td>
+            <td class="${maxPass ? 'pass' : 'fail'}">${maxPass ? 'PASS' : 'FAIL'}</td>
+          </tr>
+          <tr>
+            <td>Min time per field</td>
+            <td class="metric">${minTime.toFixed(3)}ms</td>
+            <td>-</td>
+            <td>-</td>
+          </tr>
+          <tr>
+            <td>Total time for 50 fields</td>
+            <td class="metric">${avgPerField.toFixed(3)}ms</td>
+            <td>&lt;50ms</td>
+            <td class="${totalPass ? 'pass' : 'fail'}">${totalPass ? 'PASS' : 'FAIL'}</td>
+          </tr>
+          <tr>
+            <td>Iterations</td>
+            <td class="metric">${iterations}</td>
+            <td>-</td>
+            <td>-</td>
+          </tr>
+          <tr>
+            <td>Fields tested</td>
+            <td class="metric">${fields.length}</td>
+            <td>-</td>
+            <td>-</td>
+          </tr>
+        </table>
+        
+        <h3>Individual Field Results (first 10)</h3>
+        <table>
+          <tr>
+            <th>Field ID</th>
+            <th>Time (ms)</th>
+            <th>Signal Count</th>
+            <th>≥2 Signals</th>
+          </tr>
+          ${results.slice(0, 10).map(r => `
+            <tr>
+              <td>${r.id}</td>
+              <td class="metric">${r.time.toFixed(3)}</td>
+              <td>${r.signalCount}</td>
+              <td class="${r.signalCount >= 2 ? 'pass' : 'fail'}">${r.signalCount >= 2 ? 'Yes' : 'No'}</td>
+            </tr>
+          `).join('')}
+        </table>
+        
+        <h3>Signal Coverage</h3>
+        <p>Fields with ≥2 signals: ${results.filter(r => r.signalCount >= 2).length}/${results.length} 
+           (${((results.filter(r => r.signalCount >= 2).length / results.length) * 100).toFixed(1)}%)</p>
+        <p>Target: ≥95% (SC-003)</p>
+        <p class="${(results.filter(r => r.signalCount >= 2).length / results.length) >= 0.95 ? 'pass' : 'fail'}">
+          ${(results.filter(r => r.signalCount >= 2).length / results.length) >= 0.95 ? 'PASS' : 'FAIL'}
+        </p>
+      `;
+      
+      document.getElementById('results').innerHTML = resultsHtml;
+    });
+
+    // Memory test
+    document.getElementById('run-memory-test').addEventListener('click', () => {
+      if (!performance.memory) {
+        document.getElementById('results').innerHTML = `
+          <h2>Memory Test</h2>
+          <p class="fail">Memory API not available. Run in Chrome with --enable-memory-info flag.</p>
+          <p>Alternative: Use Chrome DevTools → Memory tab → Take heap snapshot before and after scanning.</p>
+        `;
+        return;
+      }
+      
+      const fields = document.querySelectorAll('input');
+      
+      // Force GC (if available)
+      if (window.gc) window.gc();
+      
+      const beforeMem = performance.memory.usedJSHeapSize;
+      
+      // Run 100 iterations to amplify memory impact
+      for (let i = 0; i < 100; i++) {
+        fields.forEach(field => {
+          buildFieldSignals(field, { 
+            text: field.previousElementSibling?.textContent, 
+            confidence: 'high', 
+            source: 'for-id' 
+          });
+        });
+      }
+      
+      const afterMem = performance.memory.usedJSHeapSize;
+      const diff = afterMem - beforeMem;
+      const percentChange = ((afterMem - beforeMem) / beforeMem) * 100;
+      
+      const pass = percentChange <= 5;
+      
+      document.getElementById('results').innerHTML = `
+        <h2>Memory Test Results</h2>
+        <table>
+          <tr>
+            <th>Metric</th>
+            <th>Value</th>
+            <th>Target</th>
+            <th>Status</th>
+          </tr>
+          <tr>
+            <td>Before</td>
+            <td class="metric">${(beforeMem / 1024 / 1024).toFixed(2)} MB</td>
+            <td>-</td>
+            <td>-</td>
+          </tr>
+          <tr>
+            <td>After (100 iterations)</td>
+            <td class="metric">${(afterMem / 1024 / 1024).toFixed(2)} MB</td>
+            <td>-</td>
+            <td>-</td>
+          </tr>
+          <tr>
+            <td>Difference</td>
+            <td class="metric">${(diff / 1024).toFixed(2)} KB</td>
+            <td>-</td>
+            <td>-</td>
+          </tr>
+          <tr>
+            <td>Percent Change</td>
+            <td class="metric">${percentChange.toFixed(2)}%</td>
+            <td>≤5%</td>
+            <td class="${pass ? 'pass' : 'fail'}">${pass ? 'PASS' : 'FAIL'}</td>
+          </tr>
+        </table>
+        <p><em>Note: Memory test run 100 iterations to amplify signal. Actual per-scan impact is ~1/100 of this.</em></p>
+      `;
+    });
+  </script>
+</body>
+</html>

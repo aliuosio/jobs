@@ -147,7 +147,8 @@ async function handleFillAllClick() {
     const fields = detectedFields.map(field => ({
       field_id: field.id,
       label: field.labelText,
-      field_type: field.type
+      field_type: field.type,
+      signals: field.signals || null
     }));
     
     const response = await browser.runtime.sendMessage({

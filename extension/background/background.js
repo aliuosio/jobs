@@ -70,9 +70,10 @@ async function handleFillForm(data) {
         label: data.label,
         context_hints: data.context_hints || null,
         field_type: data.field_type || null,
-        form_url: data.form_url || null
+        form_url: data.form_url || null,
+        signals: data.signals || null
       }),
-      signal: AbortSignal.timeout(10000) // 10 second timeout
+      signal: AbortSignal.timeout(10000)
     });
 
     if (!response.ok) {
