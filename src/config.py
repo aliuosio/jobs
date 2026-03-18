@@ -10,7 +10,7 @@ class Settings(BaseSettings):
     """Application settings loaded from environment variables."""
 
     # Qdrant Configuration
-    QDRANT_URL: str = "http://qdrant-db:6333"
+    QDRANT_URL: str = "http://qdrant:6333"
     QDRANT_COLLECTION: str = "resumes"
 
     # Z.ai API Configuration

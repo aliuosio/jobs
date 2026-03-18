@@ -91,8 +91,10 @@ def aggregate_results(
 
 async def _check_internal_dns_impl() -> CheckResult:
     """Check if backend can reach Qdrant via Docker internal DNS."""
-    hostname = "qdrant-db"
-    port = 6333
+    from src.config import settings
+    
+    hostname = settings.QDRANT_URL.split("//")[1].split(":")[0]
+    port = int(settings.QDRANT_URL.split(":")[2].split("/")[0])
     url = f"http://{hostname}:{port}/"
 
     start_time = time.monotonic()
