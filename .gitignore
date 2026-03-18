@@ -95,3 +95,4 @@ out/
 workflows/*
 AGENTS.md
 n8nac-config.json
+.specify/*
