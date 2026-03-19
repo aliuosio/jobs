@@ -163,7 +163,7 @@ async function handleFillField(data) {
   try {
     const result = fillField(field.element, value, {
       hasData: has_data,
-      maxlength: field.element.maxLength || null
+      maxlength: field.element.maxLength > -1 ? field.element.maxLength : null
     });
     
     if (result.success) {

@@ -33,7 +33,8 @@ function fillField(element, value, options = {}) {
     let truncatedLength = value.length;
 
     // Handle maxlength truncation (FR-021)
-    if (maxlength && value.length > maxlength) {
+    // Only truncate if maxlength is a positive integer (defensive check)
+    if (maxlength > 0 && value.length > maxlength) {
       actualValue = value.substring(0, maxlength);
       wasTruncated = true;
       truncatedLength = maxlength;
