@@ -440,8 +440,9 @@ function scanForm(formOrContainer = document) {
  */
 function createFormField(pair) {
   const fillable = isElementFillable(pair.inputElement);
+  const cleanedLabel = typeof cleanLabelText === 'function' ? cleanLabelText(pair.labelText) : pair.labelText;
   const signals = buildFieldSignals(pair.inputElement, {
-    text: pair.labelText,
+    text: cleanedLabel,
     confidence: pair.confidence,
     source: pair.detectionMethod,
     element: pair.labelElement
@@ -453,7 +454,7 @@ function createFormField(pair) {
     type: pair.inputType,
     name: pair.inputName,
     elementId: pair.inputElement.id || null,
-    labelText: pair.labelText,
+    labelText: cleanedLabel,
     labelConfidence: pair.confidence,
     detectionMethod: pair.detectionMethod,
     isFillable: fillable,

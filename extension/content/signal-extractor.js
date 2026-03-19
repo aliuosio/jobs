@@ -55,6 +55,27 @@ function sanitizeSignalText(text, maxLength = DEFAULT_MAX_LENGTH) {
     : sanitized;
 }
 
+/**
+ * Clean label text for semantic classification
+ * Removes asterisks (required markers) and trailing colons
+ * @param {string|null|undefined} text - The label text to clean
+ * @returns {string|null} Cleaned label text or null if invalid
+ */
+function cleanLabelText(text) {
+  if (!text || typeof text !== 'string') return null;
+  
+  const cleaned = text
+    // Remove asterisks (required markers)
+    .replace(/\*/g, '')
+    // Remove trailing colons
+    .replace(/:\s*$/, '')
+    // Trim and normalize whitespace
+    .trim()
+    .replace(/\s+/g, ' ');
+  
+  return cleaned || null;
+}
+
 // ============================================================================
 // ATTRIBUTE EXTRACTION
 // ============================================================================
@@ -359,6 +380,7 @@ if (typeof module !== 'undefined' && module.exports) {
     
     // Constants
     DEFAULT_MAX_LENGTH,
-    HINT_CLASS_NAMES
+    HINT_CLASS_NAMES,
+    cleanLabelText
   };
 }

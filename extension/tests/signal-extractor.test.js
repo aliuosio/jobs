@@ -11,7 +11,8 @@ const {
   extractPlaceholder,
   buildFieldSignals,
   signalsToPayload,
-  countSignals
+  countSignals,
+  cleanLabelText
 } = require('../content/signal-extractor.js');
 
 let passed = 0;
@@ -229,6 +230,29 @@ test('countSignals: counts non-null signals', () => {
 
 test('countSignals: returns 0 for null signals', () => {
   assert.strictEqual(countSignals(null), 0);
+});
+
+// ========== cleanLabelText tests ==========
+test('cleanLabelText: removes surrounding asterisks', () => {
+  assert.strictEqual(cleanLabelText('*Username*'), 'Username');
+});
+test('cleanLabelText: removes trailing colon', () => {
+  assert.strictEqual(cleanLabelText('Username:'), 'Username');
+});
+test('cleanLabelText: removes asterisk and trims', () => {
+  assert.strictEqual(cleanLabelText('Username *'), 'Username');
+});
+test('cleanLabelText: preserves internal colon', () => {
+  assert.strictEqual(cleanLabelText('User: name'), 'User: name');
+});
+test('cleanLabelText: returns null for empty string', () => {
+  assert.strictEqual(cleanLabelText(''), null);
+});
+test('cleanLabelText: returns null for null input', () => {
+  assert.strictEqual(cleanLabelText(null), null);
+});
+test('cleanLabelText: handles whitespace and asterisks', () => {
+  assert.strictEqual(cleanLabelText('  *  Email  *  '), 'Email');
 });
 
 // ========== Summary ==========
