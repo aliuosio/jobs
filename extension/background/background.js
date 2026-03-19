@@ -89,12 +89,16 @@ async function handleFillForm(data) {
 
     const fillResponse = await response.json();
     
+    // Use clean field_value for forms; fall back to conversational answer if unavailable
+    const value = fillResponse.field_value || fillResponse.answer;
+    
     return {
       success: true,
       field_id: data.field_id,
-      value: fillResponse.answer,
+      value: value,
       has_data: fillResponse.has_data,
-      confidence: fillResponse.confidence
+      confidence: fillResponse.confidence,
+      field_type: fillResponse.field_type || null
     };
   } catch (error) {
     if (error.name === 'TimeoutError' || error.name === 'AbortError') {
