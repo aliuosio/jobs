@@ -47,8 +47,8 @@ class RetrieverService:
         """Search for top-k similar vectors in the collection.
 
         Args:
-            query_vector: 1536-dimensional embedding vector (Constitution I).
-            k: Number of results to retrieve. Defaults to RETRIEVAL_K (Constitution II).
+            query_vector: 1024-dimensional embedding vector.
+            k: Number of results to retrieve. Defaults to RETRIEVAL_K.
 
         Returns:
             List of search results with id, score, and payload.
@@ -86,6 +86,46 @@ class RetrieverService:
                 )
                 return []
             raise
+
+    async def get_profile_chunk(self) -> dict[str, Any] | None:
+        """Fetch the personal profile chunk from the collection.
+
+        Returns:
+            Profile chunk with payload, or None if not found.
+        """
+        if not self.client:
+            raise RuntimeError("RetrieverService not connected. Call connect() first.")
+
+        logger.info(
+            f"Fetching profile chunk from collection {settings.QDRANT_COLLECTION}"
+        )
+
+        try:
+            result = await self.client.scroll(
+                collection_name=settings.QDRANT_COLLECTION,
+                scroll_filter={"must": [{"key": "t", "match": {"value": "p"}}]},
+                limit=1,
+                with_payload=True,
+            )
+
+            points, _ = result
+            if points:
+                point = points[0]
+                logger.info("Found profile chunk")
+                return {
+                    "id": str(point.id),
+                    "score": 1.0,
+                    "payload": point.payload or {},
+                }
+
+            logger.info("No profile chunk found")
+            return None
+        except Exception as e:
+            logger.error(f"Error fetching profile chunk: {e}")
+            return None
+        except Exception as e:
+            logger.error(f"Error fetching profile chunk: {e}")
+            return None
 
     async def health_check(self) -> bool:
         """Check if Qdrant connection is healthy.

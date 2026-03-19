@@ -1,9 +1,7 @@
-"""API route handlers for RAG Backend.
-
-Implements all endpoints defined in contracts/openapi.yaml.
-"""
+"""API route handlers for RAG Backend."""
 
 import logging
+from typing import Any
 
 from fastapi import APIRouter, HTTPException, Request
 
@@ -15,6 +13,11 @@ from src.api.schemas import (
     HealthResponse,
     ValidationReport,
 )
+from src.services.field_classifier import (
+    SemanticFieldType,
+    classify_field_type,
+    extract_field_value_from_payload,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -22,15 +25,6 @@ router = APIRouter()
 
 
 def _calculate_confidence(avg_score: float, chunk_count: int) -> ConfidenceLevel:
-    """Calculate confidence level based on average similarity score.
-
-    Args:
-        avg_score: Average similarity score of retrieved chunks.
-        chunk_count: Number of chunks retrieved.
-
-    Returns:
-        ConfidenceLevel enum value.
-    """
     if chunk_count == 0:
         return ConfidenceLevel.NONE
     if avg_score >= 0.8:
@@ -41,14 +35,6 @@ def _calculate_confidence(avg_score: float, chunk_count: int) -> ConfidenceLevel
 
 
 def _assemble_context(chunks: list[dict]) -> str:
-    """Assemble context string from retrieved chunks.
-
-    Args:
-        chunks: List of retrieved chunks with payload.
-
-    Returns:
-        Formatted context string for LLM prompt.
-    """
     context_parts = []
     for i, chunk in enumerate(chunks, 1):
         payload = chunk.get("payload", {})
@@ -58,13 +44,20 @@ def _assemble_context(chunks: list[dict]) -> str:
     return "\n".join(context_parts)
 
 
+def _extract_direct_field_value(
+    chunks: list[dict], field_type: SemanticFieldType
+) -> str | None:
+    for chunk in chunks:
+        payload = chunk.get("payload", {})
+        if payload.get("profile"):
+            value = extract_field_value_from_payload(payload, field_type)
+            if value:
+                return value
+    return None
+
+
 @router.get("/health", response_model=HealthResponse, tags=["health"])
 async def health_check() -> HealthResponse:
-    """Health check endpoint for monitoring and Docker health checks.
-
-    Returns:
-        HealthResponse: Service health status.
-    """
     return HealthResponse(status="healthy")
 
 
@@ -73,9 +66,6 @@ async def validate_configuration() -> ValidationReport:
     from src.services.validation import run_all_checks
 
     return await run_all_checks()
-
-
-
 
 
 @router.post(
@@ -90,30 +80,10 @@ async def validate_configuration() -> ValidationReport:
     tags=["form-filling"],
 )
 async def fill_form(request: Request, answer_request: AnswerRequest) -> AnswerResponse:
-    """Generate answer for form field based on resume data.
-
-    Implements full RAG pipeline:
-    1. Validate request payload size
-    2. Generate embedding for form label
-    3. Retrieve relevant context from Qdrant
-    4. Generate grounded answer using LLM
-    5. Calculate confidence level
-
-    Args:
-        request: FastAPI request object for payload size validation.
-        answer_request: Form field label to generate answer for.
-
-    Returns:
-        AnswerResponse: Generated answer with confidence metadata.
-
-    Raises:
-        HTTPException: 413 if payload exceeds 10KB, 500/503 for service errors.
-    """
     from src.services.embedder import embedder
     from src.services.generator import generator
     from src.services.retriever import retriever
 
-    # Validate payload size (10KB limit per spec)
     content_length = request.headers.get("content-length")
     if content_length and int(content_length) > 10240:
         logger.warning(f"Request payload too large: {content_length} bytes")
@@ -122,17 +92,14 @@ async def fill_form(request: Request, answer_request: AnswerRequest) -> AnswerRe
         )
 
     label = answer_request.label
-    logger.info(f"Received form fill request: {label}")
+    signals = answer_request.signals
+    logger.info(f"Received form fill request: {label}, signals: {signals}")
 
     try:
-        # Step 1: Generate embedding for the query
         query_vector = await embedder.embed(label)
-
-        # Step 2: Retrieve relevant context from Qdrant
         chunks = await retriever.search(query_vector)
         chunk_count = len(chunks)
 
-        # Handle no context found
         if chunk_count == 0:
             logger.info("No relevant context found")
             return AnswerResponse(
@@ -142,14 +109,29 @@ async def fill_form(request: Request, answer_request: AnswerRequest) -> AnswerRe
                 context_chunks=0,
             )
 
-        # Step 3: Calculate confidence based on average score
         avg_score = sum(c.get("score", 0) for c in chunks) / chunk_count
         confidence = _calculate_confidence(avg_score, chunk_count)
         logger.info(
             f"Retrieved {chunk_count} chunks with avg score {avg_score:.3f}, confidence: {confidence}"
         )
 
-        # Step 4: Assemble context and generate answer
+        field_type = classify_field_type(signals)
+        field_value = None
+        field_type_str = None
+
+        if field_type:
+            field_value = _extract_direct_field_value(chunks, field_type)
+            if not field_value:
+                profile_chunk = await retriever.get_profile_chunk()
+                if profile_chunk:
+                    chunks.insert(0, profile_chunk)
+                    field_value = _extract_direct_field_value(
+                        [profile_chunk], field_type
+                    )
+            if field_value:
+                field_type_str = field_type.value
+                logger.info(f"Direct extraction: {field_type_str}={field_value}")
+
         context = _assemble_context(chunks)
         answer = await generator.generate_answer(context, label)
 
@@ -158,6 +140,8 @@ async def fill_form(request: Request, answer_request: AnswerRequest) -> AnswerRe
             has_data=True,
             confidence=confidence,
             context_chunks=chunk_count,
+            field_value=field_value,
+            field_type=field_type_str,
         )
 
     except ConnectionError as e:
