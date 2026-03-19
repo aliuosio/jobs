@@ -87,12 +87,12 @@ def aggregate_results(
     )
 
 
-
-
 async def _check_internal_dns_impl() -> CheckResult:
     """Check if backend can reach Qdrant via Docker internal DNS."""
-    hostname = "qdrant-db"
-    port = 6333
+    from src.config import settings
+
+    hostname = settings.QDRANT_URL.split("//")[1].split(":")[0]
+    port = int(settings.QDRANT_URL.split(":")[2].split("/")[0])
     url = f"http://{hostname}:{port}/"
 
     start_time = time.monotonic()
@@ -212,18 +212,18 @@ async def _check_external_endpoint_impl() -> CheckResult:
 
 
 async def _check_url_format_impl() -> CheckResult:
-    """Check if inference API base URL has correct format (no path duplication)."""
+    """Check if Mistral API base URL has correct format (no path duplication)."""
     import os
 
     start_time = time.monotonic()
-    base_url = os.environ.get("ZAI_BASE_URL", "")
+    base_url = os.environ.get("MISTRAL_BASE_URL", "")
 
     if not base_url:
         duration_ms = int((time.monotonic() - start_time) * 1000)
         return CheckResult(
             name=CheckName.URL_FORMAT,
             status=CheckStatus.FAILED,
-            message="ZAI_BASE_URL environment variable is not set",
+            message="MISTRAL_BASE_URL environment variable is not set",
             duration_ms=duration_ms,
             details={"base_url": "", "issue": "Environment variable not set"},
         )
@@ -240,11 +240,6 @@ async def _check_url_format_impl() -> CheckResult:
             issue = f"Duplicated path segment: /{parts[i]}/{parts[i + 1]}"
             recommendation = f"Remove the duplicated /{parts[i]} from the URL"
             break
-
-    # Also check for trailing /v1 which may cause issues when client appends /v1
-    if not issue and normalized_url.endswith("/v1"):
-        issue = "Trailing /v1 may cause duplication with /v1 path"
-        recommendation = f"Use {normalized_url[:-3]} instead"
 
     duration_ms = int((time.monotonic() - start_time) * 1000)
 
@@ -265,14 +260,17 @@ async def _check_url_format_impl() -> CheckResult:
     return CheckResult(
         name=CheckName.URL_FORMAT,
         status=CheckStatus.PASSED,
-        message="Base URL format is correct",
+        message="Mistral base URL format is correct",
         duration_ms=duration_ms,
         details={"normalized_url": normalized_url},
     )
 
 
 async def _check_embedding_dimensions_impl(internal_dns_passed: bool) -> CheckResult:
-    """Check if embeddings are 1536-dimensional."""
+    """Check if embeddings are correct dimension using Mistral API."""
+    import os
+    from openai import AsyncOpenAI
+
     start_time = time.monotonic()
 
     if not internal_dns_passed:
@@ -289,12 +287,37 @@ async def _check_embedding_dimensions_impl(internal_dns_passed: bool) -> CheckRe
         )
 
     try:
-        from langchain_openai import OpenAIEmbeddings
+        mistral_api_key = os.environ.get("MISTRAL_API_KEY", "")
+        mistral_base_url = os.environ.get(
+            "MISTRAL_BASE_URL", "https://api.mistral.ai/v1"
+        )
+        expected_dimensions = int(os.environ.get("EMBEDDING_DIMENSION", "1024"))
 
-        embeddings = OpenAIEmbeddings(model="text-embedding-ada-002")
-        vector = await embeddings.aembed_query("test")
+        if not mistral_api_key:
+            duration_ms = int((time.monotonic() - start_time) * 1000)
+            return CheckResult(
+                name=CheckName.EMBEDDING_DIMENSIONS,
+                status=CheckStatus.FAILED,
+                message="MISTRAL_API_KEY environment variable is not set",
+                duration_ms=duration_ms,
+                details={
+                    "error_type": "ConfigurationError",
+                    "error_message": "MISTRAL_API_KEY not configured",
+                },
+            )
+
+        client = AsyncOpenAI(
+            api_key=mistral_api_key,
+            base_url=mistral_base_url,
+        )
+
+        response = await client.embeddings.create(
+            model="mistral-embed",
+            input="test",
+        )
+
+        vector = response.data[0].embedding
         actual_dimensions = len(vector)
-        expected_dimensions = 1536
 
         duration_ms = int((time.monotonic() - start_time) * 1000)
 
@@ -302,11 +325,13 @@ async def _check_embedding_dimensions_impl(internal_dns_passed: bool) -> CheckRe
             return CheckResult(
                 name=CheckName.EMBEDDING_DIMENSIONS,
                 status=CheckStatus.PASSED,
-                message="Embeddings are 1536-dimensional",
+                message=f"Embeddings are {expected_dimensions}-dimensional",
                 duration_ms=duration_ms,
                 details={
                     "expected": expected_dimensions,
                     "actual": actual_dimensions,
+                    "model": "mistral-embed",
+                    "base_url": mistral_base_url,
                 },
             )
         else:
@@ -318,7 +343,7 @@ async def _check_embedding_dimensions_impl(internal_dns_passed: bool) -> CheckRe
                 details={
                     "expected": expected_dimensions,
                     "actual": actual_dimensions,
-                    "model": "text-embedding-ada-002",
+                    "model": "mistral-embed",
                 },
             )
     except Exception as e:

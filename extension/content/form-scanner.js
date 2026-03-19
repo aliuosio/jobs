@@ -440,6 +440,13 @@ function scanForm(formOrContainer = document) {
  */
 function createFormField(pair) {
   const fillable = isElementFillable(pair.inputElement);
+  const cleanedLabel = typeof cleanLabelText === 'function' ? cleanLabelText(pair.labelText) : pair.labelText;
+  const signals = buildFieldSignals(pair.inputElement, {
+    text: cleanedLabel,
+    confidence: pair.confidence,
+    source: pair.detectionMethod,
+    element: pair.labelElement
+  });
   
   return {
     id: generateFieldId(),
@@ -447,14 +454,15 @@ function createFormField(pair) {
     type: pair.inputType,
     name: pair.inputName,
     elementId: pair.inputElement.id || null,
-    labelText: pair.labelText,
+    labelText: cleanedLabel,
     labelConfidence: pair.confidence,
     detectionMethod: pair.detectionMethod,
     isFillable: fillable,
     currentValue: pair.inputElement.value || pair.inputElement.textContent || null,
     filledValue: null,
     selector: generateSelector(pair.inputElement),
-    formId: pair.inputElement.form?.id || null
+    formId: pair.inputElement.form?.id || null,
+    signals: signals
   };
 }
 
@@ -505,6 +513,14 @@ if (typeof module !== 'undefined' && module.exports) {
     detectProximityLabels,
     getNameIdFallback,
     Confidence,
-    PROXIMITY_MAX_DISTANCE
+    PROXIMITY_MAX_DISTANCE,
+    signalExtractor: typeof buildFieldSignals !== 'undefined' ? {
+      buildFieldSignals,
+      signalsToPayload,
+      extractAutocomplete,
+      extractAriaLabel,
+      extractPlaceholder,
+      extractHintText
+    } : null
   };
 }

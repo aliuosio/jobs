@@ -46,7 +46,8 @@ async function fetchToBackend(label, options = {}) {
   const {
     contextHints = null,
     fieldType = null,
-    formUrl = null
+    formUrl = null,
+    signals = null
   } = options;
 
   const url = `${API_CONFIG.endpoint}${API_CONFIG.endpoints.fillForm}`;
@@ -58,6 +59,11 @@ async function fetchToBackend(label, options = {}) {
   if (contextHints) payload.context_hints = contextHints;
   if (fieldType) payload.field_type = fieldType;
   if (formUrl) payload.form_url = formUrl;
+  if (signals) {
+    payload.signals = typeof signalsToPayload !== 'undefined' 
+      ? signalsToPayload(signals) 
+      : signals;
+  }
 
   const controller = new AbortController();
   const timeoutId = setTimeout(() => controller.abort(), API_CONFIG.timeout);

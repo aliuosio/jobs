@@ -123,7 +123,8 @@ async function handleDetectFields() {
       label: field.labelText,
       type: field.type,
       confidence: field.labelConfidence,
-      is_fillable: field.isFillable
+      is_fillable: field.isFillable,
+      signals: field.signals || null
     }));
     
     return {
@@ -162,7 +163,7 @@ async function handleFillField(data) {
   try {
     const result = fillField(field.element, value, {
       hasData: has_data,
-      maxlength: field.element.maxLength || null
+      maxlength: field.element.maxLength > -1 ? field.element.maxLength : null
     });
     
     if (result.success) {

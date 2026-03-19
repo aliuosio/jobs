@@ -26,15 +26,15 @@ CRITICAL RULES:
 class GeneratorService:
     """Service for generating answers using LLM.
 
-    Uses OpenAI-compatible API to generate grounded answers based on
+    Uses Mistral API to generate grounded answers based on
     retrieved context (Constitution III compliance).
     """
 
     def __init__(self):
-        """Initialize generator with OpenAI-compatible client."""
+        """Initialize generator with Mistral API client."""
         self.client = AsyncOpenAI(
-            api_key=settings.ZAI_API_KEY,
-            base_url=settings.ZAI_BASE_URL,
+            api_key=settings.MISTRAL_API_KEY,
+            base_url=settings.MISTRAL_BASE_URL,
         )
 
     async def generate_answer(self, context: str, question: str) -> str:
@@ -53,7 +53,7 @@ class GeneratorService:
         logger.info(f"Generating answer for question: {question}")
 
         response = await self.client.chat.completions.create(
-            model="gpt-4o-mini",
+            model="mistral-small-latest",
             messages=[
                 {"role": "system", "content": SYSTEM_PROMPT},
                 {

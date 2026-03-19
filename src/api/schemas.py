@@ -24,6 +24,10 @@ class AnswerRequest(BaseModel):
     label: Annotated[
         str, Field(min_length=1, max_length=1000, description="Form field label text")
     ]
+    signals: dict | None = Field(
+        default=None,
+        description="Optional signals for semantic field classification (autocomplete, label_text, input_name, html_type)",
+    )
 
 
 class AnswerResponse(BaseModel):
@@ -35,11 +39,17 @@ class AnswerResponse(BaseModel):
     context_chunks: Annotated[
         int, Field(ge=0, le=5, description="Number of context chunks retrieved (0-5)")
     ]
+    field_value: str | None = Field(
+        default=None,
+        description="Direct field value extracted from resume profile (e.g., name, email, phone)",
+    )
+    field_type: str | None = Field(
+        default=None,
+        description="Semantic field type if direct extraction was possible (e.g., 'full_name', 'email', 'phone')",
+    )
 
 
 class HealthResponse(BaseModel):
-    """Service health check response."""
-
     status: str = "healthy"
 
 
@@ -47,7 +57,6 @@ class ErrorResponse(BaseModel):
     """Error response payload."""
 
     detail: str = Field(description="Error message")
-
 
 
 class CheckStatus(str, Enum):
@@ -80,7 +89,9 @@ class CheckResult(BaseModel):
     name: CheckName = Field(description="Check identifier")
     status: CheckStatus = Field(description="Check result status")
     message: str = Field(description="Human-readable result or error details")
-    duration_ms: Annotated[int, Field(ge=0, description="Execution time in milliseconds")]
+    duration_ms: Annotated[
+        int, Field(ge=0, description="Execution time in milliseconds")
+    ]
     details: dict | None = Field(default=None, description="Optional additional data")
 
 
@@ -89,6 +100,9 @@ class ValidationReport(BaseModel):
 
     status: ReportStatus = Field(description="Overall validation status")
     timestamp: str = Field(description="ISO 8601 timestamp of validation run")
-    total_duration_ms: Annotated[int, Field(ge=0, description="Total execution time in milliseconds")]
-    checks: Annotated[list[CheckResult], Field(min_length=1, description="Individual check results")]
-
+    total_duration_ms: Annotated[
+        int, Field(ge=0, description="Total execution time in milliseconds")
+    ]
+    checks: Annotated[
+        list[CheckResult], Field(min_length=1, description="Individual check results")
+    ]

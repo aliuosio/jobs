@@ -70,9 +70,10 @@ async function handleFillForm(data) {
         label: data.label,
         context_hints: data.context_hints || null,
         field_type: data.field_type || null,
-        form_url: data.form_url || null
+        form_url: data.form_url || null,
+        signals: data.signals || null
       }),
-      signal: AbortSignal.timeout(10000) // 10 second timeout
+      signal: AbortSignal.timeout(10000)
     });
 
     if (!response.ok) {
@@ -88,12 +89,16 @@ async function handleFillForm(data) {
 
     const fillResponse = await response.json();
     
+    // Use clean field_value for forms; fall back to conversational answer if unavailable
+    const value = fillResponse.field_value || fillResponse.answer;
+    
     return {
       success: true,
       field_id: data.field_id,
-      value: fillResponse.answer,
+      value: value,
       has_data: fillResponse.has_data,
-      confidence: fillResponse.confidence
+      confidence: fillResponse.confidence,
+      field_type: fillResponse.field_type || null
     };
   } catch (error) {
     if (error.name === 'TimeoutError' || error.name === 'AbortError') {

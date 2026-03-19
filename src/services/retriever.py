@@ -47,8 +47,8 @@ class RetrieverService:
         """Search for top-k similar vectors in the collection.
 
         Args:
-            query_vector: 1536-dimensional embedding vector (Constitution I).
-            k: Number of results to retrieve. Defaults to RETRIEVAL_K (Constitution II).
+            query_vector: 1024-dimensional embedding vector.
+            k: Number of results to retrieve. Defaults to RETRIEVAL_K.
 
         Returns:
             List of search results with id, score, and payload.
@@ -64,18 +64,68 @@ class RetrieverService:
             f"Searching for top {k} results in collection {settings.QDRANT_COLLECTION}"
         )
 
-        results = await self.client.search(
-            collection_name=settings.QDRANT_COLLECTION,
-            query_vector=query_vector,
-            limit=k,
+        try:
+            response = await self.client.query_points(
+                collection_name=settings.QDRANT_COLLECTION,
+                query=query_vector,
+                limit=k,
+                with_payload=True,
+            )
+
+            search_results = [
+                {"id": str(p.id), "score": p.score, "payload": p.payload or {}}
+                for p in response.points
+            ]
+            logger.info(f"Retrieved {len(search_results)} chunks")
+            return search_results
+        except Exception as e:
+            # Handle missing collection gracefully - return empty results
+            if "doesn't exist" in str(e) or "Not found" in str(e):
+                logger.warning(
+                    f"Collection {settings.QDRANT_COLLECTION} not found, returning empty results"
+                )
+                return []
+            raise
+
+    async def get_profile_chunk(self) -> dict[str, Any] | None:
+        """Fetch the personal profile chunk from the collection.
+
+        Returns:
+            Profile chunk with payload, or None if not found.
+        """
+        if not self.client:
+            raise RuntimeError("RetrieverService not connected. Call connect() first.")
+
+        logger.info(
+            f"Fetching profile chunk from collection {settings.QDRANT_COLLECTION}"
         )
 
-        search_results = [
-            {"id": str(r.id), "score": r.score, "payload": r.payload or {}}
-            for r in results
-        ]
-        logger.info(f"Retrieved {len(search_results)} chunks")
-        return search_results
+        try:
+            result = await self.client.scroll(
+                collection_name=settings.QDRANT_COLLECTION,
+                scroll_filter={"must": [{"key": "t", "match": {"value": "p"}}]},
+                limit=1,
+                with_payload=True,
+            )
+
+            points, _ = result
+            if points:
+                point = points[0]
+                logger.info("Found profile chunk")
+                return {
+                    "id": str(point.id),
+                    "score": 1.0,
+                    "payload": point.payload or {},
+                }
+
+            logger.info("No profile chunk found")
+            return None
+        except Exception as e:
+            logger.error(f"Error fetching profile chunk: {e}")
+            return None
+        except Exception as e:
+            logger.error(f"Error fetching profile chunk: {e}")
+            return None
 
     async def health_check(self) -> bool:
         """Check if Qdrant connection is healthy.

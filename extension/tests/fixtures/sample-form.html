@@ -28,33 +28,50 @@
   <h1>Job Application Form</h1>
   <p class="note">Test fixture for Job Forms Helper extension - contains various form field patterns</p>
 
-  <!-- Section 1: Standard for/id labels -->
+  <!-- Section 1: Standard for/id labels with autocomplete (NEW: signal extraction) -->
   <div class="form-section">
-    <h2>Personal Information (for/id pattern)</h2>
+    <h2>Personal Information (for/id + autocomplete signals)</h2>
     
     <div class="form-group">
       <label for="full-name">Full Name</label>
-      <input type="text" id="full-name" name="full_name" placeholder="John Doe">
+      <input type="text" id="full-name" name="full_name" autocomplete="name" placeholder="John Doe">
     </div>
     
     <div class="form-group">
       <label for="email">Email Address</label>
-      <input type="email" id="email" name="email" placeholder="john@example.com">
+      <input type="email" id="email" name="email" autocomplete="email" placeholder="john@example.com">
+      <span id="email-hint" class="hint">We'll only use this for application updates</span>
     </div>
     
     <div class="form-group">
       <label for="phone">Phone Number</label>
-      <input type="tel" id="phone" name="phone" placeholder="+1 (555) 123-4567">
+      <input type="tel" id="phone" name="phone" autocomplete="tel" aria-describedby="phone-help" placeholder="+1 (555) 123-4567">
+      <small id="phone-help" class="help-text">Include country code for international numbers</small>
+    </div>
+    
+    <div class="form-group">
+      <label for="first-name">First Name</label>
+      <input type="text" id="first-name" name="first_name" autocomplete="given-name" placeholder="John">
+    </div>
+    
+    <div class="form-group">
+      <label for="last-name">Last Name</label>
+      <input type="text" id="last-name" name="last_name" autocomplete="family-name" placeholder="Doe">
     </div>
     
     <div class="form-group">
       <label for="website">Personal Website</label>
-      <input type="url" id="website" name="website" placeholder="https://example.com">
+      <input type="url" id="website" name="website" autocomplete="url" placeholder="https://example.com">
     </div>
     
     <div class="form-group">
       <label for="linkedin">LinkedIn Profile</label>
-      <input type="url" id="linkedin" name="linkedin_url" placeholder="https://linkedin.com/in/username">
+      <input type="url" id="linkedin" name="linkedin_url" aria-label="LinkedIn Profile URL" placeholder="https://linkedin.com/in/username">
+    </div>
+    
+    <div class="form-group">
+      <label for="github">GitHub Profile</label>
+      <input type="url" id="github" name="github_url" aria-label="GitHub Profile URL" placeholder="https://github.com/username">
     </div>
   </div>
 

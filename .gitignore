@@ -89,9 +89,11 @@ out/
 *.temp
 .cache/
 
-.shared/*
-!.shared/.gitkeep
 .opencode/skill
 workflows/*
 AGENTS.md
 n8nac-config.json
+.specify
+.shared/
+.opencode/
+.sisyphus
