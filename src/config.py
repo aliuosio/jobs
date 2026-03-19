@@ -13,10 +13,6 @@ class Settings(BaseSettings):
     QDRANT_URL: str = "http://qdrant:6333"
     QDRANT_COLLECTION: str = "resume"
 
-    # Z.ai API Configuration
-    ZAI_API_KEY: str  # Required - no default
-    ZAI_BASE_URL: str = "https://api.z.ai/v1"
-
     # Mistral Embedding Configuration
     MISTRAL_API_KEY: str  # Required for embeddings
     MISTRAL_BASE_URL: str = "https://api.mistral.ai/v1"
