@@ -171,6 +171,8 @@ services:
       - "8000:8000"
     volumes:
       - ./src:/app/src
+      - ./tests:/app/tests
+      - ./scripts:/app/scripts
     depends_on:
       qdrant:
         condition: service_healthy

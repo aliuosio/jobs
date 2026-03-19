@@ -1,21 +1,12 @@
-"""Pytest configuration and fixtures for RAG Backend tests.
-
-Provides async test client and mock fixtures for testing.
-"""
-
 import pytest
+import pytest_asyncio
 from httpx import ASGITransport, AsyncClient
 
 from src.main import app
 
 
-@pytest.fixture
+@pytest_asyncio.fixture
 async def client():
-    """Create async test client for API testing.
-
-    Yields:
-        AsyncClient: Configured test client.
-    """
     async with AsyncClient(
         transport=ASGITransport(app=app), base_url="http://test"
     ) as ac:

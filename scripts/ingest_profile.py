@@ -23,6 +23,13 @@ MISTRAL_EMBEDDING_MODEL = os.getenv("MISTRAL_EMBEDDING_MODEL", "mistral-embed")
 
 
 PROFILE_DATA = {
+    # Flat fields for form QA testing (NEW - required for 001-form-qa-field-testing)
+    "firstname": "Osiozekha",
+    "lastname": "Aliu",
+    "email": "aliu@dev-hh.de",
+    "city": "Hamburg",
+    "postcode": "22399",
+    "street": "Schleusentwiete 1",
     "t": "p",
     "text": "Osiozekha Aliu | Full-Stack & AI Automation\nContact: Hamburg | aliu@dev-hh.de | github.com/aliuosio | 20 yrs Exp.\n\nSenior E-Commerce & Backend Developer with 20 years of professional experience, including 13 years as freelance web developer focused on Magento 1 & 2. Backend specialist with expertise in Linux, Docker, and workflow automation (n8n). Currently working with AI technologies including RAG systems, LLM fine-tuning, and context engineering.",
     "d": "back",
@@ -104,11 +111,19 @@ def ingest_profile():
     )
 
     print(f"Successfully ingested profile data!")
+    # Backward-compatible nested fields
     print(f"  - Name: {PROFILE_DATA['profile']['fn']}")
     print(f"  - Email: {PROFILE_DATA['profile']['em']}")
     print(f"  - Phone: {PROFILE_DATA['profile']['ph']}")
     print(f"  - City: {PROFILE_DATA['profile']['adr']['city']}")
     print(f"  - GitHub: {PROFILE_DATA['profile']['social']['gh']}")
+    # Flat fields for QA testing (NEW - top-level fields)
+    print(f"  - Firstname: {PROFILE_DATA['firstname']}")
+    print(f"  - Lastname: {PROFILE_DATA['lastname']}")
+    print(f"  - Email (flat): {PROFILE_DATA['email']}")
+    print(f"  - City (flat): {PROFILE_DATA['city']}")
+    print(f"  - Postcode: {PROFILE_DATA['postcode']}")
+    print(f"  - Street: {PROFILE_DATA['street']}")
 
     return True
 

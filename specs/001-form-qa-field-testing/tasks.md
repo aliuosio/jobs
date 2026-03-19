@@ -1,0 +1,18 @@
+- [ ] T001 [P] [Setup] Create feature scaffolding and reference plan/spec: specs/001-form-qa-field-testing/spec.md
+- [ ] T002 [P] [Setup] Create data-model.md skeleton for six fields: firstname, lastname, email, city, postcode, street (flat fields)
+- [ ] T003 [P] [Setup] Create quickstart.md skeleton (curl examples) in specs/001-form-qa-field-testing/quickstart.md
+- [ ] T004 [US1] [Foundational] Update src/services/field_classifier.py to map to six flat fields
+- [ ] T005 [US1] [Foundational] Add email validation pattern to data-model.md
+- [ ] T006 [US1] [Foundational] Add postcode validation pattern to data-model.md
+- [ ] T007 [US1] [Foundational] Update src/services/retriever.py to support flat-field payloads and AsyncQdrantClient usage
+- [ ] T008 [US1] [Foundational] Extend scripts/ingest_profile.py to seed six fields (six-flat payload)
+- [ ] T009 [US1] [US1] Implement /fill-form endpoint skeleton in src/api/routes.py
+- [ ] T010 [US1] [US1] Wire label->field_type mapping using field_classifier in /fill-form flow
+- [ ] T011 [US1] [US1] Implement embedding + retrieval flow in /fill-form path
+- [ ] T012 [US1] [US1] Implement extract_field_value_from_payload for six fields
+- [ ] T013 [US1] [US1] Add unit tests for field_classifier six fields (tests/unit/test_field_classifier_six_fields.py)
+- [ ] T014 [US1] [US1] Add integration tests for /fill-form endpoint using seeded data (tests/integration/test_fill_form.py)
+- [ ] T015 [US1] [US1] Add end-to-end tests (tests/e2e/test_end2end_fill_form.py)
+- [ ] T016 [US1] [Polish] Update README with six-field testing guidance
+- [ ] T017 [US1] [Polish] Update specs/001-form-qa-field-testing/plan.md to reflect implemented tests and MVP scope
+- [ ] T018 [US1] [Polish] Add logging/observability tasks for field extraction and retrieval latency
