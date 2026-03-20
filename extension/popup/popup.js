@@ -16,11 +16,7 @@ const elements = {
   tabForms: document.getElementById('tab-forms'),
   tabLinks: document.getElementById('tab-links'),
   
-  // Forms Tab Elements
-  statusValue: document.getElementById('status-value'),
-  fieldCount: document.getElementById('field-count'),
-  apiIndicator: document.getElementById('api-indicator'),
-  apiStatus: document.getElementById('api-status'),
+  // Forms Panel Elements
   scanBtn: document.getElementById('scan-btn'),
   fillAllBtn: document.getElementById('fill-all-btn'),
   fieldsList: document.getElementById('fields-list'),
@@ -30,9 +26,6 @@ const elements = {
   clearBtn: document.getElementById('clear-btn'),
   
   // Links Tab Elements
-  jobCount: document.getElementById('job-count'),
-  linksApiIndicator: document.getElementById('links-api-indicator'),
-  linksApiStatus: document.getElementById('links-api-status'),
   refreshLinksBtn: document.getElementById('refresh-links-btn'),
   jobLinksList: document.getElementById('job-links-list'),
   jobLinksLoading: document.getElementById('job-links-loading'),
@@ -48,14 +41,8 @@ async function init() {
   const [tab] = await browser.tabs.query({ active: true, currentWindow: true });
   currentTabId = tab.id;
   
-  // Check API status
-  await checkApiStatus();
-  
   // Set up event listeners
   setupEventListeners();
-  
-  // Try to get cached field count
-  await updateFieldCount();
   
   // Load job links from background (replacing dummy data)
   await loadJobLinks();
@@ -69,7 +56,7 @@ function setupEventListeners() {
   elements.tabForms.addEventListener('click', () => switchTab('forms'));
   elements.tabLinks.addEventListener('click', () => switchTab('links'));
   
-  // Forms tab buttons
+  // Forms panel buttons
   elements.scanBtn.addEventListener('click', handleScanClick);
   elements.fillAllBtn.addEventListener('click', handleFillAllClick);
   elements.clearBtn.addEventListener('click', handleClearClick);
@@ -80,41 +67,6 @@ function setupEventListeners() {
   // Retry button for loading failures
   if (elements.retryBtn) {
     elements.retryBtn.addEventListener('click', handleRetryClick);
-  }
-}
-
-/**
- * Check API connectivity status
- */
-async function checkApiStatus() {
-  try {
-    const response = await browser.runtime.sendMessage({ type: 'GET_STATUS' });
-    
-    if (response.api_connected) {
-      elements.apiIndicator.className = 'status-indicator status-connected';
-      elements.apiStatus.className = 'status-value status-connected';
-      elements.apiStatus.textContent = 'Connected';
-    } else {
-      elements.apiIndicator.className = 'status-indicator status-error';
-      elements.apiStatus.className = 'status-value status-error';
-      elements.apiStatus.textContent = 'Disconnected';
-    }
-  } catch (error) {
-    elements.apiIndicator.className = 'status-indicator status-error';
-    elements.apiStatus.className = 'status-value status-error';
-    elements.apiStatus.textContent = 'Error';
-  }
-}
-
-/**
- * Update field count from storage
- */
-async function updateFieldCount() {
-  try {
-    const status = await browser.runtime.sendMessage({ type: 'GET_STATUS' });
-    elements.fieldCount.textContent = status.field_count || 0;
-  } catch (error) {
-    elements.fieldCount.textContent = '0';
   }
 }
 
@@ -203,7 +155,6 @@ async function handleScanClick() {
   isScanning = true;
   elements.scanBtn.disabled = true;
   elements.scanBtn.textContent = 'Scanning...';
-  elements.statusValue.textContent = 'Scanning...';
   
   try {
     const response = await browser.runtime.sendMessage({
@@ -213,8 +164,6 @@ async function handleScanClick() {
     
     if (response.success) {
       detectedFields = response.fields || [];
-      elements.fieldCount.textContent = detectedFields.length;
-      elements.statusValue.textContent = `Found ${detectedFields.length} fields`;
       
       // Update fields list
       renderFieldsList(detectedFields);
@@ -222,11 +171,9 @@ async function handleScanClick() {
       // Enable fill button if fields found
       elements.fillAllBtn.disabled = detectedFields.length === 0;
     } else {
-      elements.statusValue.textContent = 'Scan failed';
       showError(response.error?.message || 'Failed to scan page');
     }
   } catch (error) {
-    elements.statusValue.textContent = 'Scan error';
     showError(error.message);
   } finally {
     isScanning = false;
@@ -244,7 +191,6 @@ async function handleFillAllClick() {
   isFilling = true;
   elements.fillAllBtn.disabled = true;
   elements.scanBtn.disabled = true;
-  elements.statusValue.textContent = 'Filling...';
   
   // Show progress section
   elements.progressSection.style.display = 'block';
@@ -271,20 +217,16 @@ async function handleFillAllClick() {
       const { completed, failed, total } = response;
       
       if (failed > 0) {
-        elements.statusValue.textContent = `Filled ${completed}/${total} (${failed} failed)`;
         showError(`${failed} field(s) failed to fill`);
       } else {
-        elements.statusValue.textContent = `All ${completed} fields filled`;
         showSuccess(`Successfully filled ${completed} fields`);
       }
       
       updateProgress(total, total);
     } else {
-      elements.statusValue.textContent = 'Fill failed';
       showError(response.error?.message || 'Failed to fill fields');
     }
   } catch (error) {
-    elements.statusValue.textContent = 'Fill error';
     showError(error.message);
   } finally {
     isFilling = false;
@@ -304,7 +246,6 @@ async function handleFillAllClick() {
 async function handleClearClick() {
   try {
     await browser.tabs.sendMessage(currentTabId, { type: 'CLEAR_INDICATORS' });
-    elements.statusValue.textContent = 'Indicators cleared';
   } catch (error) {
     console.error('Clear error:', error);
   }
