@@ -334,6 +334,33 @@ function getDummyJobLinks() {
 }
 
 /**
+ * Get visited job links from localStorage
+ * @returns {Set<number>}
+ */
+function getVisitedJobLinks() {
+  try {
+    const visited = localStorage.getItem('jfh-visited-links');
+    return visited ? new Set(JSON.parse(visited)) : new Set();
+  } catch {
+    return new Set();
+  }
+}
+
+/**
+ * Mark a job link as visited in localStorage
+ * @param {number} jobId
+ */
+function markJobLinkVisited(jobId) {
+  try {
+    const visited = getVisitedJobLinks();
+    visited.add(jobId);
+    localStorage.setItem('jfh-visited-links', JSON.stringify([...visited]));
+  } catch (err) {
+    console.error('[Popup] Failed to save visited state:', err);
+  }
+}
+
+/**
  * Render job links list in popup
  * @param {Array} links
  */
@@ -343,16 +370,20 @@ function renderJobLinksList(links) {
     return;
   }
   
-  const html = links.map(link => `
-    <div class="job-link-item" data-job-id="${link.id}">
+  const visitedLinks = getVisitedJobLinks();
+  
+  const html = links.map(link => {
+    const isVisited = visitedLinks.has(link.id);
+    return `
+    <div class="job-link-item${isVisited ? ' job-link-visited' : ''}" data-job-id="${link.id}">
       <span class="job-status-indicator ${link.applied ? 'job-status-applied' : 'job-status-new'}${link.pending ? ' job-status-pending' : ''}" 
             data-action="toggle" 
             data-job-id="${link.id}"
             title="${link.pending ? 'Updating...' : (link.applied ? 'Applied - click to mark as not applied' : 'Not applied - click to mark as applied')}"
             role="button" aria-label="${link.pending ? 'Updating...' : (link.applied ? 'Applied' : 'Not applied')}" ></span>
-      <a class="job-link-title" href="${link.url}" target="_blank" rel="noopener noreferrer" title="${link.title}">${link.title}</a>
-    </div>`
-  ).join('');
+      <a class="job-link-title" href="${link.url}" target="_blank" rel="noopener noreferrer" title="${link.title}" data-job-id="${link.id}">${link.title}</a>
+    </div>`;
+  }).join('');
   
   elements.jobLinksList.innerHTML = html;
   
@@ -371,6 +402,16 @@ function renderJobLinksList(links) {
         const jobId = parseInt(icon.dataset.jobId, 10);
         handleStatusClick(jobId);
       }
+    });
+  });
+  
+  // Attach click listeners for job links to track visited state
+  elements.jobLinksList.querySelectorAll('.job-link-title').forEach(link => {
+    link.addEventListener('click', (e) => {
+      const jobId = parseInt(link.dataset.jobId, 10);
+      markJobLinkVisited(jobId);
+      // Add visited class immediately for visual feedback
+      link.closest('.job-link-item').classList.add('job-link-visited');
     });
   });
 }

@@ -239,6 +239,21 @@ body {
   margin-top: 16px;
 }
 
+/* Refresh Section */
+.refresh-section {
+  padding-top: 12px;
+  border-top: 1px solid #e5e7eb;
+  margin-top: 12px;
+  display: flex;
+  justify-content: center;
+}
+
+/* Small Button */
+.btn-small {
+  padding: 6px 12px;
+  font-size: 12px;
+}
+
 /* Error/Success Messages */
 .message {
   padding: 8px 12px;
@@ -314,8 +329,8 @@ body {
   box-shadow: 0 0 0 2px #3b82f6;
 }
 
-.job-link-item:visited .job-link-title {
-  color: #ef4444;
+.job-link-visited .job-link-title {
+  color: #6366f1;
 }
 
 .job-link-item:hover .job-link-title,
