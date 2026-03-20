@@ -12,6 +12,11 @@ let jobLinks = [];
 
 // DOM Elements
 const elements = {
+  // Tab Navigation
+  tabForms: document.getElementById('tab-forms'),
+  tabLinks: document.getElementById('tab-links'),
+  
+  // Forms Tab Elements
   statusValue: document.getElementById('status-value'),
   fieldCount: document.getElementById('field-count'),
   apiIndicator: document.getElementById('api-indicator'),
@@ -23,6 +28,12 @@ const elements = {
   progressFill: document.getElementById('progress-fill'),
   progressText: document.getElementById('progress-text'),
   clearBtn: document.getElementById('clear-btn'),
+  
+  // Links Tab Elements
+  jobCount: document.getElementById('job-count'),
+  linksApiIndicator: document.getElementById('links-api-indicator'),
+  linksApiStatus: document.getElementById('links-api-status'),
+  refreshLinksBtn: document.getElementById('refresh-links-btn'),
   jobLinksList: document.getElementById('job-links-list'),
   jobLinksLoading: document.getElementById('job-links-loading'),
   jobLinksError: document.getElementById('job-links-error'),
@@ -54,9 +65,18 @@ async function init() {
  * Set up button event listeners
  */
 function setupEventListeners() {
+  // Tab navigation
+  elements.tabForms.addEventListener('click', () => switchTab('forms'));
+  elements.tabLinks.addEventListener('click', () => switchTab('links'));
+  
+  // Forms tab buttons
   elements.scanBtn.addEventListener('click', handleScanClick);
   elements.fillAllBtn.addEventListener('click', handleFillAllClick);
   elements.clearBtn.addEventListener('click', handleClearClick);
+  
+  // Links tab buttons
+  elements.refreshLinksBtn.addEventListener('click', handleRefreshLinksClick);
+  
   // Retry button for loading failures
   if (elements.retryBtn) {
     elements.retryBtn.addEventListener('click', handleRetryClick);
@@ -412,6 +432,37 @@ function renderJobLinksList(links) {
       }
     });
   });
+}
+
+/**
+ * Switch between tabs
+ * @param {string} tabName - 'forms' or 'links'
+ */
+function switchTab(tabName) {
+  // Update tab buttons
+  if (tabName === 'forms') {
+    elements.tabForms.classList.add('active');
+    elements.tabLinks.classList.remove('active');
+  } else {
+    elements.tabForms.classList.remove('active');
+    elements.tabLinks.classList.add('active');
+  }
+  
+  // Update tab panels
+  if (tabName === 'forms') {
+    document.getElementById('panel-forms').classList.add('active');
+    document.getElementById('panel-links').classList.remove('active');
+  } else {
+    document.getElementById('panel-forms').classList.remove('active');
+    document.getElementById('panel-links').classList.add('active');
+  }
+}
+
+/**
+ * Handle Refresh Jobs button click
+ */
+async function handleRefreshLinksClick() {
+  await loadJobLinks();
 }
 
 // Initialize on DOM ready

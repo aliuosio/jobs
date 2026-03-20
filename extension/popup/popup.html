@@ -8,63 +8,101 @@
 </head>
 <body>
   <div class="popup-container">
-    <header class="popup-header">
-      <h1 class="popup-title">Job Forms Helper</h1>
-      <div class="status-section">
-        <div class="status-row">
-          <span class="status-label">Status:</span>
-          <span id="status-value" class="status-value">Ready</span>
+    <!-- Tab Navigation -->
+    <div class="tabs-header">
+      <button class="tab-btn active" data-tab="forms" id="tab-forms">
+        Job Forms Helper
+      </button>
+      <button class="tab-btn" data-tab="links" id="tab-links">
+        Job Links
+      </button>
+    </div>
+
+    <!-- Tab Content -->
+    <div class="tab-content">
+      <!-- Job Forms Helper Tab -->
+      <div class="tab-panel active" id="panel-forms">
+        <header class="popup-header">
+          <h1 class="popup-title">Job Forms Helper</h1>
+          <div class="status-section">
+            <div class="status-row">
+              <span class="status-label">Status:</span>
+              <span id="status-value" class="status-value">Ready</span>
+            </div>
+            <div class="status-row">
+              <span class="status-label">Fields:</span>
+              <span id="field-count">0</span>
+            </div>
+            <div class="status-row">
+              <span class="status-label">API:</span>
+              <span id="api-indicator" class="status-indicator status-checking">●</span>
+              <span id="api-status" class="status-value status-checking">Checking...</span>
+            </div>
+          </div>
+        </header>
+        
+        <div class="section">
+          <button id="scan-btn" class="btn btn-primary">Scan Page</button>
+          <button id="fill-all-btn" class="btn btn-primary" disabled>Fill All Fields</button>
         </div>
-        <div class="status-row">
-          <span class="status-label">Fields:</span>
-          <span id="field-count">0</span>
+        
+        <div class="section fields-section">
+          <h3>Detected Fields</h3>
+          <div id="fields-list" class="fields-list">
+            <p class="no-fields">No fields detected. Click "Scan Page" to detect form fields.</p>
+          </div>
         </div>
-        <div class="status-row">
-          <span class="status-label">API:</span>
-          <span id="api-indicator" class="status-indicator status-checking">●</span>
-          <span id="api-status" class="status-value status-checking">Checking...</span>
+        
+        <div class="section progress-section" id="progress-section" style="display: none;">
+          <h3>Progress</h3>
+          <div class="progress-bar">
+            <div id="progress-fill" class="progress-fill" style="width: 0%"></div>
+          </div>
+          <div id="progress-text" class="progress-text">Filling 0/0 fields...</div>
+        </div>
+        
+        <div class="section actions-section">
+          <button id="clear-btn" class="btn btn-secondary">Clear Indicators</button>
         </div>
       </div>
-    </header>
-    
-    <div class="section">
-      <button id="scan-btn" class="btn btn-primary">Scan Page</button>
-      <button id="fill-all-btn" class="btn btn-primary" disabled>Fill All Fields</button>
-    </div>
-    
-    <div class="section fields-section">
-      <h3>Detected Fields</h3>
-      <div id="fields-list" class="fields-list">
-        <p class="no-fields">No fields detected. Click "Scan Page" to detect form fields.</p>
+
+      <!-- Job Links Tab -->
+      <div class="tab-panel" id="panel-links">
+        <header class="popup-header">
+          <h1 class="popup-title">Job Links</h1>
+          <div class="status-section">
+            <div class="status-row">
+              <span class="status-label">Jobs:</span>
+              <span id="job-count">0</span>
+            </div>
+            <div class="status-row">
+              <span class="status-label">API:</span>
+              <span id="links-api-indicator" class="status-indicator status-checking">●</span>
+              <span id="links-api-status" class="status-value status-checking">Checking...</span>
+            </div>
+          </div>
+        </header>
+        
+        <div class="section">
+          <button id="refresh-links-btn" class="btn btn-primary">Refresh Jobs</button>
+        </div>
+        
+        <div class="section job-links-section">
+          <h3>Available Jobs</h3>
+          <div id="job-links-loading" class="job-links-loading" style="display: none;">
+            <div class="job-link-skeleton"></div>
+            <div class="job-link-skeleton"></div>
+            <div class="job-link-skeleton"></div>
+          </div>
+          <div id="job-links-error" class="job-links-error" style="display: none;">
+            <p class="error-message">Failed to load jobs</p>
+            <button id="retry-btn" class="btn btn-secondary">Retry</button>
+          </div>
+          <div id="job-links-list" class="job-links-list">
+            <p class="no-links">No job links available.</p>
+          </div>
+        </div>
       </div>
-    </div>
-    
-<div class="section job-links-section">
-  <h3>Job Links</h3>
-  <div id="job-links-loading" class="job-links-loading" style="display: none;">
-    <div class="job-link-skeleton"></div>
-    <div class="job-link-skeleton"></div>
-    <div class="job-link-skeleton"></div>
-  </div>
-  <div id="job-links-error" class="job-links-error" style="display: none;">
-    <p class="error-message">Failed to load jobs</p>
-    <button id="retry-btn" class="btn btn-secondary">Retry</button>
-  </div>
-  <div id="job-links-list" class="job-links-list">
-    <p class="no-links">No job links available.</p>
-  </div>
-</div>
-    
-    <div class="section progress-section" id="progress-section" style="display: none;">
-      <h3>Progress</h3>
-      <div class="progress-bar">
-        <div id="progress-fill" class="progress-fill" style="width: 0%"></div>
-      </div>
-      <div id="progress-text" class="progress-text">Filling 0/0 fields...</div>
-    </div>
-    
-    <div class="section actions-section">
-      <button id="clear-btn" class="btn btn-secondary">Clear Indicators</button>
     </div>
   </div>
 
