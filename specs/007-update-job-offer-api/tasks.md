@@ -23,8 +23,8 @@ No independent tests at this phase (foundational only).
 
 ### Tasks
 
-- [ ] T001 Add ProcessUpdateRequest schema in src/api/schemas.py
-- [ ] T002 Add update_job_offer_process method in src/services/job_offers.py
+- [x] T001 Add ProcessUpdateRequest schema in src/api/schemas.py
+- [x] T002 Add update_job_offer_process method in src/services/job_offers.py
 
 ---
 
@@ -41,10 +41,10 @@ No independent tests at this phase (foundational only).
 
 ### Tasks
 
-- [ ] T003 [US1] Add PATCH /job-offers/{id}/process endpoint in src/api/routes.py
-- [ ] T004 [US1] Test update existing process record in tests/integration/test_job_offers_update.py
-- [ ] T005 [US1] Test create new process record in tests/integration/test_job_offers_update.py
-- [ ] T006 [US1] Test 404 for non-existent job offer in tests/integration/test_job_offers_update.py
+- [x] T003 [US1] Add PATCH /job-offers/{id}/process endpoint in src/api/routes.py
+- [x] T004 [US1] Test update existing process record in tests/integration/test_job_offers_update.py
+- [x] T005 [US1] Test create new process record in tests/integration/test_job_offers_update.py
+- [x] T006 [US1] Test 404 for non-existent job offer in tests/integration/test_job_offers_update.py
 
 ---
 
@@ -60,8 +60,8 @@ No independent tests at this phase (foundational only).
 
 ### Tasks
 
-- [ ] T007 [US2] Test partial update preserves existing fields in tests/integration/test_job_offers_update.py
-- [ ] T008 [US2] Test empty payload (no-op) in tests/integration/test_job_offers_update.py
+- [x] T007 [US2] Test partial update preserves existing fields in tests/integration/test_job_offers_update.py
+- [x] T008 [US2] Test empty payload (no-op) in tests/integration/test_job_offers_update.py
 
 ---
 
@@ -77,7 +77,7 @@ No independent tests at this phase (foundational only).
 
 ### Tasks
 
-- [ ] T009 [US3] Test response includes complete job offer data in tests/integration/test_job_offers_update.py
+- [x] T009 [US3] Test response includes complete job offer data in tests/integration/test_job_offers_update.py
 
 ---
 
@@ -85,8 +85,8 @@ No independent tests at this phase (foundational only).
 
 ### Tasks
 
-- [ ] T010 Run full test suite to verify all functionality
-- [ ] T011 Validate endpoint against API contract in contracts/patch-job-offer-process.md
+- [x] T010 Run full test suite to verify all functionality
+- [x] T011 Validate endpoint against API contract in contracts/patch-job-offer-process.md
 
 ---
 

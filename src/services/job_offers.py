@@ -96,5 +96,73 @@ class JobOffersService:
         logger.info(f"Retrieved {len(result)} job offers")
         return result
 
+    async def update_job_offer_process(
+        self,
+        job_offer_id: int,
+        research: bool | None = None,
+        research_email: bool | None = None,
+        applied: bool | None = None,
+    ) -> dict[str, Any] | None:
+        """Update or create job offer process record with upsert behavior.
+
+        Args:
+            job_offer_id: The ID of the job offer to update.
+            research: Whether job research has been completed (None = preserve existing).
+            research_email: Whether research email has been sent (None = preserve existing).
+            applied: Whether job application has been submitted (None = preserve existing).
+
+        Returns:
+            Updated job offer dict with process data, or None if job offer not found.
+
+        Raises:
+            RuntimeError: If database pool not initialized.
+            asyncpg.PostgresError: Database query failure.
+        """
+        if not self._pool:
+            raise RuntimeError("Database pool not initialized")
+
+        async with self._pool.acquire() as conn:
+            async with conn.transaction():
+                job_exists = await conn.fetchrow(
+                    "SELECT id FROM job_offers WHERE id = $1",
+                    job_offer_id,
+                )
+                if not job_exists:
+                    return None
+
+                query = """
+                    INSERT INTO job_offers_process (job_offers_id, research, research_email, applied)
+                    VALUES ($1, COALESCE($2, false), COALESCE($3, false), COALESCE($4, false))
+                    ON CONFLICT (job_offers_id) DO UPDATE SET
+                        research = COALESCE($2, job_offers_process.research),
+                        research_email = COALESCE($3, job_offers_process.research_email),
+                        applied = COALESCE($4, job_offers_process.applied)
+                    RETURNING id as process_id, job_offers_id, research, research_email, applied
+                """
+                process_row = await conn.fetchrow(
+                    query,
+                    job_offer_id,
+                    research,
+                    research_email,
+                    applied,
+                )
+
+                job_row = await conn.fetchrow(
+                    "SELECT id, title, url FROM job_offers WHERE id = $1",
+                    job_offer_id,
+                )
+
+                return {
+                    "id": job_row["id"],
+                    "title": job_row["title"],
+                    "url": job_row["url"],
+                    "process": {
+                        "job_offers_id": process_row["job_offers_id"],
+                        "research": process_row["research"],
+                        "research_email": process_row["research_email"],
+                        "applied": process_row["applied"],
+                    },
+                }
+
 
 job_offers_service = JobOffersService()

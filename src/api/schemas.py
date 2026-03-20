@@ -129,3 +129,17 @@ class JobOffersListResponse(BaseModel):
     job_offers: list[JobOfferWithProcess] = Field(
         description="List of job offers with process data"
     )
+
+
+class ProcessUpdateRequest(BaseModel):
+    """Request payload for updating job offer process fields."""
+
+    research: bool | None = Field(
+        default=None, description="Whether job research has been completed"
+    )
+    research_email: bool | None = Field(
+        default=None, description="Whether research email has been sent"
+    )
+    applied: bool | None = Field(
+        default=None, description="Whether job application has been submitted"
+    )
