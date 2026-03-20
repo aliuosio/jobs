@@ -93,6 +93,9 @@ out/
 workflows/*
 AGENTS.md
 n8nac-config.json
-.specify
 .opencode/
-.shared/
+.shared/*
+!.shared/resume.html
+!.shared/resume-de.pdf
+!.shared/resume-eng.pdf
+=0.29.0

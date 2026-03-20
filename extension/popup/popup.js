@@ -8,20 +8,29 @@ let currentTabId = null;
 let detectedFields = [];
 let isScanning = false;
 let isFilling = false;
+let jobLinks = [];
 
 // DOM Elements
 const elements = {
-  statusValue: document.getElementById('status-value'),
-  fieldCount: document.getElementById('field-count'),
-  apiIndicator: document.getElementById('api-indicator'),
-  apiStatus: document.getElementById('api-status'),
+  // Tab Navigation
+  tabForms: document.getElementById('tab-forms'),
+  tabLinks: document.getElementById('tab-links'),
+  
+  // Forms Panel Elements
   scanBtn: document.getElementById('scan-btn'),
   fillAllBtn: document.getElementById('fill-all-btn'),
   fieldsList: document.getElementById('fields-list'),
   progressSection: document.getElementById('progress-section'),
   progressFill: document.getElementById('progress-fill'),
   progressText: document.getElementById('progress-text'),
-  clearBtn: document.getElementById('clear-btn')
+  clearBtn: document.getElementById('clear-btn'),
+  
+  // Links Tab Elements
+  refreshLinksBtn: document.getElementById('refresh-links-btn'),
+  jobLinksList: document.getElementById('job-links-list'),
+  jobLinksLoading: document.getElementById('job-links-loading'),
+  jobLinksError: document.getElementById('job-links-error'),
+  retryBtn: document.getElementById('retry-btn')
 };
 
 /**
@@ -32,57 +41,108 @@ async function init() {
   const [tab] = await browser.tabs.query({ active: true, currentWindow: true });
   currentTabId = tab.id;
   
-  // Check API status
-  await checkApiStatus();
-  
   // Set up event listeners
   setupEventListeners();
   
-  // Try to get cached field count
-  await updateFieldCount();
+  // Load job links from background (replacing dummy data)
+  await loadJobLinks();
 }
 
 /**
  * Set up button event listeners
  */
 function setupEventListeners() {
+  // Tab navigation
+  elements.tabForms.addEventListener('click', () => switchTab('forms'));
+  elements.tabLinks.addEventListener('click', () => switchTab('links'));
+  
+  // Forms panel buttons
   elements.scanBtn.addEventListener('click', handleScanClick);
   elements.fillAllBtn.addEventListener('click', handleFillAllClick);
   elements.clearBtn.addEventListener('click', handleClearClick);
-}
-
-/**
- * Check API connectivity status
- */
-async function checkApiStatus() {
-  try {
-    const response = await browser.runtime.sendMessage({ type: 'GET_STATUS' });
-    
-    if (response.api_connected) {
-      elements.apiIndicator.className = 'status-indicator status-connected';
-      elements.apiStatus.className = 'status-value status-connected';
-      elements.apiStatus.textContent = 'Connected';
-    } else {
-      elements.apiIndicator.className = 'status-indicator status-error';
-      elements.apiStatus.className = 'status-value status-error';
-      elements.apiStatus.textContent = 'Disconnected';
-    }
-  } catch (error) {
-    elements.apiIndicator.className = 'status-indicator status-error';
-    elements.apiStatus.className = 'status-value status-error';
-    elements.apiStatus.textContent = 'Error';
+  
+  // Links tab buttons
+  elements.refreshLinksBtn.addEventListener('click', handleRefreshLinksClick);
+  
+  // Retry button for loading failures
+  if (elements.retryBtn) {
+    elements.retryBtn.addEventListener('click', handleRetryClick);
   }
 }
 
 /**
- * Update field count from storage
+ * Show skeleton loading state
  */
-async function updateFieldCount() {
+function showSkeleton() {
+  elements.jobLinksList.style.display = 'none';
+  elements.jobLinksError.style.display = 'none';
+  elements.jobLinksLoading.style.display = 'flex';
+}
+
+/**
+ * Hide loading state and show job list
+ */
+function hideLoading() {
+  elements.jobLinksLoading.style.display = 'none';
+  elements.jobLinksError.style.display = 'none';
+  elements.jobLinksList.style.display = 'block';
+}
+
+/**
+ * Show error state with retry
+ * @param {string} message
+ */
+function showJobError(message) {
+  elements.jobLinksLoading.style.display = 'none';
+  elements.jobLinksError.style.display = 'flex';
+  elements.jobLinksList.style.display = 'none';
+  const errorMsg = elements.jobLinksError.querySelector('.error-message');
+  if (errorMsg) errorMsg.textContent = message || 'Failed to load jobs';
+}
+
+/**
+ * Handle retry button click
+ */
+async function handleRetryClick() {
+  await loadJobLinks();
+}
+
+/**
+ * Load job links from API (called on init and retry)
+ */
+async function loadJobLinks() {
+  showSkeleton();
   try {
-    const status = await browser.runtime.sendMessage({ type: 'GET_STATUS' });
-    elements.fieldCount.textContent = status.field_count || 0;
-  } catch (error) {
-    elements.fieldCount.textContent = '0';
+    const links = await fetchJobOffers();
+    jobLinks = links;
+    hideLoading();
+    renderJobLinksList(jobLinks);
+  } catch (err) {
+    console.error('[Popup] loadJobLinks error:', err);
+    showJobError('Failed to load jobs');
+  }
+}
+
+/**
+ * Fetch job offers from background script
+ * @returns {Promise<Array>} JobLinkState array
+ */
+async function fetchJobOffers() {
+  try {
+    const response = await browser.runtime.sendMessage({ type: 'GET_JOB_OFFERS' });
+    if (!response.success) {
+      throw new Error(response.error?.message || 'Failed to fetch job offers');
+    }
+    return (response.job_offers || []).map(offer => ({
+      id: offer.id,
+      title: offer.title,
+      url: offer.url,
+      applied: offer.process?.applied ?? false,
+      pending: false,
+      error: false
+    }));
+  } catch (err) {
+    throw err;
   }
 }
 
@@ -95,7 +155,6 @@ async function handleScanClick() {
   isScanning = true;
   elements.scanBtn.disabled = true;
   elements.scanBtn.textContent = 'Scanning...';
-  elements.statusValue.textContent = 'Scanning...';
   
   try {
     const response = await browser.runtime.sendMessage({
@@ -105,8 +164,6 @@ async function handleScanClick() {
     
     if (response.success) {
       detectedFields = response.fields || [];
-      elements.fieldCount.textContent = detectedFields.length;
-      elements.statusValue.textContent = `Found ${detectedFields.length} fields`;
       
       // Update fields list
       renderFieldsList(detectedFields);
@@ -114,11 +171,9 @@ async function handleScanClick() {
       // Enable fill button if fields found
       elements.fillAllBtn.disabled = detectedFields.length === 0;
     } else {
-      elements.statusValue.textContent = 'Scan failed';
       showError(response.error?.message || 'Failed to scan page');
     }
   } catch (error) {
-    elements.statusValue.textContent = 'Scan error';
     showError(error.message);
   } finally {
     isScanning = false;
@@ -136,7 +191,6 @@ async function handleFillAllClick() {
   isFilling = true;
   elements.fillAllBtn.disabled = true;
   elements.scanBtn.disabled = true;
-  elements.statusValue.textContent = 'Filling...';
   
   // Show progress section
   elements.progressSection.style.display = 'block';
@@ -163,20 +217,16 @@ async function handleFillAllClick() {
       const { completed, failed, total } = response;
       
       if (failed > 0) {
-        elements.statusValue.textContent = `Filled ${completed}/${total} (${failed} failed)`;
         showError(`${failed} field(s) failed to fill`);
       } else {
-        elements.statusValue.textContent = `All ${completed} fields filled`;
         showSuccess(`Successfully filled ${completed} fields`);
       }
       
       updateProgress(total, total);
     } else {
-      elements.statusValue.textContent = 'Fill failed';
       showError(response.error?.message || 'Failed to fill fields');
     }
   } catch (error) {
-    elements.statusValue.textContent = 'Fill error';
     showError(error.message);
   } finally {
     isFilling = false;
@@ -196,7 +246,6 @@ async function handleFillAllClick() {
 async function handleClearClick() {
   try {
     await browser.tabs.sendMessage(currentTabId, { type: 'CLEAR_INDICATORS' });
-    elements.statusValue.textContent = 'Indicators cleared';
   } catch (error) {
     console.error('Clear error:', error);
   }
@@ -270,5 +319,146 @@ function showSuccess(message) {
   setTimeout(() => msgEl.remove(), 3000);
 }
 
+/**
+ * Get dummy job links data
+ * @returns {Array}
+ */
+function getDummyJobLinks() {
+  return [
+    { id: '1', title: 'Senior Frontend Developer', url: 'https://example.com/jobs/1', status: 'new' },
+    { id: '2', title: 'Full Stack Engineer - React/Node', url: 'https://example.com/jobs/2', status: 'new' },
+    { id: '3', title: 'DevOps Engineer - Kubernetes', url: 'https://example.com/jobs/3', status: 'new' },
+    { id: '4', title: 'Backend Developer - Python', url: 'https://example.com/jobs/4', status: 'new' },
+    { id: '5', title: 'Mobile Developer - iOS/Swift', url: 'https://example.com/jobs/5', status: 'new' }
+  ];
+}
+
+/**
+ * Render job links list in popup
+ * @param {Array} links
+ */
+function renderJobLinksList(links) {
+  if (!links || links.length === 0) {
+    elements.jobLinksList.innerHTML = '<p class="no-links">No job links available.</p>';
+    return;
+  }
+  
+  const html = links.map(link => `
+    <div class="job-link-item" data-job-id="${link.id}">
+      <span class="job-status-indicator ${link.applied ? 'job-status-applied' : 'job-status-new'}${link.pending ? ' job-status-pending' : ''}" 
+            data-action="toggle" 
+            data-job-id="${link.id}"
+            title="${link.pending ? 'Updating...' : (link.applied ? 'Applied - click to mark as not applied' : 'Not applied - click to mark as applied')}"
+            role="button" aria-label="${link.pending ? 'Updating...' : (link.applied ? 'Applied' : 'Not applied')}" ></span>
+      <a class="job-link-title" href="${link.url}" target="_blank" rel="noopener noreferrer" title="${link.title}">${link.title}</a>
+    </div>`
+  ).join('');
+  
+  elements.jobLinksList.innerHTML = html;
+  
+  // Attach click listeners for status icons
+  elements.jobLinksList.querySelectorAll('[data-action="toggle"]').forEach(icon => {
+    icon.addEventListener('click', (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+      const jobId = parseInt(icon.dataset.jobId, 10);
+      handleStatusClick(jobId);
+    });
+    icon.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter' || e.key === ' ') {
+        e.preventDefault();
+        e.stopPropagation();
+        const jobId = parseInt(icon.dataset.jobId, 10);
+        handleStatusClick(jobId);
+      }
+    });
+  });
+}
+
+/**
+ * Switch between tabs
+ * @param {string} tabName - 'forms' or 'links'
+ */
+function switchTab(tabName) {
+  // Update tab buttons
+  if (tabName === 'forms') {
+    elements.tabForms.classList.add('active');
+    elements.tabLinks.classList.remove('active');
+  } else {
+    elements.tabForms.classList.remove('active');
+    elements.tabLinks.classList.add('active');
+  }
+  
+  // Update tab panels
+  if (tabName === 'forms') {
+    document.getElementById('panel-forms').classList.add('active');
+    document.getElementById('panel-links').classList.remove('active');
+  } else {
+    document.getElementById('panel-forms').classList.remove('active');
+    document.getElementById('panel-links').classList.add('active');
+  }
+}
+
+/**
+ * Handle Refresh Jobs button click
+ */
+async function handleRefreshLinksClick() {
+  await loadJobLinks();
+}
+
 // Initialize on DOM ready
 document.addEventListener('DOMContentLoaded', init);
+/**
+ * Handle status icon click — optimistic toggle
+ * @param {number} jobId
+ */
+async function handleStatusClick(jobId) {
+  const link = jobLinks.find(l => l.id === jobId);
+  if (!link || link.pending) return; // debounce: ignore if already pending
+  
+  // Optimistic update
+  link.pending = true;
+  const oldApplied = link.applied;
+  link.applied = !oldApplied;
+  renderJobLinksList(jobLinks);
+  
+  try {
+    const response = await browser.runtime.sendMessage({
+      type: 'UPDATE_APPLIED',
+      data: { job_offer_id: jobId, applied: link.applied }
+    });
+    
+    if (response.success) {
+      link.pending = false;
+      link.error = false;
+    } else {
+      // Revert on failure
+      link.pending = false;
+      link.applied = oldApplied;
+      link.error = true;
+      showToggleError('Failed to update status');
+    }
+    renderJobLinksList(jobLinks);
+  } catch (err) {
+    // Revert on error
+    link.pending = false;
+    link.applied = oldApplied;
+    link.error = true;
+    renderJobLinksList(jobLinks);
+    showToggleError('Failed to update status');
+  }
+}
+
+/**
+ * Show toggle error message
+ * @param {string} message
+ */
+function showToggleError(message) {
+  // Remove existing toggle errors
+  document.querySelectorAll('.toggle-error').forEach(el => el.remove());
+  const msgEl = document.createElement('div');
+  msgEl.className = 'message message-error toggle-error';
+  msgEl.textContent = message;
+  elements.jobLinksList.parentElement.insertBefore(msgEl, elements.jobLinksList);
+  setTimeout(() => msgEl.remove(), 3000);
+}

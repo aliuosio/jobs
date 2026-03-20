@@ -24,16 +24,19 @@ logger = logging.getLogger(__name__)
 async def lifespan(app: FastAPI):
     """Manage application lifespan for service connections."""
     from src.services.retriever import retriever
+    from src.services.job_offers import job_offers_service
 
     logger.info("Starting RAG Backend API...")
 
-    # Connect to Qdrant vector database
     await retriever.connect()
     logger.info("Connected to Qdrant")
 
+    await job_offers_service.connect()
+    logger.info("Connected to PostgreSQL")
+
     yield
 
-    # Cleanup connections
+    await job_offers_service.close()
     await retriever.close()
     logger.info("Shutting down RAG Backend API...")
 

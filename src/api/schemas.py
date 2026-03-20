@@ -106,3 +106,40 @@ class ValidationReport(BaseModel):
     checks: Annotated[
         list[CheckResult], Field(min_length=1, description="Individual check results")
     ]
+
+
+class JobOfferProcess(BaseModel):
+    model_config = {"extra": "allow"}
+    job_offers_id: int | None = None
+    research: bool | None = None
+    research_email: bool | None = None
+    applied: bool | None = None
+
+
+class JobOfferWithProcess(BaseModel):
+    id: int = Field(description="Job offer primary key")
+    title: str = Field(description="Job posting title")
+    url: str = Field(description="URL to job posting")
+    process: JobOfferProcess | None = Field(
+        default=None, description="Processing metadata, null if no process record"
+    )
+
+
+class JobOffersListResponse(BaseModel):
+    job_offers: list[JobOfferWithProcess] = Field(
+        description="List of job offers with process data"
+    )
+
+
+class ProcessUpdateRequest(BaseModel):
+    """Request payload for updating job offer process fields."""
+
+    research: bool | None = Field(
+        default=None, description="Whether job research has been completed"
+    )
+    research_email: bool | None = Field(
+        default=None, description="Whether research email has been sent"
+    )
+    applied: bool | None = Field(
+        default=None, description="Whether job application has been submitted"
+    )
