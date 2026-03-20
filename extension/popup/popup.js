@@ -8,6 +8,7 @@ let currentTabId = null;
 let detectedFields = [];
 let isScanning = false;
 let isFilling = false;
+let jobLinks = [];
 
 // DOM Elements
 const elements = {
@@ -21,7 +22,8 @@ const elements = {
   progressSection: document.getElementById('progress-section'),
   progressFill: document.getElementById('progress-fill'),
   progressText: document.getElementById('progress-text'),
-  clearBtn: document.getElementById('clear-btn')
+  clearBtn: document.getElementById('clear-btn'),
+  jobLinksList: document.getElementById('job-links-list')
 };
 
 /**
@@ -40,6 +42,9 @@ async function init() {
   
   // Try to get cached field count
   await updateFieldCount();
+  
+  jobLinks = getDummyJobLinks();
+  renderJobLinksList(jobLinks);
 }
 
 /**
@@ -268,6 +273,40 @@ function showSuccess(message) {
   
   // Auto-remove after 3 seconds
   setTimeout(() => msgEl.remove(), 3000);
+}
+
+/**
+ * Get dummy job links data
+ * @returns {Array}
+ */
+function getDummyJobLinks() {
+  return [
+    { id: '1', title: 'Senior Frontend Developer', url: 'https://example.com/jobs/1', status: 'new' },
+    { id: '2', title: 'Full Stack Engineer - React/Node', url: 'https://example.com/jobs/2', status: 'new' },
+    { id: '3', title: 'DevOps Engineer - Kubernetes', url: 'https://example.com/jobs/3', status: 'new' },
+    { id: '4', title: 'Backend Developer - Python', url: 'https://example.com/jobs/4', status: 'new' },
+    { id: '5', title: 'Mobile Developer - iOS/Swift', url: 'https://example.com/jobs/5', status: 'new' }
+  ];
+}
+
+/**
+ * Render job links list in popup
+ * @param {Array} links
+ */
+function renderJobLinksList(links) {
+  if (!links || links.length === 0) {
+    elements.jobLinksList.innerHTML = '<p class="no-links">No job links available.</p>';
+    return;
+  }
+  
+  const html = links.map(link => `
+    <a class="job-link-item" href="${link.url}" target="_blank" rel="noopener noreferrer" aria-label="Open ${link.title}">
+      <span class="job-status-indicator job-status-${link.status}" title="${link.status}"></span>
+      <span class="job-link-title" title="${link.title}">${link.title}</span>
+    </a>
+  `).join('');
+  
+  elements.jobLinksList.innerHTML = html;
 }
 
 // Initialize on DOM ready

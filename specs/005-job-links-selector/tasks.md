@@ -25,9 +25,9 @@
 
 **Purpose**: Add UI structure and integrate dummy data into existing popup.js
 
-- [ ] T001 [P] Add job links section HTML to extension/popup/popup.html after "Detected Fields" section
-- [ ] T002 [P] Add job links CSS styles to extension/popup/popup.css
-- [ ] T003 [P] Add dummy data function to extension/popup/popup.js (NO new file)
+- [X] T001 [P] Add job links section HTML to extension/popup/popup.html after "Detected Fields" section
+- [X] T002 [P] Add job links CSS styles to extension/popup/popup.css
+- [X] T003 [P] Add dummy data function to extension/popup/popup.js (NO new file)
 
 **Checkpoint**: Setup complete - UI structure and dummy data ready in existing files
 
@@ -41,10 +41,10 @@
 
 ### Implementation for User Story 1
 
-- [ ] T004 [US1] Add getDummyJobLinks() function to extension/popup/popup.js (no import needed)
-- [ ] T005 [US1] Create renderJobLinksList() function in extension/popup/popup.js
-- [ ] T006 [US1] Call renderJobLinksList() on popup initialization (DOMContentLoaded)
-- [ ] T007 [US1] Style status indicators in extension/popup/popup.css (.job-status-indicator)
+- [X] T004 [US1] Add getDummyJobLinks() function to extension/popup/popup.js (no import needed)
+- [X] T005 [US1] Create renderJobLinksList() function in extension/popup/popup.js
+- [X] T006 [US1] Call renderJobLinksList() on popup initialization (DOMContentLoaded)
+- [X] T007 [US1] Style status indicators in extension/popup/popup.css (.job-status-indicator)
 
 **Checkpoint**: User Story 1 complete - 5 links display with status indicators
 
@@ -58,9 +58,9 @@
 
 ### Implementation for User Story 2
 
-- [ ] T008 [P] [US2] Add click event handlers to job link items in extension/popup/popup.js
-- [ ] T009 [P] [US2] Implement browser.tabs.create() to open links in new tabs
-- [ ] T010 [US2] Add visual feedback on link click (highlight selected link)
+- [X] T008 [P] [US2] Add click event handlers to job link items in extension/popup/popup.js
+- [X] T009 [P] [US2] Implement browser.tabs.create() to open links in new tabs
+- [X] T010 [US2] Add visual feedback on link click (highlight selected link)
 
 **Checkpoint**: User Story 2 complete - clicking links opens new tabs
 
@@ -74,9 +74,9 @@
 
 ### Implementation for User Story 3
 
-- [ ] T011 [P] [US3] Add tabindex="0" to job link items in extension/popup/popup.html
-- [ ] T012 [US3] Add keyboard event handlers (Enter key) in extension/popup/popup.js
-- [ ] T013 [US3] Verify WCAG AA contrast ratios for status indicators (#22c55e, #9ca3af, #3b82f6)
+- [X] T011 [P] [US3] Add tabindex="0" to job link items in extension/popup/popup.html
+- [X] T012 [US3] Add keyboard event handlers (Enter key) in extension/popup/popup.js
+- [X] T013 [US3] Verify WCAG AA contrast ratios for status indicators (#22c55e, #9ca3af, #3b82f6)
 
 **Checkpoint**: User Story 3 complete - keyboard navigation and accessibility verified
 
@@ -86,9 +86,9 @@
 
 **Purpose**: Handle edge cases and finalize UI
 
-- [ ] T014 Handle empty data source (show "No job links available" message)
-- [ ] T015 Handle long titles (truncate with ellipsis at ~30 chars)
-- [ ] T016 Verify 320px popup width constraint is maintained
+- [X] T014 Handle empty data source (show "No job links available" message)
+- [X] T015 Handle long titles (truncate with ellipsis at ~30 chars)
+- [X] T016 Verify 320px popup width constraint is maintained
 - [ ] T017 Final manual testing in Firefox browser
 
 **Checkpoint**: All user stories complete, edge cases handled

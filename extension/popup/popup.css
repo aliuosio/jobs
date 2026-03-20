@@ -267,3 +267,83 @@ body {
     transform: rotate(360deg);
   }
 }
+
+/* Job Links Section */
+.job-links-section {
+  max-height: 180px;
+  overflow-y: auto;
+}
+
+.job-links-list {
+  font-size: 13px;
+}
+
+.no-links {
+  color: #6b7280;
+  font-style: italic;
+}
+
+.job-link-item {
+  display: flex;
+  align-items: center;
+  padding: 8px 10px;
+  border-radius: 4px;
+  margin-bottom: 4px;
+  background-color: #f9fafb;
+  cursor: pointer;
+  transition: background-color 0.15s ease;
+  text-decoration: none;
+}
+
+.job-link-item:hover,
+.job-link-item:focus {
+  background-color: #eff6ff;
+  outline: none;
+}
+
+.job-link-item:focus-visible {
+  box-shadow: 0 0 0 2px #3b82f6;
+}
+
+.job-link-item:visited .job-link-title {
+  color: #ef4444;
+}
+
+.job-link-item:hover .job-link-title,
+.job-link-item:focus .job-link-title {
+  color: #1d4ed8;
+}
+
+.job-status-indicator {
+  display: inline-block;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  margin-right: 8px;
+  flex-shrink: 0;
+}
+
+.job-status-new {
+  background-color: #22c55e;
+}
+
+.job-status-viewed {
+  background-color: #9ca3af;
+}
+
+.job-status-saved {
+  background-color: #3b82f6;
+}
+
+.job-link-title {
+  flex: 1;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  color: #374151;
+}
+
+.job-link-item:hover .job-link-title,
+.job-link-item:focus .job-link-title {
+  color: #1d4ed8;
+}
