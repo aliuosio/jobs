@@ -135,6 +135,15 @@ function filterNotAppliedLinks(links) {
 }
 
 /**
+ * Get all job links (including applied ones)
+ * @param {Array} links
+ * @returns {Array} All links
+ */
+function getAllJobLinks(links) {
+  return links;
+}
+
+/**
  * Fetch job offers from background script
  * @returns {Promise<Array>} JobLinkState array
  */
@@ -483,9 +492,9 @@ async function handleStatusClick(jobId) {
       link.pending = false;
       link.error = false;
       
-      // Filter to show only "not applied for" jobs after successful update
-      const notAppliedLinks = filterNotAppliedLinks(jobLinks);
-      renderJobLinksList(notAppliedLinks);
+      // Show all job links after successful update (don't hide applied ones)
+      const allLinks = getAllJobLinks(jobLinks);
+      renderJobLinksList(allLinks);
     } else {
       // Revert on failure
       link.pending = false;
