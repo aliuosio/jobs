@@ -9,6 +9,7 @@ let detectedFields = [];
 let isScanning = false;
 let isFilling = false;
 let jobLinks = [];
+let lastClickedJobId = null;
 
 // DOM Elements
 const elements = {
@@ -425,13 +426,35 @@ function renderJobLinksList(links) {
     });
   });
   
-  // Attach click listeners for job links to track visited state
+  // Attach click listeners for job links to track visited state and handle navigation
   elements.jobLinksList.querySelectorAll('.job-link-title').forEach(link => {
-    link.addEventListener('click', (e) => {
+    link.addEventListener('click', async (e) => {
+      e.preventDefault();
       const jobId = parseInt(link.dataset.jobId, 10);
+      
+      // Mark as visited
       markJobLinkVisited(jobId);
       // Add visited class immediately for visual feedback
       link.closest('.job-link-item').classList.add('job-link-visited');
+      
+      // Remove last clicked indicator from previous link
+      if (lastClickedJobId) {
+        const prevLink = elements.jobLinksList.querySelector(`.job-link-item[data-job-id="${lastClickedJobId}"]`);
+        if (prevLink) {
+          prevLink.classList.remove('job-link-last-clicked');
+        }
+      }
+      
+      // Add last clicked indicator to current link
+      lastClickedJobId = jobId;
+      link.closest('.job-link-item').classList.add('job-link-last-clicked');
+      
+      // Navigate to the URL in the current tab
+      try {
+        await browser.tabs.update(currentTabId, { url: link.href });
+      } catch (error) {
+        console.error('Failed to navigate to job link:', error);
+      }
     });
   });
 }

@@ -294,8 +294,9 @@ body {
  
 /* Job Links Section */
 .job-links-section {
-  max-height: 220px;
+  max-height: 260px;
   overflow-y: auto;
+  margin-bottom: 24px;
 }
 
 .job-links-list {
@@ -427,4 +428,16 @@ body {
   100% {
     background-position: -200% 0;
   }
+}
+
+/* Last Clicked Link Indicator */
+.job-link-last-clicked {
+  background-color: #fef3c7 !important;
+  border: 1px solid #f59e0b;
+  box-shadow: 0 0 0 2px rgba(245, 158, 11, 0.2);
+}
+
+.job-link-last-clicked .job-link-title {
+  color: #92400e;
+  font-weight: 600;
 }
