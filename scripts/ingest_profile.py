@@ -27,6 +27,8 @@ PROFILE_DATA = {
     "firstname": "Osiozekha",
     "lastname": "Aliu",
     "email": "aliu@dev-hh.de",
+    "phone": "+49 177 639 40 82",
+    "birthdate": "28.06.1976",
     "city": "Hamburg",
     "postcode": "22399",
     "street": "Schleusentwiete 1",
@@ -121,6 +123,8 @@ def ingest_profile():
     print(f"  - Firstname: {PROFILE_DATA['firstname']}")
     print(f"  - Lastname: {PROFILE_DATA['lastname']}")
     print(f"  - Email (flat): {PROFILE_DATA['email']}")
+    print(f"  - Phone (flat): {PROFILE_DATA['phone']}")
+    print(f"  - Birthdate (flat): {PROFILE_DATA['birthdate']}")
     print(f"  - City (flat): {PROFILE_DATA['city']}")
     print(f"  - Postcode: {PROFILE_DATA['postcode']}")
     print(f"  - Street: {PROFILE_DATA['street']}")

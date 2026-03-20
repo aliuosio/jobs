@@ -30,12 +30,14 @@ EXPECTED_VALUES = {
     "firstname": "Osiozekha",
     "lastname": "Aliu",
     "email": "aliu@dev-hh.de",
+    "phone": "+49 177 639 40 82",
+    "birthdate": "28.06.1976",
     "city": "Hamburg",
     "postcode": "22399",
     "street": "Schleusentwiete 1",
 }
 
-# Test cases for all 6 fields
+# Test cases for all 8 fields
 FIELD_TEST_CASES = [
     {
         "field": "firstname",
@@ -54,6 +56,18 @@ FIELD_TEST_CASES = [
         "label": "Email",
         "signals": {"autocomplete": "email"},
         "expected_field_type": "email",
+    },
+    {
+        "field": "phone",
+        "label": "Phone",
+        "signals": {"autocomplete": "tel"},
+        "expected_field_type": "phone",
+    },
+    {
+        "field": "birthdate",
+        "label": "Birthdate",
+        "signals": {"autocomplete": "bday"},
+        "expected_field_type": "birthdate",
     },
     {
         "field": "city",
@@ -178,6 +192,38 @@ class TestFillFormRealAPI:
             # German postcode: 5 digits
             assert len(postcode) == 5, f"Expected 5-digit postcode, got: {postcode}"
             assert postcode.isdigit(), f"Postcode should be digits only: {postcode}"
+
+    @pytest.mark.asyncio
+    async def test_phone_format(self, real_client):
+        """Test that extracted phone matches expected format."""
+        response = await real_client.post(
+            "/fill-form",
+            json={"label": "Phone", "signals": {"autocomplete": "tel"}},
+        )
+        assert response.status_code == 200
+        data = response.json()
+
+        if data.get("field_value"):
+            phone = data["field_value"]
+            assert "+" in phone or phone.startswith("0"), (
+                f"Invalid phone format: {phone}"
+            )
+
+    @pytest.mark.asyncio
+    async def test_birthdate_format(self, real_client):
+        """Test that extracted birthdate matches expected format."""
+        response = await real_client.post(
+            "/fill-form",
+            json={"label": "Birthdate", "signals": {"autocomplete": "bday"}},
+        )
+        assert response.status_code == 200
+        data = response.json()
+
+        if data.get("field_value"):
+            birthdate = data["field_value"]
+            assert "." in birthdate or "-" in birthdate, (
+                f"Invalid birthdate format: {birthdate}"
+            )
 
     @pytest.mark.asyncio
     async def test_response_latency(self, real_client):

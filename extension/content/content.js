@@ -27,7 +27,8 @@ function initContentScript() {
     formObserver = new FormObserver({
       debounceMs: 300,
       maxWaitMs: 10000,
-      onFormDetected: handleFormDetected
+      onFormDetected: handleFormDetected,
+      onFieldDetected: handleFieldDetected
     });
     
     formObserver.setOnScanComplete(() => {
@@ -295,6 +296,29 @@ function handleFormDetected(form) {
       }
     });
   }
+}
+
+function handleFieldDetected(fieldElement, fieldDescriptor) {
+  console.log('[Content] Dynamic field detected:', fieldDescriptor.id);
+  
+  const existing = detectedFields.find(f => f.element === fieldElement);
+  if (existing) {
+    return;
+  }
+  
+  detectedFields.push(fieldDescriptor);
+  fieldCount++;
+  
+  if (fieldDescriptor.isFillable) {
+    fieldElement.classList.add('jfh-field-detected');
+  }
+  
+  browser.runtime.sendMessage({
+    type: 'FIELDS_UPDATED',
+    data: {
+      count: fieldCount
+    }
+  });
 }
 
 /**

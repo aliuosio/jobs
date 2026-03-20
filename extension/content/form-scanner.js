@@ -16,7 +16,7 @@ const Confidence = {
 /**
  * Supported input field types (FR-002)
  */
-const SUPPORTED_INPUT_TYPES = ['text', 'email', 'tel', 'url', 'number'];
+const SUPPORTED_INPUT_TYPES = ['text', 'email', 'tel', 'url', 'number', 'date'];
 
 /**
  * Maximum distance for proximity-based label detection (FR-017)

@@ -21,6 +21,7 @@ class SemanticFieldType(str, Enum):
     LAST_NAME = "last_name"
     EMAIL = "email"
     PHONE = "phone"
+    BIRTHDATE = "birthdate"
     CITY = "city"
     STREET = "street"
     ZIP = "zip"
@@ -64,6 +65,16 @@ PHONE_PATTERNS = [
     r"\bmobile\b",
     r"\bcell\b",
     r"\bcontact[\s_-]*number\b",
+    r"\btelefon\b",  # German
+]
+
+BIRTHDATE_PATTERNS = [
+    r"\bgeburtstag\b",
+    r"\bgeburtsdatum\b",
+    r"\bdate\s*of\s*birth\b",
+    r"\bbirthday\b",
+    r"\bdob\b",
+    r"\bbirth\s*date\b",
 ]
 
 CITY_PATTERNS = [
@@ -110,6 +121,7 @@ AUTOCOMPLETE_MAP = {
     "tel": SemanticFieldType.PHONE,
     "tel-national": SemanticFieldType.PHONE,
     "tel-international": SemanticFieldType.PHONE,
+    "bday": SemanticFieldType.BIRTHDATE,
     "street-address": SemanticFieldType.STREET,
     "address-line1": SemanticFieldType.STREET,
     "address-level2": SemanticFieldType.CITY,
@@ -215,6 +227,10 @@ def classify_field_type(signals: dict[str, Any] | None) -> SemanticFieldType | N
         logger.debug(f"Classified as phone from patterns in: {combined_text}")
         return SemanticFieldType.PHONE
 
+    if _matches_patterns(combined_text, BIRTHDATE_PATTERNS):
+        logger.debug(f"Classified as birthdate from patterns in: {combined_text}")
+        return SemanticFieldType.BIRTHDATE
+
     if _matches_patterns(combined_text, CITY_PATTERNS):
         logger.debug(f"Classified as city from patterns in: {combined_text}")
         return SemanticFieldType.CITY
@@ -257,20 +273,20 @@ def get_profile_field_name(field_type: SemanticFieldType) -> str | None:
     mapping = {
         # Full name uses historic short flag
         SemanticFieldType.FULL_NAME: "fn",
-        # New flat field mappings
+        # Flat field mappings
         SemanticFieldType.FIRST_NAME: "firstname",
         SemanticFieldType.LAST_NAME: "lastname",
         SemanticFieldType.EMAIL: "email",
-        SemanticFieldType.PHONE: "ph",
+        SemanticFieldType.PHONE: "phone",
+        SemanticFieldType.BIRTHDATE: "birthdate",
         SemanticFieldType.CITY: "city",
         SemanticFieldType.STREET: "street",
         SemanticFieldType.ZIP: "postcode",
-        # New flat postcode mapping
         SemanticFieldType.POSTCODE: "postcode",
         SemanticFieldType.COUNTRY: "adr.cc",
         SemanticFieldType.GITHUB: "social.gh",
         SemanticFieldType.LINKEDIN: "social.li",
-        SemanticFieldType.URL: None,  # No direct mapping, use RAG
+        SemanticFieldType.URL: None,
     }
     return mapping.get(field_type)
 
@@ -333,6 +349,9 @@ def extract_field_value_from_payload(
     if field_type == SemanticFieldType.PHONE:
         return _extract_phone_from_text(text)
 
+    if field_type == SemanticFieldType.BIRTHDATE:
+        return _extract_birthdate_from_text(text)
+
     if field_type == SemanticFieldType.GITHUB:
         return _extract_github_from_text(text)
 
@@ -379,6 +398,20 @@ def _extract_phone_from_text(text: str) -> str | None:
         r"\+\d{1,3}[-.\s]?\d{1,4}[-.\s]?\d{1,4}[-.\s]?\d{1,9}",
     ]
     for pattern in phone_patterns:
+        match = re.search(pattern, text)
+        if match:
+            return match.group(0)
+    return None
+
+
+def _extract_birthdate_from_text(text: str) -> str | None:
+    """Extract birthdate from text."""
+    birthdate_patterns = [
+        r"\b\d{1,2}[./]\d{1,2}[./]\d{2,4}\b",
+        r"\b\d{4}-\d{2}-\d{2}\b",
+        r"\b\d{1,2}\s+(?:Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)[a-z]*\s+\d{2,4}\b",
+    ]
+    for pattern in birthdate_patterns:
         match = re.search(pattern, text)
         if match:
             return match.group(0)
