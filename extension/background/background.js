@@ -86,7 +86,6 @@ async function handleUpdateApplied(data) {
         const json = await response.json();
         if (json && json.message) message = json.message;
       } catch (e) {
-        // ignore JSON parse errors
       }
       return {
         success: false,
@@ -94,11 +93,27 @@ async function handleUpdateApplied(data) {
       };
     }
 
-    // Try to parse JSON body if any (does not affect output)
     try {
       await response.json();
     } catch {
-      // ignore if no JSON
+    }
+
+    try {
+      const state = await browser.storage.local.get(['jobOffers']);
+      if (state.jobOffers) {
+        const updatedOffers = state.jobOffers.map(offer => {
+          if (offer.id === job_offer_id) {
+            return { ...offer, applied };
+          }
+          return offer;
+        });
+        await browser.storage.local.set({
+          jobOffers: updatedOffers,
+          jobOffersTimestamp: Date.now()
+        });
+      }
+    } catch (storageError) {
+      console.error('[Background] Failed to update job offers cache:', storageError);
     }
 
     return {
@@ -216,8 +231,8 @@ async function handleFillForm(data) {
  * Fetch job offers from backend with optional pagination
  */
 async function handleGetJobOffers(data) {
+  console.log('[Background] handleGetJobOffers called');
   try {
-    // Build URL with optional query parameters
     const url = new URL(`${API_ENDPOINT}/job-offers`);
     if (data && typeof data.limit !== 'undefined') {
       url.searchParams.append('limit', String(data.limit));
@@ -230,6 +245,7 @@ async function handleGetJobOffers(data) {
       method: 'GET',
       signal: AbortSignal.timeout(10000)
     });
+    console.log('[Background] API response status:', response.status);
 
     if (!response.ok) {
       return {
@@ -243,14 +259,24 @@ async function handleGetJobOffers(data) {
     }
 
     const json = await response.json();
-    // Normalize response to contract: { job_offers: [...] }
     const offers = json.job_offers ?? json.offers ?? [];
+    console.log('[Background] offers from API:', offers.length);
+
+    try {
+      await browser.storage.local.set({
+        jobOffers: offers,
+        jobOffersTimestamp: Date.now()
+      });
+    } catch (storageError) {
+      console.error('[Background] Failed to cache job offers:', storageError);
+    }
 
     return {
       success: true,
       job_offers: offers
     };
   } catch (error) {
+    console.error('[Background] handleGetJobOffers error:', error);
     if (error.name === 'TimeoutError' || error.name === 'AbortError') {
       return {
         success: false,
@@ -461,16 +487,17 @@ function sleep(ms) {
   return new Promise(resolve => setTimeout(resolve, ms));
 }
 
-// Initialize on install
+// Initialize on install (only set defaults if keys don't exist)
 browser.runtime.onInstalled.addListener(async (details) => {
   console.log('[Background] Extension installed:', details.reason);
   
-  // Initialize storage with defaults
-  await browser.storage.local.set({
-    lastScanTime: null,
-    fieldCount: 0,
-    totalFieldsFilled: 0
-  });
+  const existing = await browser.storage.local.get(['lastScanTime', 'fieldCount', 'totalFieldsFilled']);
+  const defaults = {
+    lastScanTime: existing.lastScanTime ?? null,
+    fieldCount: existing.fieldCount ?? 0,
+    totalFieldsFilled: existing.totalFieldsFilled ?? 0
+  };
+  await browser.storage.local.set(defaults);
 });
 
 console.log('[Background] Job Forms Helper background script loaded');

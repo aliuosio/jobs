@@ -3,13 +3,45 @@
  * Handles UI interactions and communication with background/content scripts
  */
 
-// State
+// =============================================================================
+// STORAGE CONSTANTS (T004)
+// =============================================================================
+
+/** @type {Object} Storage keys for browser.storage.local */
+const STORAGE_KEYS = {
+  JOB_OFFERS: 'jobOffers',
+  JOB_OFFERS_TIMESTAMP: 'jobOffersTimestamp',
+  DETECTED_FIELDS: 'detectedFields',
+  LAST_URL: 'lastUrl',
+  LAST_TAB: 'lastTab',
+  STORAGE_VERSION: 'storageVersion',
+  LAST_CLICKED_JOB_ID: 'lastClickedJobId'
+};
+
+/** @type {number} Stale threshold in milliseconds (1 hour) */
+const STALE_THRESHOLD_MS = 60 * 60 * 1000;
+
+/** @type {number} Current storage schema version */
+const CURRENT_STORAGE_VERSION = 1;
+
+// =============================================================================
+// STATE
+// =============================================================================
+
+/** @type {?number} Current tab ID */
 let currentTabId = null;
+/** @type {Array} Detected form fields */
 let detectedFields = [];
+/** @type {boolean} Scanning state */
 let isScanning = false;
+/** @type {boolean} Filling state */
 let isFilling = false;
+/** @type {Array} Job links from API */
 let jobLinks = [];
+/** @type {?number} Last clicked job ID */
 let lastClickedJobId = null;
+/** @type {?string} Current page URL for field cache validation */
+let currentUrl = null;
 
 // DOM Elements
 const elements = {
@@ -31,22 +63,80 @@ const elements = {
   jobLinksList: document.getElementById('job-links-list'),
   jobLinksLoading: document.getElementById('job-links-loading'),
   jobLinksError: document.getElementById('job-links-error'),
-  retryBtn: document.getElementById('retry-btn')
+  retryBtn: document.getElementById('retry-btn'),
+  staleIndicator: document.getElementById('stale-indicator')
 };
+
+/**
+ * Update stale indicator visibility
+ * @param {boolean} isStale - Whether the cache is stale
+ */
+function updateStaleIndicator(isStale) {
+  if (elements.staleIndicator) {
+    elements.staleIndicator.style.display = isStale ? 'block' : 'none';
+  }
+}
 
 /**
  * Initialize popup
  */
 async function init() {
-  // Get current tab
   const [tab] = await browser.tabs.query({ active: true, currentWindow: true });
   currentTabId = tab.id;
+  currentUrl = tab.url;
   
-  // Set up event listeners
   setupEventListeners();
   
-  // Load job links from background (replacing dummy data)
+  await restoreTabPreference();
+  await restoreLastClickedJobId();
+  await restoreFormFieldsState();
   await loadJobLinks();
+}
+
+/**
+ * Restore last clicked job ID from storage
+ */
+async function restoreLastClickedJobId() {
+  try {
+    const state = await loadStateFromStorage();
+    lastClickedJobId = state[STORAGE_KEYS.LAST_CLICKED_JOB_ID] || null;
+  } catch (error) {
+    console.error('[Popup] Failed to restore lastClickedJobId:', error);
+  }
+}
+
+/**
+ * Restore tab preference from storage
+ */
+async function restoreTabPreference() {
+  try {
+    const state = await loadStateFromStorage();
+    const lastTab = state[STORAGE_KEYS.LAST_TAB];
+    if (lastTab === 'forms' || lastTab === 'links') {
+      switchTab(lastTab);
+    }
+  } catch (error) {
+    console.error('[Popup] Failed to restore tab preference:', error);
+  }
+}
+
+/**
+ * Restore form fields from storage if on same URL
+ */
+async function restoreFormFieldsState() {
+  try {
+    const state = await loadStateFromStorage();
+    const cachedFields = state[STORAGE_KEYS.DETECTED_FIELDS] || [];
+    const cachedUrl = state[STORAGE_KEYS.LAST_URL];
+    
+    if (cachedFields.length > 0 && cachedUrl === currentUrl) {
+      detectedFields = cachedFields;
+      renderFieldsList(detectedFields);
+      elements.fillAllBtn.disabled = detectedFields.length === 0;
+    }
+  } catch (error) {
+    console.error('[Popup] Failed to restore form fields state:', error);
+  }
 }
 
 /**
@@ -109,20 +199,78 @@ async function handleRetryClick() {
 }
 
 /**
- * Load job links from API (called on init and retry)
+ * Load job links with cache-first strategy
+ * 1. Try to restore from storage first
+ * 2. Fetch from API in background
+ * 3. Cache new data to storage
  */
 async function loadJobLinks() {
   showSkeleton();
+  
+  try {
+    const state = await loadStateFromStorage();
+    const cachedOffers = state[STORAGE_KEYS.JOB_OFFERS] || [];
+    const cachedTimestamp = state[STORAGE_KEYS.JOB_OFFERS_TIMESTAMP] || 0;
+    const isStale = isCacheStale(cachedTimestamp);
+    
+    console.log('[Popup] loadJobLinks - cachedOffers:', cachedOffers.length, 'isStale:', isStale);
+    
+    if (cachedOffers.length > 0) {
+      jobLinks = cachedOffers;
+      hideLoading();
+      const notAppliedLinks = filterNotAppliedLinks(jobLinks);
+      renderJobLinksList(notAppliedLinks);
+      
+      if (isStale) {
+        updateStaleIndicator(true);
+        fetchAndCacheJobOffers();
+      }
+    } else {
+      console.log('[Popup] No cache, fetching from API...');
+      const links = await fetchJobOffers();
+      console.log('[Popup] fetchJobOffers returned:', links.length, 'items');
+      jobLinks = links;
+      hideLoading();
+      const notAppliedLinks = filterNotAppliedLinks(jobLinks);
+      renderJobLinksList(notAppliedLinks);
+      
+      await cacheJobOffers();
+    }
+  } catch (err) {
+    console.error('[Popup] loadJobLinks error:', err);
+    showJobError('Failed to load jobs: ' + err.message);
+  }
+}
+
+/**
+ * Fetch job offers from API and cache them
+ */
+async function fetchAndCacheJobOffers() {
   try {
     const links = await fetchJobOffers();
     jobLinks = links;
-    hideLoading();
-    // Filter to show only "not applied for" jobs (applied is false or null)
+    
     const notAppliedLinks = filterNotAppliedLinks(jobLinks);
     renderJobLinksList(notAppliedLinks);
+    
+    await cacheJobOffers();
+    updateStaleIndicator(false);
   } catch (err) {
-    console.error('[Popup] loadJobLinks error:', err);
-    showJobError('Failed to load jobs');
+    console.error('[Popup] fetchAndCacheJobOffers error:', err);
+  }
+}
+
+/**
+ * Cache current job offers to storage
+ */
+async function cacheJobOffers() {
+  try {
+    await saveStateToStorage({
+      [STORAGE_KEYS.JOB_OFFERS]: jobLinks,
+      [STORAGE_KEYS.JOB_OFFERS_TIMESTAMP]: Date.now()
+    });
+  } catch (err) {
+    console.error('[Popup] Failed to cache job offers:', err);
   }
 }
 
@@ -185,12 +333,12 @@ async function handleScanClick() {
     
     if (response.success) {
       detectedFields = response.fields || [];
+      currentUrl = (await browser.tabs.get(currentTabId)).url;
       
-      // Update fields list
       renderFieldsList(detectedFields);
-      
-      // Enable fill button if fields found
       elements.fillAllBtn.disabled = detectedFields.length === 0;
+      
+      await cacheDetectedFields();
     } else {
       showError(response.error?.message || 'Failed to scan page');
     }
@@ -200,6 +348,20 @@ async function handleScanClick() {
     isScanning = false;
     elements.scanBtn.disabled = false;
     elements.scanBtn.textContent = 'Scan Page';
+  }
+}
+
+/**
+ * Cache detected fields with current URL
+ */
+async function cacheDetectedFields() {
+  try {
+    await saveStateToStorage({
+      [STORAGE_KEYS.DETECTED_FIELDS]: detectedFields,
+      [STORAGE_KEYS.LAST_URL]: currentUrl
+    });
+  } catch (err) {
+    console.error('[Popup] Failed to cache detected fields:', err);
   }
 }
 
@@ -355,6 +517,78 @@ function getDummyJobLinks() {
 }
 
 /**
+ * Load state from browser storage.local
+ * @returns {Promise<Object>} Stored state object
+ */
+async function loadStateFromStorage() {
+  try {
+    const keys = Object.values(STORAGE_KEYS);
+    const state = await browser.storage.local.get(keys);
+    return state;
+  } catch (error) {
+    console.error('[Popup] Failed to load state from storage:', error);
+    return {};
+  }
+}
+
+/**
+ * Save state to browser storage.local
+ * @param {Object} state - State object with keys from STORAGE_KEYS
+ * @returns {Promise<void>}
+ */
+async function saveStateToStorage(state) {
+  try {
+    await browser.storage.local.set(state);
+  } catch (error) {
+    if (error.name === 'QuotaExceededError') {
+      console.error('[Popup] Storage quota exceeded:', error);
+    } else {
+      console.error('[Popup] Failed to save state to storage:', error);
+    }
+    throw error;
+  }
+}
+
+/**
+ * Check if cached data is stale based on timestamp
+ * @param {number} timestamp - Unix timestamp in milliseconds
+ * @returns {boolean} True if cache is stale (> 1 hour old)
+ */
+function isCacheStale(timestamp) {
+  if (!timestamp) return true;
+  const now = Date.now();
+  return (now - timestamp) > STALE_THRESHOLD_MS;
+}
+
+/**
+ * Migrate storage data if version mismatch detected
+ * @param {Object} state - Current stored state
+ * @returns {Promise<Object>} Migrated state
+ */
+async function migrateStorageIfNeeded(state) {
+  const storedVersion = state[STORAGE_KEYS.STORAGE_VERSION] || 0;
+  
+  if (storedVersion === CURRENT_STORAGE_VERSION) {
+    return state;
+  }
+  
+  console.log('[Popup] Storage migration needed:', storedVersion, '->', CURRENT_STORAGE_VERSION);
+  
+  let migratedState = { ...state };
+  
+  migratedState[STORAGE_KEYS.STORAGE_VERSION] = CURRENT_STORAGE_VERSION;
+  
+  try {
+    await saveStateToStorage({ [STORAGE_KEYS.STORAGE_VERSION]: CURRENT_STORAGE_VERSION });
+    console.log('[Popup] Storage migration complete');
+  } catch (error) {
+    console.error('[Popup] Storage migration failed:', error);
+  }
+  
+  return migratedState;
+}
+
+/**
  * Get visited job links from localStorage
  * @returns {Set<number>}
  */
@@ -395,8 +629,9 @@ function renderJobLinksList(links) {
   
   const html = links.map(link => {
     const isVisited = visitedLinks.has(link.id);
+    const isLastClicked = link.id === lastClickedJobId;
     return `
-    <div class="job-link-item${isVisited ? ' job-link-visited' : ''}" data-job-id="${link.id}">
+    <div class="job-link-item${isVisited ? ' job-link-visited' : ''}${isLastClicked ? ' job-link-last-clicked' : ''}" data-job-id="${link.id}">
       <span class="job-status-indicator ${link.applied ? 'job-status-applied' : 'job-status-new'}${link.pending ? ' job-status-pending' : ''}" 
             data-action="toggle" 
             data-job-id="${link.id}"
@@ -449,6 +684,11 @@ function renderJobLinksList(links) {
       lastClickedJobId = jobId;
       link.closest('.job-link-item').classList.add('job-link-last-clicked');
       
+      // Persist last clicked job ID
+      saveStateToStorage({ [STORAGE_KEYS.LAST_CLICKED_JOB_ID]: jobId }).catch(err => {
+        console.error('[Popup] Failed to persist lastClickedJobId:', err);
+      });
+      
       // Navigate to the URL in the current tab
       try {
         await browser.tabs.update(currentTabId, { url: link.href });
@@ -464,22 +704,30 @@ function renderJobLinksList(links) {
  * @param {string} tabName - 'forms' or 'links'
  */
 function switchTab(tabName) {
-  // Update tab buttons
   if (tabName === 'forms') {
     elements.tabForms.classList.add('active');
     elements.tabLinks.classList.remove('active');
-  } else {
-    elements.tabForms.classList.remove('active');
-    elements.tabLinks.classList.add('active');
-  }
-  
-  // Update tab panels
-  if (tabName === 'forms') {
     document.getElementById('panel-forms').classList.add('active');
     document.getElementById('panel-links').classList.remove('active');
   } else {
+    elements.tabForms.classList.remove('active');
+    elements.tabLinks.classList.add('active');
     document.getElementById('panel-forms').classList.remove('active');
     document.getElementById('panel-links').classList.add('active');
+  }
+  
+  persistTabPreference(tabName);
+}
+
+/**
+ * Persist tab preference to storage
+ * @param {string} tabName - 'forms' or 'links'
+ */
+async function persistTabPreference(tabName) {
+  try {
+    await saveStateToStorage({ [STORAGE_KEYS.LAST_TAB]: tabName });
+  } catch (err) {
+    console.error('[Popup] Failed to persist tab preference:', err);
   }
 }
 
@@ -498,12 +746,13 @@ document.addEventListener('DOMContentLoaded', init);
  */
 async function handleStatusClick(jobId) {
   const link = jobLinks.find(l => l.id === jobId);
-  if (!link || link.pending) return; // debounce: ignore if already pending
+  if (!link || link.pending) return;
   
-  // Optimistic update
   link.pending = true;
   const oldApplied = link.applied;
   link.applied = !oldApplied;
+  
+  await persistJobOffersState();
   
   try {
     const response = await browser.runtime.sendMessage({
@@ -515,11 +764,11 @@ async function handleStatusClick(jobId) {
       link.pending = false;
       link.error = false;
       
-      // Show all job links after successful update (don't hide applied ones)
+      await persistJobOffersState();
+      
       const allLinks = getAllJobLinks(jobLinks);
       renderJobLinksList(allLinks);
     } else {
-      // Revert on failure
       link.pending = false;
       link.applied = oldApplied;
       link.error = true;
@@ -527,12 +776,25 @@ async function handleStatusClick(jobId) {
       renderJobLinksList(jobLinks);
     }
   } catch (err) {
-    // Revert on error
     link.pending = false;
     link.applied = oldApplied;
     link.error = true;
     renderJobLinksList(jobLinks);
     showToggleError('Failed to update status');
+  }
+}
+
+/**
+ * Persist current job offers state to storage
+ */
+async function persistJobOffersState() {
+  try {
+    await saveStateToStorage({
+      [STORAGE_KEYS.JOB_OFFERS]: jobLinks,
+      [STORAGE_KEYS.JOB_OFFERS_TIMESTAMP]: Date.now()
+    });
+  } catch (err) {
+    console.error('[Popup] Failed to persist job offers state:', err);
   }
 }
 
