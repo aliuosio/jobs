@@ -12,6 +12,8 @@ from src.api.schemas import (
     ConfidenceLevel,
     ErrorResponse,
     HealthResponse,
+    JobOfferWithProcess,
+    JobOffersListResponse,
     ValidationReport,
 )
 from src.services.field_classifier import (
@@ -198,4 +200,34 @@ async def fill_form(request: Request, answer_request: AnswerRequest) -> AnswerRe
 
     except Exception as e:
         logger.error(f"[fill-form] unexpected_error: {e}", exc_info=True)
+        raise HTTPException(status_code=500, detail="Internal server error")
+
+
+@router.get(
+    "/job-offers",
+    response_model=JobOffersListResponse,
+    responses={
+        503: {"model": ErrorResponse, "description": "Database unavailable"},
+        500: {"model": ErrorResponse, "description": "Internal server error"},
+    },
+    tags=["job-offers"],
+)
+async def get_job_offers(
+    limit: int | None = None, offset: int | None = None
+) -> JobOffersListResponse:
+    """Retrieve job offers with processing metadata."""
+    from asyncpg import PostgresError
+
+    from src.services.job_offers import job_offers_service
+
+    try:
+        offers = await job_offers_service.get_job_offers(limit=limit, offset=offset)
+        return JobOffersListResponse(
+            job_offers=[JobOfferWithProcess(**o) for o in offers]
+        )
+    except PostgresError as e:
+        logger.error(f"[job-offers] database_error: {e}")
+        raise HTTPException(status_code=503, detail="Database temporarily unavailable")
+    except Exception as e:
+        logger.error(f"[job-offers] unexpected_error: {e}", exc_info=True)
         raise HTTPException(status_code=500, detail="Internal server error")

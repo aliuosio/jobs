@@ -26,6 +26,12 @@ class Settings(BaseSettings):
     MAX_RETRIES: int = 4
     RETRY_BASE_DELAY: float = 1.0
 
+    # PostgreSQL Configuration
+    DATABASE_URL: str = (
+        "postgresql://postgres:zuiCh6ohw4oofee9zei+woo@postgres:5432/n8n"
+    )
+    DATABASE_POOL_SIZE: int = 10
+
     class Config:
         env_file = ".env"
         env_file_encoding = "utf-8"
