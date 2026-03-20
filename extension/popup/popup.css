@@ -267,7 +267,7 @@ body {
     transform: rotate(360deg);
   }
 }
-
+ 
 /* Job Links Section */
 .job-links-section {
   max-height: 180px;
@@ -335,6 +335,15 @@ body {
   background-color: #3b82f6;
 }
 
+.job-status-applied {
+  background-color: #ef4444;
+}
+
+.job-status-pending {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
 .job-link-title {
   flex: 1;
   white-space: nowrap;
@@ -346,4 +355,51 @@ body {
 .job-link-item:hover .job-link-title,
 .job-link-item:focus .job-link-title {
   color: #1d4ed8;
+}
+
+/* Job Links Loading & Error */
+.job-links-loading {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.job-links-error {
+  padding: 12px;
+  background-color: #fef2f2;
+  border: 1px solid #fecaca;
+  border-radius: 6px;
+}
+
+.job-links-error .error-message {
+  color: #dc2626;
+  font-size: 13px;
+  margin-bottom: 8px;
+}
+
+.job-links-error .btn {
+  font-size: 13px;
+  padding: 6px 12px;
+}
+
+.job-link-skeleton {
+  height: 32px;
+  border-radius: 4px;
+  background: linear-gradient(
+    90deg,
+    #f0f0f0 25%,
+    #e0e0e0 50%,
+    #f0f0f0 75%
+  );
+  background-size: 200% 100%;
+  animation: shimmer 1.5s infinite;
+}
+
+@keyframes shimmer {
+  0% {
+    background-position: 200% 0;
+  }
+  100% {
+    background-position: -200% 0;
+  }
 }

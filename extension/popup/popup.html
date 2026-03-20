@@ -39,12 +39,21 @@
       </div>
     </div>
     
-    <div class="section job-links-section">
-      <h3>Job Links</h3>
-      <div id="job-links-list" class="job-links-list">
-        <p class="no-links">No job links available.</p>
-      </div>
-    </div>
+<div class="section job-links-section">
+  <h3>Job Links</h3>
+  <div id="job-links-loading" class="job-links-loading" style="display: none;">
+    <div class="job-link-skeleton"></div>
+    <div class="job-link-skeleton"></div>
+    <div class="job-link-skeleton"></div>
+  </div>
+  <div id="job-links-error" class="job-links-error" style="display: none;">
+    <p class="error-message">Failed to load jobs</p>
+    <button id="retry-btn" class="btn btn-secondary">Retry</button>
+  </div>
+  <div id="job-links-list" class="job-links-list">
+    <p class="no-links">No job links available.</p>
+  </div>
+</div>
     
     <div class="section progress-section" id="progress-section" style="display: none;">
       <h3>Progress</h3>

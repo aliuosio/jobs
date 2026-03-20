@@ -39,8 +39,14 @@ async function handleMessage(message, sender) {
     case 'GET_STATUS':
       return handleGetStatus();
     
+    case 'GET_JOB_OFFERS':
+      return handleGetJobOffers(message.data);
+    
     case 'FIELD_FILLED':
       return handleFieldFilled(message.data, sender);
+
+    case 'UPDATE_APPLIED':
+      return handleUpdateApplied(message.data);
     
     case 'FILL_ERROR':
       return handleFillError(message.data, sender);
@@ -53,6 +59,80 @@ async function handleMessage(message, sender) {
           message: `Unknown message type: ${message.type}`
         }
       };
+  }
+}
+
+/**
+ * Handle update applied status for a job offer
+ */
+async function handleUpdateApplied(data) {
+  try {
+    const { job_offer_id, applied } = data;
+    console.log('[Background] UPDATE_APPLIED', job_offer_id, applied);
+    const response = await fetch(`${API_ENDPOINT}/job-offers/${job_offer_id}/process`, {
+      method: 'PATCH',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({ applied }),
+      signal: AbortSignal.timeout(10000)
+    });
+
+    if (!response.ok) {
+      const status = response.status;
+      const code = status === 404 ? 'NOT_FOUND' : 'API_ERROR';
+      let message = response.statusText || `API returned status ${status}`;
+      try {
+        const json = await response.json();
+        if (json && json.message) message = json.message;
+      } catch (e) {
+        // ignore JSON parse errors
+      }
+      return {
+        success: false,
+        error: { code, message }
+      };
+    }
+
+    // Try to parse JSON body if any (does not affect output)
+    try {
+      await response.json();
+    } catch {
+      // ignore if no JSON
+    }
+
+    return {
+      success: true,
+      job_offer_id,
+      applied
+    };
+  } catch (error) {
+    if (error.name === 'TimeoutError' || error.name === 'AbortError') {
+      return {
+        success: false,
+        error: {
+          code: 'API_TIMEOUT',
+          message: 'API request timed out after 10 seconds'
+        }
+      };
+    }
+    if (error.name === 'TypeError' && error.message.includes('fetch')) {
+      return {
+        success: false,
+        error: {
+          code: 'API_UNAVAILABLE',
+          message: `Cannot connect to ${API_ENDPOINT}`,
+          details: error.message
+        }
+      };
+    }
+    return {
+      success: false,
+      error: {
+        code: 'API_ERROR',
+        message: error.message
+      }
+    };
   }
 }
 
@@ -111,6 +191,75 @@ async function handleFillForm(data) {
       };
     }
     
+    if (error.name === 'TypeError' && error.message.includes('fetch')) {
+      return {
+        success: false,
+        error: {
+          code: 'API_UNAVAILABLE',
+          message: `Cannot connect to ${API_ENDPOINT}`,
+          details: error.message
+        }
+      };
+    }
+
+    return {
+      success: false,
+      error: {
+        code: 'API_ERROR',
+        message: error.message
+      }
+    };
+  }
+}
+
+/**
+ * Fetch job offers from backend with optional pagination
+ */
+async function handleGetJobOffers(data) {
+  try {
+    // Build URL with optional query parameters
+    const url = new URL(`${API_ENDPOINT}/job-offers`);
+    if (data && typeof data.limit !== 'undefined') {
+      url.searchParams.append('limit', String(data.limit));
+    }
+    if (data && typeof data.offset !== 'undefined') {
+      url.searchParams.append('offset', String(data.offset));
+    }
+
+    const response = await fetch(url.toString(), {
+      method: 'GET',
+      signal: AbortSignal.timeout(10000)
+    });
+
+    if (!response.ok) {
+      return {
+        success: false,
+        error: {
+          code: 'API_ERROR',
+          message: `API returned status ${response.status}`,
+          details: response.statusText
+        }
+      };
+    }
+
+    const json = await response.json();
+    // Normalize response to contract: { job_offers: [...] }
+    const offers = json.job_offers ?? json.offers ?? [];
+
+    return {
+      success: true,
+      job_offers: offers
+    };
+  } catch (error) {
+    if (error.name === 'TimeoutError' || error.name === 'AbortError') {
+      return {
+        success: false,
+        error: {
+          code: 'API_TIMEOUT',
+          message: 'API request timed out after 10 seconds'
+        }
+      };
+    }
     if (error.name === 'TypeError' && error.message.includes('fetch')) {
       return {
         success: false,
