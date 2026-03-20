@@ -95,4 +95,5 @@ AGENTS.md
 n8nac-config.json
 .specify
 .opencode/
-.shared/
+.shared/*
+!.shared/resume.html
