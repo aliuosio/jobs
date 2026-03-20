@@ -97,3 +97,4 @@ n8nac-config.json
 .opencode/
 .shared/*
 !.shared/resume.html
+!.shared/resume.pdf
