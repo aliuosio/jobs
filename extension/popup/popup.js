@@ -116,11 +116,22 @@ async function loadJobLinks() {
     const links = await fetchJobOffers();
     jobLinks = links;
     hideLoading();
-    renderJobLinksList(jobLinks);
+    // Filter to show only "not applied for" jobs (applied is false or null)
+    const notAppliedLinks = filterNotAppliedLinks(jobLinks);
+    renderJobLinksList(notAppliedLinks);
   } catch (err) {
     console.error('[Popup] loadJobLinks error:', err);
     showJobError('Failed to load jobs');
   }
+}
+
+/**
+ * Filter job links to show only "not applied for" jobs
+ * @param {Array} links
+ * @returns {Array} Filtered links where applied is false or null
+ */
+function filterNotAppliedLinks(links) {
+  return links.filter(link => !link.applied);
 }
 
 /**
@@ -461,7 +472,6 @@ async function handleStatusClick(jobId) {
   link.pending = true;
   const oldApplied = link.applied;
   link.applied = !oldApplied;
-  renderJobLinksList(jobLinks);
   
   try {
     const response = await browser.runtime.sendMessage({
@@ -472,14 +482,18 @@ async function handleStatusClick(jobId) {
     if (response.success) {
       link.pending = false;
       link.error = false;
+      
+      // Filter to show only "not applied for" jobs after successful update
+      const notAppliedLinks = filterNotAppliedLinks(jobLinks);
+      renderJobLinksList(notAppliedLinks);
     } else {
       // Revert on failure
       link.pending = false;
       link.applied = oldApplied;
       link.error = true;
       showToggleError('Failed to update status');
+      renderJobLinksList(jobLinks);
     }
-    renderJobLinksList(jobLinks);
   } catch (err) {
     // Revert on error
     link.pending = false;
