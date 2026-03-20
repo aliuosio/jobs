@@ -381,7 +381,7 @@ function renderJobLinksList(links) {
             data-job-id="${link.id}"
             title="${link.pending ? 'Updating...' : (link.applied ? 'Applied - click to mark as not applied' : 'Not applied - click to mark as applied')}"
             role="button" aria-label="${link.pending ? 'Updating...' : (link.applied ? 'Applied' : 'Not applied')}" ></span>
-      <a class="job-link-title" href="${link.url}" target="_blank" rel="noopener noreferrer" title="${link.title}" data-job-id="${link.id}">${link.title}</a>
+      <a class="job-link-title" href="${link.url}" title="${link.title}" data-job-id="${link.id}">${link.title}</a>
     </div>`;
   }).join('');
   

@@ -241,17 +241,17 @@ body {
 
 /* Refresh Section */
 .refresh-section {
-  padding-top: 12px;
+  padding-top: 20px;
   border-top: 1px solid #e5e7eb;
-  margin-top: 12px;
+  margin-top: 20px;
   display: flex;
-  justify-content: center;
+  justify-content: flex-end;
 }
 
 /* Small Button */
 .btn-small {
-  padding: 6px 12px;
-  font-size: 12px;
+  padding: 4px 10px;
+  font-size: 11px;
 }
 
 /* Error/Success Messages */
@@ -294,7 +294,7 @@ body {
  
 /* Job Links Section */
 .job-links-section {
-  max-height: 180px;
+  max-height: 220px;
   overflow-y: auto;
 }
 
