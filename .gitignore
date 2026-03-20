@@ -94,6 +94,5 @@ workflows/*
 AGENTS.md
 n8nac-config.json
 .specify
-.shared/
 .opencode/
-.sisyphus
+.shared/

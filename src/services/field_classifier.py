@@ -21,9 +21,11 @@ class SemanticFieldType(str, Enum):
     LAST_NAME = "last_name"
     EMAIL = "email"
     PHONE = "phone"
+    BIRTHDATE = "birthdate"
     CITY = "city"
     STREET = "street"
     ZIP = "zip"
+    POSTCODE = "postcode"
     COUNTRY = "country"
     GITHUB = "github"
     LINKEDIN = "linkedin"
@@ -63,6 +65,16 @@ PHONE_PATTERNS = [
     r"\bmobile\b",
     r"\bcell\b",
     r"\bcontact[\s_-]*number\b",
+    r"\btelefon\b",  # German
+]
+
+BIRTHDATE_PATTERNS = [
+    r"\bgeburtstag\b",
+    r"\bgeburtsdatum\b",
+    r"\bdate\s*of\s*birth\b",
+    r"\bbirthday\b",
+    r"\bdob\b",
+    r"\bbirth\s*date\b",
 ]
 
 CITY_PATTERNS = [
@@ -81,6 +93,13 @@ ZIP_PATTERNS = [
     r"\bzip\b",
     r"\bpostal\b",
     r"\bpostcode\b",
+]
+
+# Additional patterns to detect postcode fields at payload top level
+POSTCODE_PATTERNS = [
+    r"\bpostcode\b",
+    r"\bpostal\s*code\b",
+    r"\bzip\s*code\b",
 ]
 
 GITHUB_PATTERNS = [
@@ -102,10 +121,12 @@ AUTOCOMPLETE_MAP = {
     "tel": SemanticFieldType.PHONE,
     "tel-national": SemanticFieldType.PHONE,
     "tel-international": SemanticFieldType.PHONE,
+    "bday": SemanticFieldType.BIRTHDATE,
     "street-address": SemanticFieldType.STREET,
     "address-line1": SemanticFieldType.STREET,
+    "address-level2": SemanticFieldType.CITY,
     "city": SemanticFieldType.CITY,
-    "postal-code": SemanticFieldType.ZIP,
+    "postal-code": SemanticFieldType.POSTCODE,
     "country": SemanticFieldType.COUNTRY,
     "country-name": SemanticFieldType.COUNTRY,
     "url": SemanticFieldType.URL,
@@ -118,6 +139,20 @@ def _matches_patterns(text: str, patterns: list[str]) -> bool:
         return False
     text_lower = text.lower()
     return any(re.search(p, text_lower) for p in patterns)
+
+
+def _get_by_path(obj: Any, path: str) -> Any:
+    """Navigate a dotted path within a dict and return the value if present."""
+    if obj is None or not isinstance(obj, dict) or not path:
+        return None
+    parts = path.split(".")
+    current: Any = obj
+    for part in parts:
+        if isinstance(current, dict) and part in current:
+            current = current[part]
+        else:
+            return None
+    return current
 
 
 def classify_field_type(signals: dict[str, Any] | None) -> SemanticFieldType | None:
@@ -192,6 +227,10 @@ def classify_field_type(signals: dict[str, Any] | None) -> SemanticFieldType | N
         logger.debug(f"Classified as phone from patterns in: {combined_text}")
         return SemanticFieldType.PHONE
 
+    if _matches_patterns(combined_text, BIRTHDATE_PATTERNS):
+        logger.debug(f"Classified as birthdate from patterns in: {combined_text}")
+        return SemanticFieldType.BIRTHDATE
+
     if _matches_patterns(combined_text, CITY_PATTERNS):
         logger.debug(f"Classified as city from patterns in: {combined_text}")
         return SemanticFieldType.CITY
@@ -199,6 +238,11 @@ def classify_field_type(signals: dict[str, Any] | None) -> SemanticFieldType | N
     if _matches_patterns(combined_text, STREET_PATTERNS):
         logger.debug(f"Classified as street from patterns in: {combined_text}")
         return SemanticFieldType.STREET
+
+    # POSTCODE detection before ZIP detection (to prefer postcode semantics)
+    if _matches_patterns(combined_text, POSTCODE_PATTERNS):
+        logger.debug(f"Classified as postcode from patterns in: {combined_text}")
+        return SemanticFieldType.POSTCODE
 
     if _matches_patterns(combined_text, ZIP_PATTERNS):
         logger.debug(f"Classified as zip from patterns in: {combined_text}")
@@ -227,18 +271,22 @@ def get_profile_field_name(field_type: SemanticFieldType) -> str | None:
         The profile field path (e.g., "fn", "em", "ph") or None.
     """
     mapping = {
+        # Full name uses historic short flag
         SemanticFieldType.FULL_NAME: "fn",
-        SemanticFieldType.FIRST_NAME: "fn",  # Fall back to full name
-        SemanticFieldType.LAST_NAME: "fn",  # Fall back to full name
-        SemanticFieldType.EMAIL: "em",
-        SemanticFieldType.PHONE: "ph",
-        SemanticFieldType.CITY: "adr.city",
-        SemanticFieldType.STREET: "adr.st",
-        SemanticFieldType.ZIP: "adr.zip",
+        # Flat field mappings
+        SemanticFieldType.FIRST_NAME: "firstname",
+        SemanticFieldType.LAST_NAME: "lastname",
+        SemanticFieldType.EMAIL: "email",
+        SemanticFieldType.PHONE: "phone",
+        SemanticFieldType.BIRTHDATE: "birthdate",
+        SemanticFieldType.CITY: "city",
+        SemanticFieldType.STREET: "street",
+        SemanticFieldType.ZIP: "postcode",
+        SemanticFieldType.POSTCODE: "postcode",
         SemanticFieldType.COUNTRY: "adr.cc",
         SemanticFieldType.GITHUB: "social.gh",
         SemanticFieldType.LINKEDIN: "social.li",
-        SemanticFieldType.URL: None,  # No direct mapping, use RAG
+        SemanticFieldType.URL: None,
     }
     return mapping.get(field_type)
 
@@ -256,18 +304,33 @@ def extract_field_value_from_payload(
         The extracted field value or None if not found.
     """
     profile = payload.get("profile")
-    if profile:
-        field_path = get_profile_field_name(field_type)
-        if field_path:
-            parts = field_path.split(".")
-            value = profile
-            for part in parts:
-                if isinstance(value, dict):
-                    value = value.get(part)
-                else:
-                    return None
-            if value is not None:
-                return str(value) if value else None
+    # 1) Try flat top-level fields first for flat payloads
+    flat_field = get_profile_field_name(field_type)
+    if flat_field and "." not in flat_field:
+        if isinstance(payload, dict) and flat_field in payload:
+            val = payload.get(flat_field)
+            if val is not None:
+                return str(val)
+
+    # 2) Fallback to nested profile structure (backwards compatibility)
+    if profile and isinstance(profile, dict):
+        # ADDRESS fields commonly nested under profile.adr
+        if field_type == SemanticFieldType.CITY:
+            val = _get_by_path(profile, "adr.city")
+        elif field_type == SemanticFieldType.STREET:
+            val = _get_by_path(profile, "adr.st")
+        elif field_type in (SemanticFieldType.ZIP, SemanticFieldType.POSTCODE):
+            val = _get_by_path(profile, "adr.zip")
+        elif field_type == SemanticFieldType.FIRST_NAME:
+            val = _get_by_path(profile, "fn")
+        elif field_type == SemanticFieldType.LAST_NAME:
+            val = _get_by_path(profile, "ln")
+        elif field_type == SemanticFieldType.EMAIL:
+            val = _get_by_path(profile, "em")
+        else:
+            val = None
+        if val is not None:
+            return str(val)
 
     text = payload.get("text", "")
     if not text:
@@ -285,6 +348,9 @@ def extract_field_value_from_payload(
 
     if field_type == SemanticFieldType.PHONE:
         return _extract_phone_from_text(text)
+
+    if field_type == SemanticFieldType.BIRTHDATE:
+        return _extract_birthdate_from_text(text)
 
     if field_type == SemanticFieldType.GITHUB:
         return _extract_github_from_text(text)
@@ -332,6 +398,20 @@ def _extract_phone_from_text(text: str) -> str | None:
         r"\+\d{1,3}[-.\s]?\d{1,4}[-.\s]?\d{1,4}[-.\s]?\d{1,9}",
     ]
     for pattern in phone_patterns:
+        match = re.search(pattern, text)
+        if match:
+            return match.group(0)
+    return None
+
+
+def _extract_birthdate_from_text(text: str) -> str | None:
+    """Extract birthdate from text."""
+    birthdate_patterns = [
+        r"\b\d{1,2}[./]\d{1,2}[./]\d{2,4}\b",
+        r"\b\d{4}-\d{2}-\d{2}\b",
+        r"\b\d{1,2}\s+(?:Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)[a-z]*\s+\d{2,4}\b",
+    ]
+    for pattern in birthdate_patterns:
         match = re.search(pattern, text)
         if match:
             return match.group(0)

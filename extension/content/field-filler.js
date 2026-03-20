@@ -56,6 +56,7 @@ function fillField(element, value, options = {}) {
         fillContentEditable(element, actualValue);
         break;
       
+      case 'date':
       case 'textarea':
       case 'text':
       case 'email':

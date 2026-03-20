@@ -252,6 +252,81 @@ pytest tests/ -v
 
 For detailed testing instructions, see [Testing Guide](docs/testing-guide.md).
 
+### Six-Field Form Testing
+
+The system supports direct field extraction for six core form fields from flat payloads:
+
+| Field | Autocomplete Signal | Flat Field Name | Example Value |
+|-------|---------------------|-----------------|---------------|
+| First Name | `given-name` | `firstname` | `Osiozekha` |
+| Last Name | `family-name` | `lastname` | `Aliu` |
+| Email | `email` | `email` | `aliu@dev-hh.de` |
+| City | `address-level2` | `city` | `Hamburg` |
+| Postcode | `postal-code` | `postcode` | `22399` |
+| Street | `street-address` | `street` | `Schleusentwiete 1` |
+
+#### Testing All Six Fields
+
+```bash
+# Test First Name
+curl -X POST http://localhost:8000/fill-form \
+  -H "Content-Type: application/json" \
+  -d '{"label": "First Name", "signals": {"autocomplete": "given-name"}}'
+
+# Test Last Name
+curl -X POST http://localhost:8000/fill-form \
+  -H "Content-Type: application/json" \
+  -d '{"label": "Last Name", "signals": {"autocomplete": "family-name"}}'
+
+# Test Email
+curl -X POST http://localhost:8000/fill-form \
+  -H "Content-Type: application/json" \
+  -d '{"label": "Email", "signals": {"autocomplete": "email"}}'
+
+# Test City
+curl -X POST http://localhost:8000/fill-form \
+  -H "Content-Type: application/json" \
+  -d '{"label": "City", "signals": {"autocomplete": "address-level2"}}'
+
+# Test Postcode
+curl -X POST http://localhost:8000/fill-form \
+  -H "Content-Type: application/json" \
+  -d '{"label": "Postcode", "signals": {"autocomplete": "postal-code"}}'
+
+# Test Street
+curl -X POST http://localhost:8000/fill-form \
+  -H "Content-Type: application/json" \
+  -d '{"label": "Street", "signals": {"autocomplete": "street-address"}}'
+```
+
+#### Expected Response Format
+
+```json
+{
+  "answer": "Osiozekha",
+  "has_data": true,
+  "confidence": "high",
+  "context_chunks": 1,
+  "field_value": "Osiozekha",
+  "field_type": "first_name"
+}
+```
+
+#### Running Six-Field Tests
+
+```bash
+# Run unit tests for six-field classification
+pytest tests/unit/test_field_classifier_six_fields.py -v
+
+# Run integration tests for /fill-form endpoint
+pytest tests/integration/test_fill_form.py -v
+
+# Run end-to-end tests
+pytest tests/e2e/test_end2end_fill_form.py -v
+```
+
+See [specs/001-form-qa-field-testing/](specs/001-form-qa-field-testing/) for detailed specification and testing guidance.
+
 ### Local Development
 
 ```bash
