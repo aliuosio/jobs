@@ -268,24 +268,24 @@ def get_profile_field_name(field_type: SemanticFieldType) -> str | None:
         field_type: The classified semantic field type.
 
     Returns:
-        The profile field path (e.g., "fn", "em", "ph") or None.
+        The profile field path (e.g., "profile.fn", "profile.em") or None.
     """
     mapping = {
-        # Full name uses historic short flag
-        SemanticFieldType.FULL_NAME: "fn",
-        # Flat field mappings
-        SemanticFieldType.FIRST_NAME: "firstname",
-        SemanticFieldType.LAST_NAME: "lastname",
-        SemanticFieldType.EMAIL: "email",
-        SemanticFieldType.PHONE: "phone",
-        SemanticFieldType.BIRTHDATE: "birthdate",
-        SemanticFieldType.CITY: "city",
-        SemanticFieldType.STREET: "street",
-        SemanticFieldType.ZIP: "postcode",
-        SemanticFieldType.POSTCODE: "postcode",
-        SemanticFieldType.COUNTRY: "adr.cc",
-        SemanticFieldType.GITHUB: "social.gh",
-        SemanticFieldType.LINKEDIN: "social.li",
+        # Full name uses historic short flag from profile object
+        SemanticFieldType.FULL_NAME: "profile.fn",
+        # Personal data from nested profile structure (matches resume-import.md schema)
+        SemanticFieldType.FIRST_NAME: "profile.fn",
+        SemanticFieldType.LAST_NAME: "profile.fn",  # Extract from full name
+        SemanticFieldType.EMAIL: "profile.em",
+        SemanticFieldType.PHONE: "profile.ph",
+        SemanticFieldType.BIRTHDATE: "profile.birthdate",  # May need text extraction fallback
+        SemanticFieldType.CITY: "profile.adr.city",
+        SemanticFieldType.STREET: "profile.adr.st",
+        SemanticFieldType.ZIP: "profile.adr.zip",
+        SemanticFieldType.POSTCODE: "profile.adr.zip",
+        SemanticFieldType.COUNTRY: "profile.adr.cc",
+        SemanticFieldType.GITHUB: "profile.social.gh",
+        SemanticFieldType.LINKEDIN: "profile.social.li",
         SemanticFieldType.URL: None,
     }
     return mapping.get(field_type)
@@ -303,16 +303,15 @@ def extract_field_value_from_payload(
     Returns:
         The extracted field value or None if not found.
     """
-    profile = payload.get("profile")
-    # 1) Try flat top-level fields first for flat payloads
-    flat_field = get_profile_field_name(field_type)
-    if flat_field and "." not in flat_field:
-        if isinstance(payload, dict) and flat_field in payload:
-            val = payload.get(flat_field)
-            if val is not None:
-                return str(val)
+    # 1) Try direct field access using the updated field mappings
+    field_path = get_profile_field_name(field_type)
+    if field_path:
+        value = _get_by_path(payload, field_path)
+        if value is not None:
+            return str(value)
 
-    # 2) Fallback to nested profile structure (backwards compatibility)
+    # 2) Handle special cases for nested profile structure
+    profile = payload.get("profile")
     if profile and isinstance(profile, dict):
         # ADDRESS fields commonly nested under profile.adr
         if field_type == SemanticFieldType.CITY:
@@ -321,17 +320,33 @@ def extract_field_value_from_payload(
             val = _get_by_path(profile, "adr.st")
         elif field_type in (SemanticFieldType.ZIP, SemanticFieldType.POSTCODE):
             val = _get_by_path(profile, "adr.zip")
+        elif field_type == SemanticFieldType.COUNTRY:
+            val = _get_by_path(profile, "adr.cc")
+        elif field_type == SemanticFieldType.GITHUB:
+            val = _get_by_path(profile, "social.gh")
+        elif field_type == SemanticFieldType.LINKEDIN:
+            val = _get_by_path(profile, "social.li")
         elif field_type == SemanticFieldType.FIRST_NAME:
             val = _get_by_path(profile, "fn")
-        elif field_type == SemanticFieldType.LAST_NAME:
-            val = _get_by_path(profile, "ln")
         elif field_type == SemanticFieldType.EMAIL:
             val = _get_by_path(profile, "em")
+        elif field_type == SemanticFieldType.PHONE:
+            val = _get_by_path(profile, "ph")
+        elif field_type == SemanticFieldType.LAST_NAME:
+            # Extract lastname from full name (last word)
+            full_name = _get_by_path(profile, "fn")
+            if full_name:
+                name_parts = full_name.strip().split()
+                if len(name_parts) > 1:
+                    return name_parts[-1]  # Return last word as lastname
+                return full_name  # If only one name, use it as lastname
+            val = _get_by_path(profile, "ln")
         else:
             val = None
         if val is not None:
             return str(val)
 
+    # 3) Fallback to text extraction for remaining cases
     text = payload.get("text", "")
     if not text:
         return None
@@ -374,6 +389,22 @@ def _extract_name_from_text(text: str) -> str | None:
             words = name_part.split()
             if 2 <= len(words) <= 4:
                 return name_part
+
+    # Enhanced name extraction patterns
+    name_patterns = [
+        r"^(?:Name:)?\s*([A-Z][a-zA-Z]+\s+[A-Z][a-zA-Z]+)",  # "Name: John Doe" or "John Doe"
+        r"^([A-Z][a-zA-Z]+\s+[A-Z][a-zA-Z]+)",  # "John Doe" at start of line
+        r"Contact:\s*([A-Z][a-zA-Z]+\s+[A-Z][a-zA-Z]+)",  # "Contact: John Doe"
+    ]
+    
+    for pattern in name_patterns:
+        match = re.search(pattern, text, re.IGNORECASE)
+        if match:
+            name = match.group(1).strip()
+            # Validate it looks like a name (2-4 words, no numbers)
+            words = name.split()
+            if 2 <= len(words) <= 4 and not any(c.isdigit() for c in name):
+                return name
 
     contact_match = re.search(r"Contact:\s*([^|]+)", text, re.IGNORECASE)
     if contact_match:
