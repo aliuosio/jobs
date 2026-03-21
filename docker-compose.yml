@@ -136,8 +136,12 @@ services:
       - "11235:11235"
     volumes:
       - crawl4ai_data:/root/.crawl4ai
+      - ./.docker/crawl4ai/supervisord.conf:/app/supervisord.conf:ro
     env_file:
       - .env
+    environment:
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
     networks:
       - jobs
 

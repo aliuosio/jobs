@@ -32,6 +32,10 @@ class Settings(BaseSettings):
     )
     DATABASE_POOL_SIZE: int = 10
 
+    # Redis Configuration (for caching and pip cachecontrol)
+    REDIS_URL: str = "redis://redis:6379/0"
+    REDIS_ENABLED: bool = True
+
     class Config:
         env_file = ".env"
         env_file_encoding = "utf-8"
