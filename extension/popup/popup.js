@@ -766,20 +766,25 @@ async function handleStatusClick(jobId) {
       
       await persistJobOffersState();
       
-      const allLinks = getAllJobLinks(jobLinks);
-      renderJobLinksList(allLinks);
+      // Only show non-applied jobs after successful toggle
+      const notAppliedLinks = filterNotAppliedLinks(jobLinks);
+      renderJobLinksList(notAppliedLinks);
     } else {
       link.pending = false;
       link.applied = oldApplied;
       link.error = true;
       showToggleError('Failed to update status');
-      renderJobLinksList(jobLinks);
+      // Revert UI to show only non-applied jobs
+      const notAppliedLinks = filterNotAppliedLinks(jobLinks);
+      renderJobLinksList(notAppliedLinks);
     }
   } catch (err) {
     link.pending = false;
     link.applied = oldApplied;
     link.error = true;
-    renderJobLinksList(jobLinks);
+    // Revert UI to show only non-applied jobs
+    const notAppliedLinks = filterNotAppliedLinks(jobLinks);
+    renderJobLinksList(notAppliedLinks);
     showToggleError('Failed to update status');
   }
 }
