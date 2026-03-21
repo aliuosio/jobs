@@ -35,6 +35,16 @@
 }
 
 ---
+### Enhanced Personal Data Extraction Rules
+1. **Full Name Extraction:** Extract complete name from contact line. Split into first and last name if possible.
+2. **Email Extraction:** Look for email patterns in contact information.
+3. **Phone Extraction:** Extract phone numbers from contact line.
+4. **Address Extraction:** Parse city, street, and postal code from contact information.
+5. **Birthday/Experience:** Extract years of experience or age from text like "20 yrs Exp." and convert to birthdate if possible.
+6. **Salary Extraction:** Look for salary information in text (annual gross EUR).
+7. **Social Media:** Extract GitHub and LinkedIn URLs from contact information.
+
+---
 ### Strict Logic & Token Rules
 1. **Language:** "text" and "achieve" MUST be in English regardless of source.
 2. **Personal Block:** Extract exactly one "p" object. Split address into street, zip, city.
