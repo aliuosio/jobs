@@ -378,17 +378,12 @@ Run `/validate` endpoint and check each check result:
 - `url_format`: Check `MISTRAL_BASE_URL` format
 - `embedding_dimensions`: Verify API key is valid
 
-## Specifications
+## Todos
 
-This project is documented through detailed specifications:
-
-- **Spec 001**: Docker infrastructure setup
-- **Spec 002**: RAG backend implementation
-- **Spec 003**: Firefox extension development
-- **Spec 004**: Configuration validation
-- **Spec 005**: Label field type detection
-
-Each spec includes data models, plans, research notes, and implementation checklists.
+* verify resume input/output 
+* get job descriptions (optimise Crawler)
+* generate cover letter 
+* add cover letter generation to Extension
 
 ## License
 
