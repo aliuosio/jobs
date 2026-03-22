@@ -524,3 +524,9 @@ if (typeof module !== 'undefined' && module.exports) {
     } : null
   };
 }
+
+if (typeof window !== 'undefined') {
+  window.scanPage = scanPage;
+  window.scanForm = scanForm;
+  window.isElementFillable = isElementFillable;
+}

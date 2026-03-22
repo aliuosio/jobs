@@ -359,15 +359,6 @@ function filterJobLinks(links, showApplied) {
 }
 
 /**
- * Filter job links to show only "not applied for" jobs
- * @param {Array} links
- * @returns {Array} Filtered links where applied is false or null
- */
-function filterNotAppliedLinks(links) {
-  return links.filter(link => !link.applied);
-}
-
-/**
  * Restore show applied filter state from storage
  */
 async function restoreShowAppliedFilter() {
@@ -391,15 +382,6 @@ async function handleShowAppliedToggle() {
   await saveStateToStorage({ [STORAGE_KEYS.SHOW_APPLIED_FILTER]: showAppliedFilter });
   const filteredLinks = filterJobLinks(jobLinks, showAppliedFilter);
   renderJobLinksList(filteredLinks);
-}
-
-/**
- * Get all job links (including applied ones)
- * @param {Array} links
- * @returns {Array} All links
- */
-function getAllJobLinks(links) {
-  return links;
 }
 
 /**
@@ -613,20 +595,6 @@ function showSuccess(message) {
 }
 
 /**
- * Get dummy job links data
- * @returns {Array}
- */
-function getDummyJobLinks() {
-  return [
-    { id: '1', title: 'Senior Frontend Developer', url: 'https://example.com/jobs/1', status: 'new' },
-    { id: '2', title: 'Full Stack Engineer - React/Node', url: 'https://example.com/jobs/2', status: 'new' },
-    { id: '3', title: 'DevOps Engineer - Kubernetes', url: 'https://example.com/jobs/3', status: 'new' },
-    { id: '4', title: 'Backend Developer - Python', url: 'https://example.com/jobs/4', status: 'new' },
-    { id: '5', title: 'Mobile Developer - iOS/Swift', url: 'https://example.com/jobs/5', status: 'new' }
-  ];
-}
-
-/**
  * Load state from browser storage.local
  * @returns {Promise<Object>} Stored state object
  */
@@ -668,34 +636,6 @@ function isCacheStale(timestamp) {
   if (!timestamp) return true;
   const now = Date.now();
   return (now - timestamp) > STALE_THRESHOLD_MS;
-}
-
-/**
- * Migrate storage data if version mismatch detected
- * @param {Object} state - Current stored state
- * @returns {Promise<Object>} Migrated state
- */
-async function migrateStorageIfNeeded(state) {
-  const storedVersion = state[STORAGE_KEYS.STORAGE_VERSION] || 0;
-  
-  if (storedVersion === CURRENT_STORAGE_VERSION) {
-    return state;
-  }
-  
-  console.log('[Popup] Storage migration needed:', storedVersion, '->', CURRENT_STORAGE_VERSION);
-  
-  let migratedState = { ...state };
-  
-  migratedState[STORAGE_KEYS.STORAGE_VERSION] = CURRENT_STORAGE_VERSION;
-  
-  try {
-    await saveStateToStorage({ [STORAGE_KEYS.STORAGE_VERSION]: CURRENT_STORAGE_VERSION });
-    console.log('[Popup] Storage migration complete');
-  } catch (error) {
-    console.error('[Popup] Storage migration failed:', error);
-  }
-  
-  return migratedState;
 }
 
 /**

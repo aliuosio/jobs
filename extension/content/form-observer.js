@@ -201,17 +201,6 @@ class FormObserver {
     return path.join(' > ')
   }
 
-  _isFieldFillable(element) {
-    if (!element) return false
-    
-    if (element.type === 'password') return false
-    if (element.readOnly) return false
-    if (element.disabled) return false
-    if (element.type === 'hidden') return false
-    
-    return true
-  }
-
   scanForForms() {
     const forms = document.querySelectorAll('form')
     console.log('[FormObserver] scanForForms - found', forms.length, 'forms')

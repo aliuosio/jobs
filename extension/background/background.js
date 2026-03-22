@@ -6,7 +6,7 @@
  */
 
 const API_ENDPOINT = 'http://localhost:8000';
-const SSE_ENDPOINT = `${API_ENDPOINT}/api/v1/stream`;
+const SSE_ENDPOINT = `${API_ENDPOINT}/job-offers/stream`;
 
 // =============================================================================
 // SSE CLIENT (T019, T020, T022)
@@ -210,14 +210,6 @@ async function broadcastJobOffers(jobOffers) {
   }
 }
 
-/**
- * Get all job offers from memory map
- * @returns {Array} Array of job offers
- */
-function getJobOffersFromMap() {
-  return Array.from(jobOffersMap.values());
-}
-
 // Initialize SSE connection on startup
 connectSSE();
 
@@ -249,22 +241,20 @@ async function handleMessage(message, sender) {
       return handleFillAllForms(message.data);
     
     case 'SCAN_PAGE':
-      return handleScanPage(message.data);
+      const tabId = message.data?.tab_id;
+      if (!tabId) {
+        return { success: false, error: { code: 'INVALID_TAB', message: 'No tab ID provided' } };
+      }
+      return sendToContent(tabId, { type: 'DETECT_FIELDS' });
     
     case 'GET_STATUS':
       return handleGetStatus();
     
     case 'GET_JOB_OFFERS':
       return handleGetJobOffers(message.data);
-    
-    case 'FIELD_FILLED':
-      return handleFieldFilled(message.data, sender);
 
     case 'UPDATE_APPLIED':
       return handleUpdateApplied(message.data);
-    
-    case 'FILL_ERROR':
-      return handleFillError(message.data, sender);
     
     default:
       return {
@@ -609,26 +599,6 @@ async function handleFillAllForms(data) {
 }
 
 /**
- * Handle page scan request
- */
-async function handleScanPage(data) {
-  const { tab_id } = data;
-  
-  try {
-    const response = await sendToContent(tab_id, { type: 'DETECT_FIELDS' });
-    return response;
-  } catch (error) {
-    return {
-      success: false,
-      error: {
-        code: 'CONTENT_SCRIPT_NOT_LOADED',
-        message: 'Content script not ready or tab not accessible'
-      }
-    };
-  }
-}
-
-/**
  * Handle get status request
  */
 async function handleGetStatus() {
@@ -655,44 +625,56 @@ async function handleGetStatus() {
   };
 }
 
-/**
- * Handle field filled notification from content script
- */
-async function handleFieldFilled(data, sender) {
-  // Update extension storage with fill statistics
-  const stats = await browser.storage.local.get(['totalFieldsFilled', 'lastFillTime']);
-  await browser.storage.local.set({
-    totalFieldsFilled: (stats.totalFieldsFilled || 0) + 1,
-    lastFillTime: Date.now()
-  });
-
-  return { success: true };
-}
-
-/**
- * Handle fill error notification from content script
- */
-async function handleFillError(data, sender) {
-  console.error('[Background] Fill error:', data);
-  return { success: true };
-}
-
-/**
- * Send message to content script in specific tab
- */
-async function sendToContent(tabId, message) {
+async function sendToContent(tabId, message, maxRetries = 3, baseDelayMs = 500) {
   try {
-    const response = await browser.tabs.sendMessage(tabId, message);
-    return response;
-  } catch (error) {
+    const tab = await browser.tabs.get(tabId);
+    
+    if (tab.url && (
+      tab.url.startsWith('about:') ||
+      tab.url.startsWith('chrome:') ||
+      tab.url.startsWith('file:') ||
+      tab.url.startsWith('moz-extension:')
+    )) {
+      return {
+        success: false,
+        error: {
+          code: 'INVALID_TAB_URL',
+          message: `Cannot inject content script into ${tab.url}`
+        }
+      };
+    }
+  } catch (err) {
     return {
       success: false,
       error: {
-        code: 'CONTENT_SCRIPT_NOT_LOADED',
-        message: 'Content script not ready'
+        code: 'TAB_NOT_FOUND',
+        message: 'Tab not found or inaccessible'
       }
     };
   }
+
+  let lastError = null;
+  for (let attempt = 0; attempt < maxRetries; attempt++) {
+    try {
+      const response = await browser.tabs.sendMessage(tabId, message);
+      return response;
+    } catch (error) {
+      lastError = error;
+      
+      if (attempt < maxRetries - 1) {
+        const delay = baseDelayMs * Math.pow(2, attempt);
+        await sleep(delay);
+      }
+    }
+  }
+
+  return {
+    success: false,
+    error: {
+      code: 'CONTENT_SCRIPT_NOT_LOADED',
+      message: 'Content script not ready. Try reloading the extension.'
+    }
+  };
 }
 
 /**

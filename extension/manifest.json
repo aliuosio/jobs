@@ -33,7 +33,6 @@
       "matches": ["<all_urls>"],
       "js": [
         "content/signal-extractor.js",
-        "content/api-client.js",
         "content/form-scanner.js",
         "content/field-filler.js",
         "content/form-observer.js",
