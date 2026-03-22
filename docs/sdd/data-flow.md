@@ -1,8 +1,8 @@
 # Software Design Document: Data Flow
 
 **Project**: Job Forms Helper  
-**Version**: 1.0.0  
-**Last Updated**: 2026-03-19
+**Version**: 1.1.0  
+**Last Updated**: 2026-03-22
 
 ## 1. RAG Pipeline Overview
 
@@ -158,3 +158,100 @@ Context: "[1] 5 years of experience at TechCorp developing Python applications..
 - CORS enabled for extension origins only
 - Input validation via Pydantic constraints
 - No authentication required for API endpoints (internal service)
+
+---
+
+## 9. Job Status Sync Feature (v1.1.0)
+
+### Overview
+
+The Job Status Sync feature provides real-time synchronization of job application status between the Firefox extension and the backend API using Server-Sent Events (SSE).
+
+### Architecture
+
+```
+┌─────────────────────────────────────────────────────────────────────────────┐
+│                        Job Status Sync Architecture                            │
+├─────────────────────────────────────────────────────────────────────────────┘
+
+┌──────────────┐          ┌──────────────────┐          ┌──────────────────┐
+│   Firefox    │          │   FastAPI        │          │   PostgreSQL     │
+│   Extension  │          │   Backend        │          │   Database       │
+│              │          │                  │          │                  │
+│  Background  │◄────────►│  SSE Endpoint    │◄───────►│  job_offers      │
+│  (SSE Client)│   SSE    │  /api/v1/stream  │   Query │  job_offers_     │
+│              │          │                  │          │  process         │
+│  Popup UI    │◄──msg───│                  │          │                  │
+│              │          │                  │          │                  │
+└──────────────┘          └──────────────────┘          └──────────────────┘
+```
+
+### Data Flow
+
+1. **Extension Startup**: Background script establishes SSE connection to `/api/v1/stream`
+2. **Initial State**: SSE sends current job offers with process data
+3. **User Action**: User toggles applied status in extension
+4. **API Update**: PATCH `/job-offers/{id}/process` updates database
+5. **Broadcast**: Backend broadcasts updated data to all SSE subscribers
+6. **UI Update**: Extension receives update via SSE and refreshes popup
+
+### SSE Endpoint
+
+**Endpoint**: `GET /api/v1/stream`
+
+**Headers**:
+- `Content-Type: text/event-stream`
+- `Cache-Control: no-cache`
+- `Connection: keep-alive`
+
+**Message Format**:
+```json
+data: [{"id": 1, "title": "Job Title", "url": "https://...", "process": {"applied": true}}]
+```
+
+### Reconnection Strategy
+
+The extension implements exponential backoff reconnection:
+- Base delay: 1000ms
+- Max delay: 30000ms
+- Jitter: ±25%
+- Max attempts: unlimited (0)
+
+### Success Criteria (per spec)
+
+| Criterion | Target | Verification |
+|-----------|--------|--------------|
+| SC-001: Accuracy | ≥95% | Without manual refresh |
+| SC-002: Process Data | 100% | All records with process |
+| SC-003: Update Latency | ≤1s | SSE to database change |
+| SC-004: Error Recovery | ≤2s | Empty state display |
+| SC-005: UI Update | ≤1s | After SSE event |
+
+### Database Schema
+
+```sql
+-- job_offers_process table
+CREATE TABLE job_offers_process (
+    id SERIAL PRIMARY KEY,
+    job_offers_id INTEGER REFERENCES job_offers(id),
+    research BOOLEAN DEFAULT false,
+    research_email BOOLEAN DEFAULT false,
+    applied BOOLEAN DEFAULT false,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+-- Updated via ON CONFLICT for last-write-wins
+INSERT INTO job_offers_process (job_offers_id, applied)
+VALUES ($1, $2)
+ON CONFLICT (job_offers_id) DO UPDATE SET
+    applied = $2,
+    updated_at = CURRENT_TIMESTAMP;
+```
+
+### Color Coding
+
+| Status | Color | Hex |
+|--------|-------|-----|
+| Not Applied | Green | #22C55E |
+| Applied | Red | #EF4444 |

@@ -1,10 +1,13 @@
 """API route handlers for RAG Backend."""
 
+import asyncio
+import json
 import logging
 import time
 from typing import Any
 
 from fastapi import APIRouter, HTTPException, Request
+from starlette.responses import StreamingResponse
 
 from src.api.schemas import (
     AnswerRequest,
@@ -48,14 +51,11 @@ def _assemble_context(chunks: list[dict]) -> str:
     return "\n".join(context_parts)
 
 
-def _extract_direct_field_value(
-    chunks: list[dict], field_type: SemanticFieldType
-) -> str | None:
+def _extract_direct_field_value(chunks: list[dict], field_type: SemanticFieldType) -> str | None:
     for chunk in chunks:
         payload = chunk.get("payload", {})
         if payload.get("profile") or any(
-            k in payload
-            for k in ["firstname", "lastname", "email", "city", "postcode", "street"]
+            k in payload for k in ["firstname", "lastname", "email", "city", "postcode", "street"]
         ):
             value = extract_field_value_from_payload(payload, field_type)
             if value:
@@ -96,9 +96,7 @@ async def fill_form(request: Request, answer_request: AnswerRequest) -> AnswerRe
     content_length = request.headers.get("content-length")
     if content_length and int(content_length) > 10240:
         logger.warning(f"Request payload too large: {content_length} bytes")
-        raise HTTPException(
-            status_code=413, detail="Request payload exceeds 10KB limit"
-        )
+        raise HTTPException(status_code=413, detail="Request payload exceeds 10KB limit")
 
     label = answer_request.label
     signals = answer_request.signals
@@ -153,9 +151,7 @@ async def fill_form(request: Request, answer_request: AnswerRequest) -> AnswerRe
                 profile_chunk = await retriever.get_profile_chunk()
                 if profile_chunk:
                     chunks.insert(0, profile_chunk)
-                    field_value = _extract_direct_field_value(
-                        [profile_chunk], field_type
-                    )
+                    field_value = _extract_direct_field_value([profile_chunk], field_type)
             extraction_latency_ms = (time.time() - extraction_start) * 1000
 
             if field_value:
@@ -223,9 +219,7 @@ async def get_job_offers(
 
     try:
         offers = await job_offers_service.get_job_offers(limit=limit, offset=offset)
-        return JobOffersListResponse(
-            job_offers=[JobOfferWithProcess(**o) for o in offers]
-        )
+        return JobOffersListResponse(job_offers=[JobOfferWithProcess(**o) for o in offers])
     except PostgresError as e:
         logger.error(f"[job-offers] database_error: {e}")
         raise HTTPException(status_code=503, detail="Database temporarily unavailable")
@@ -259,9 +253,7 @@ async def update_job_offer_process(
     from src.services.job_offers import job_offers_service
 
     if job_offer_id <= 0:
-        raise HTTPException(
-            status_code=400, detail="Job offer ID must be a positive integer"
-        )
+        raise HTTPException(status_code=400, detail="Job offer ID must be a positive integer")
 
     logger.info(
         f"[job-offers-process] updating job_offer_id={job_offer_id} "
@@ -271,7 +263,7 @@ async def update_job_offer_process(
     )
 
     try:
-        result = await job_offers_service.update_job_offer_process(
+        result = await job_offers_service.update_and_broadcast(
             job_offer_id=job_offer_id,
             research=update_request.research,
             research_email=update_request.research_email,
@@ -279,9 +271,7 @@ async def update_job_offer_process(
         )
 
         if result is None:
-            logger.warning(
-                f"[job-offers-process] not_found job_offer_id={job_offer_id}"
-            )
+            logger.warning(f"[job-offers-process] not_found job_offer_id={job_offer_id}")
             raise HTTPException(status_code=404, detail="Job offer not found")
 
         logger.info(f"[job-offers-process] success job_offer_id={job_offer_id}")
@@ -295,3 +285,62 @@ async def update_job_offer_process(
     except Exception as e:
         logger.error(f"[job-offers-process] unexpected_error: {e}", exc_info=True)
         raise HTTPException(status_code=500, detail="Internal server error")
+
+
+@router.get(
+    "/api/v1/stream",
+    tags=["job-offers"],
+)
+async def stream_job_offers():
+    """Server-Sent Events endpoint for real-time job offer updates.
+
+    Streams the complete list of job offers with process data to clients.
+    Broadcasts updates whenever any job offer process data changes.
+    """
+    from src.services.job_offers import job_offers_service
+
+    async def event_generator():
+        # Subscribe to updates
+        queue = await job_offers_service.subscribe()
+
+        try:
+            # Send initial state immediately
+            initial_data = await job_offers_service.get_all_job_offers_for_broadcast()
+            yield f"data: {json.dumps(initial_data)}\n\n"
+
+            # Keep connection alive with periodic heartbeat
+            heartbeat_interval = 30  # seconds
+            last_heartbeat = time.time()
+
+            while True:
+                try:
+                    # Wait for updates with timeout for heartbeat
+                    data = await asyncio.wait_for(queue.get(), timeout=1.0)
+
+                    # Send SSE message
+                    yield f"data: {json.dumps(data)}\n\n"
+                    last_heartbeat = time.time()
+
+                except asyncio.TimeoutError:
+                    # Send heartbeat comment to keep connection alive
+                    current_time = time.time()
+                    if current_time - last_heartbeat >= heartbeat_interval:
+                        yield f": heartbeat\n\n"
+                        last_heartbeat = current_time
+
+        except asyncio.CancelledError:
+            logger.info("[stream] Client disconnected")
+        finally:
+            # Unsubscribe on disconnect
+            await job_offers_service.unsubscribe(queue)
+            logger.info("[stream] Client unsubscribed")
+
+    return StreamingResponse(
+        event_generator(),
+        media_type="text/event-stream",
+        headers={
+            "Cache-Control": "no-cache",
+            "Connection": "keep-alive",
+            "X-Accel-Buffering": "no",  # Disable nginx buffering
+        },
+    )

@@ -1,5 +1,6 @@
 """Database service for job offers data retrieval from PostgreSQL."""
 
+import asyncio
 import logging
 from typing import Any
 
@@ -11,19 +12,108 @@ logger = logging.getLogger(__name__)
 
 
 class JobOffersService:
-    """Async PostgreSQL service for job offers data."""
+    """Async PostgreSQL service for job offers data with SSE broadcast support."""
 
     def __init__(self) -> None:
         self._pool: asyncpg.Pool | None = None
+        self._broadcast_queue: asyncio.Queue | None = None
+        self._subscribers: list[asyncio.Queue] = []
 
     async def connect(self) -> None:
-        """Initialize database connection pool."""
+        """Initialize database connection pool and broadcast queue."""
         self._pool = await asyncpg.create_pool(
             settings.DATABASE_URL,
             min_size=1,
             max_size=settings.DATABASE_POOL_SIZE,
         )
+        self._broadcast_queue = asyncio.Queue()
+        self._subscribers = []
         logger.info("Connected to PostgreSQL database 'n8n'")
+
+    async def subscribe(self) -> asyncio.Queue:
+        """Subscribe to job offer updates.
+
+        Returns:
+            Queue that will receive job offer updates.
+        """
+        if self._broadcast_queue is None:
+            raise RuntimeError("Service not connected")
+        queue: asyncio.Queue = asyncio.Queue()
+        self._subscribers.append(queue)
+        logger.info(f"SSE client subscribed (total: {len(self._subscribers)})")
+        return queue
+
+    async def unsubscribe(self, queue: asyncio.Queue) -> None:
+        """Unsubscribe from job offer updates.
+
+        Args:
+            queue: The queue to remove from subscribers.
+        """
+        if queue in self._subscribers:
+            self._subscribers.remove(queue)
+            logger.info(f"SSE client unsubscribed (total: {len(self._subscribers)})")
+
+    async def broadcast(self, data: list[dict[str, Any]]) -> None:
+        """Broadcast job offer data to all subscribers.
+
+        Args:
+            data: List of job offers with process data.
+        """
+        if not self._subscribers:
+            return
+        for queue in self._subscribers:
+            try:
+                queue.put_nowait(data)
+            except asyncio.QueueFull:
+                logger.warning("SSE queue full, dropping message")
+        logger.debug(f"Broadcast to {len(self._subscribers)} subscribers")
+
+    async def get_all_job_offers_for_broadcast(self) -> list[dict[str, Any]]:
+        """Get all job offers for broadcasting.
+
+        Returns:
+            List of job offers with process data (same format as get_job_offers).
+        """
+        if not self._pool:
+            raise RuntimeError("Database pool not initialized")
+
+        query = """
+            SELECT
+                jo.id,
+                jo.title,
+                jo.url,
+                jop.id as process_id,
+                jop.job_offers_id,
+                jop.research,
+                jop.research_email,
+                jop.applied
+            FROM job_offers jo
+            LEFT JOIN job_offers_process jop ON jo.id = jop.job_offers_id
+            ORDER BY jo.id ASC
+        """
+
+        async with self._pool.acquire() as conn:
+            rows = await conn.fetch(query)
+
+        result = []
+        for row in rows:
+            row_dict = dict(row)
+            process_data = {
+                "process_id": row_dict.pop("process_id"),
+                "job_offers_id": row_dict.pop("job_offers_id"),
+                "research": row_dict.pop("research"),
+                "research_email": row_dict.pop("research_email"),
+                "applied": row_dict.pop("applied"),
+            }
+            job_offer = {
+                "id": row_dict.pop("id"),
+                "title": row_dict.pop("title"),
+                "url": row_dict.pop("url"),
+                "process": process_data if process_data["job_offers_id"] is not None else None,
+            }
+            result.append(job_offer)
+
+        return result
 
     async def close(self) -> None:
         """Close database connection pool."""
@@ -87,9 +177,7 @@ class JobOffersService:
                 "id": row_dict.pop("id"),
                 "title": row_dict.pop("title"),
                 "url": row_dict.pop("url"),
-                "process": process_data
-                if process_data["job_offers_id"] is not None
-                else None,
+                "process": process_data if process_data["job_offers_id"] is not None else None,
             }
             result.append(job_offer)
 
@@ -163,6 +251,29 @@ class JobOffersService:
                         "applied": process_row["applied"],
                     },
                 }
+
+    async def update_and_broadcast(
+        self,
+        job_offer_id: int,
+        research: bool | None = None,
+        research_email: bool | None = None,
+        applied: bool | None = None,
+    ) -> dict[str, Any] | None:
+        """Update job offer process and broadcast to all SSE subscribers.
+
+        Combines update and broadcast into atomic operation.
+        """
+        result = await self.update_job_offer_process(
+            job_offer_id=job_offer_id,
+            research=research,
+            research_email=research_email,
+            applied=applied,
+        )
+        if result:
+            # Broadcast full state after any update
+            all_offers = await self.get_all_job_offers_for_broadcast()
+            await self.broadcast(all_offers)
+        return result
 
 
 job_offers_service = JobOffersService()

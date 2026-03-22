@@ -16,7 +16,8 @@ const STORAGE_KEYS = {
   LAST_TAB: 'lastTab',
   STORAGE_VERSION: 'storageVersion',
   LAST_CLICKED_JOB_ID: 'lastClickedJobId',
-  SHOW_APPLIED_FILTER: 'showAppliedFilter'
+  SHOW_APPLIED_FILTER: 'showAppliedFilter',
+  SSE_STATUS: 'sseStatus'
 };
 
 /** @type {number} Stale threshold in milliseconds (1 hour) */
@@ -45,6 +46,8 @@ let lastClickedJobId = null;
 let currentUrl = null;
 /** @type {boolean} Filter state for showing applied jobs */
 let showAppliedFilter = false;
+/** @type {string} SSE connection status */
+let sseStatus = 'disconnected';
 
 // DOM Elements
 const elements = {
@@ -89,12 +92,64 @@ async function init() {
   currentUrl = tab.url;
   
   setupEventListeners();
+  setupSSEMessageListener();
   
   await restoreTabPreference();
   await restoreLastClickedJobId();
   await restoreFormFieldsState();
   await restoreShowAppliedFilter();
   await loadJobLinks();
+}
+
+/**
+ * Set up listener for SSE updates from background script
+ */
+function setupSSEMessageListener() {
+  browser.runtime.onMessage.addListener((message, sender, sendResponse) => {
+    if (message.type === 'JOB_OFFERS_UPDATE') {
+      handleJobOffersUpdate(message.data);
+      return false;
+    }
+    if (message.type === 'SSE_STATUS_CHANGE') {
+      handleSSEStatusChange(message.data);
+      return false;
+    }
+  });
+}
+
+/**
+ * Handle job offers update from SSE
+ * @param {Object} data - { jobOffers: Array, timestamp: number }
+ */
+function handleJobOffersUpdate(data) {
+  const { jobOffers } = data;
+  console.log('[Popup] SSE update received:', jobOffers.length, 'offers');
+  
+  jobLinks = jobOffers.map(offer => ({
+    id: offer.id,
+    title: offer.title,
+    url: offer.url,
+    applied: offer.process?.applied ?? false,
+    pending: false,
+    error: false
+  }));
+  
+  const filteredLinks = filterJobLinks(jobLinks, showAppliedFilter);
+  renderJobLinksList(filteredLinks);
+  cacheJobOffers();
+}
+
+/**
+ * Handle SSE connection status change
+ * @param {Object} data - { status: string, timestamp: number }
+ */
+function handleSSEStatusChange(data) {
+  sseStatus = data.status;
+  console.log('[Popup] SSE status changed:', sseStatus);
+  
+  if (data.status === 'disconnected') {
+    updateStaleIndicator(true);
+  }
 }
 
 /**

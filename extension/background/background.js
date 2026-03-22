@@ -2,9 +2,224 @@
  * Background Service Worker for Job Forms Helper
  * Handles message routing between popup and content scripts
  * Manages API communication and extension state
+ * Supports SSE for real-time job offer updates
  */
 
 const API_ENDPOINT = 'http://localhost:8000';
+const SSE_ENDPOINT = `${API_ENDPOINT}/api/v1/stream`;
+
+// =============================================================================
+// SSE CLIENT (T019, T020, T022)
+// =============================================================================
+
+/** @type {?EventSource} Current SSE connection */
+let eventSource = null;
+
+/** @type {number} Current reconnection attempt count */
+let reconnectAttempts = 0;
+
+/** @type {?number} Reconnection timeout ID */
+let reconnectTimeout = null;
+
+/** @type {string} Current connection status */
+let connectionStatus = 'disconnected';
+
+/** @type {Map<number, Object>} In-memory map of job offer ID to latest process data */
+const jobOffersMap = new Map();
+
+/** @type {number} Maximum reconnection attempts before giving up (0 = infinite) */
+const MAX_RECONNECT_ATTEMPTS = 0;
+
+/** @type {number} Base delay for exponential backoff in milliseconds */
+const BASE_RECONNECT_DELAY_MS = 1000;
+
+/** @type {number} Maximum delay for exponential backoff in milliseconds */
+const MAX_RECONNECT_DELAY_MS = 30000;
+
+/** @type {number} SSE connection timeout in milliseconds */
+const SSE_TIMEOUT_MS = 60000;
+
+/**
+ * Get current connection status
+ * @returns {string} 'connected' | 'disconnected' | 'reconnecting'
+ */
+function getConnectionStatus() {
+  return connectionStatus;
+}
+
+/**
+ * Update connection status and notify all tabs
+ * @param {string} status - New connection status
+ */
+async function updateConnectionStatus(status) {
+  connectionStatus = status;
+  // Notify popup of status change
+  try {
+    const tabs = await browser.tabs.query({});
+    for (const tab of tabs) {
+      browser.tabs.sendMessage(tab.id, {
+        type: 'SSE_STATUS_CHANGE',
+        data: { status, timestamp: Date.now() }
+      }).catch(() => {});
+    }
+  } catch {
+    // Ignore errors when notifying
+  }
+}
+
+/**
+ * Calculate delay with exponential backoff
+ * @returns {number} Delay in milliseconds
+ */
+function calculateBackoffDelay() {
+  const delay = Math.min(
+    BASE_RECONNECT_DELAY_MS * Math.pow(2, reconnectAttempts),
+    MAX_RECONNECT_DELAY_MS
+  );
+  // Add jitter (±25%)
+  const jitter = delay * 0.25 * (Math.random() * 2 - 1);
+  return Math.floor(delay + jitter);
+}
+
+/**
+ * Connect to SSE endpoint
+ */
+function connectSSE() {
+  if (eventSource) {
+    eventSource.close();
+  }
+
+  updateConnectionStatus('reconnecting');
+  console.log('[Background] Connecting to SSE:', SSE_ENDPOINT);
+
+  try {
+    eventSource = new EventSource(SSE_ENDPOINT);
+
+    // Handle successful connection
+    eventSource.onopen = () => {
+      console.log('[Background] SSE connected');
+      reconnectAttempts = 0;
+      updateConnectionStatus('connected');
+    };
+
+    // Handle messages
+    eventSource.onmessage = (event) => {
+      try {
+        const jobOffers = JSON.parse(event.data);
+      } catch (err) {
+        console.error('[Background] Malformed JSON in SSE message:', err);
+        return;
+      }
+      
+      if (!Array.isArray(jobOffers)) {
+        console.error('[Background] Expected array in SSE message, got:', typeof jobOffers);
+        return;
+      }
+      
+      console.log('[Background] SSE received', jobOffers.length, 'job offers');
+
+      // Update in-memory map
+      for (const offer of jobOffers) {
+        if (offer && typeof offer.id !== 'undefined') {
+          jobOffersMap.set(offer.id, offer);
+        }
+      }
+
+      // Broadcast to all tabs
+      broadcastJobOffers(jobOffers);
+    };
+
+    // Handle errors
+    eventSource.onerror = (err) => {
+      console.error('[Background] SSE error:', err);
+      updateConnectionStatus('disconnected');
+
+      // Don't reconnect if connection was intentionally closed
+      if (eventSource && eventSource.readyState === EventSource.CLOSED) {
+        return;
+      }
+
+      // Attempt reconnection with exponential backoff
+      scheduleReconnect();
+    };
+  } catch (err) {
+    console.error('[Background] Failed to create EventSource:', err);
+    scheduleReconnect();
+  }
+}
+
+/**
+ * Schedule reconnection with exponential backoff
+ */
+function scheduleReconnect() {
+  if (reconnectTimeout) {
+    clearTimeout(reconnectTimeout);
+  }
+
+  // Check if max attempts reached
+  if (MAX_RECONNECT_ATTEMPTS > 0 && reconnectAttempts >= MAX_RECONNECT_ATTEMPTS) {
+    console.log('[Background] Max reconnection attempts reached');
+    updateConnectionStatus('disconnected');
+    return;
+  }
+
+  const delay = calculateBackoffDelay();
+  reconnectAttempts++;
+  console.log(`[Background] Scheduling reconnect in ${delay}ms (attempt ${reconnectAttempts})`);
+
+  reconnectTimeout = setTimeout(() => {
+    connectSSE();
+  }, delay);
+}
+
+/**
+ * Disconnect from SSE endpoint
+ */
+function disconnectSSE() {
+  if (reconnectTimeout) {
+    clearTimeout(reconnectTimeout);
+    reconnectTimeout = null;
+  }
+
+  if (eventSource) {
+    eventSource.close();
+    eventSource = null;
+  }
+
+  updateConnectionStatus('disconnected');
+  console.log('[Background] SSE disconnected');
+}
+
+/**
+ * Broadcast job offers to all open popup tabs
+ * @param {Array} jobOffers - Array of job offers with process data
+ */
+async function broadcastJobOffers(jobOffers) {
+  try {
+    const tabs = await browser.tabs.query({});
+    for (const tab of tabs) {
+      browser.tabs.sendMessage(tab.id, {
+        type: 'JOB_OFFERS_UPDATE',
+        data: { jobOffers, timestamp: Date.now() }
+      }).catch(() => {
+        // Tab might not have content script loaded
+      });
+    }
+  } catch (err) {
+    console.error('[Background] Failed to broadcast job offers:', err);
+  }
+}
+
+/**
+ * Get all job offers from memory map
+ * @returns {Array} Array of job offers
+ */
+function getJobOffersFromMap() {
+  return Array.from(jobOffersMap.values());
+}
+
+// Initialize SSE connection on startup
+connectSSE();
 
 /**
  * Message handler for all extension messages
