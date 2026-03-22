@@ -41,9 +41,7 @@ class RetrieverService:
             self.client = None
             logger.info("Closed Qdrant connection")
 
-    async def search(
-        self, query_vector: list[float], k: int | None = None
-    ) -> list[dict[str, Any]]:
+    async def search(self, query_vector: list[float], k: int | None = None) -> list[dict[str, Any]]:
         """Search for top-k similar vectors in the collection.
 
         Args:
@@ -60,9 +58,7 @@ class RetrieverService:
             raise RuntimeError("RetrieverService not connected. Call connect() first.")
 
         k = k or settings.RETRIEVAL_K
-        logger.info(
-            f"Searching for top {k} results in collection {settings.QDRANT_COLLECTION}"
-        )
+        logger.info(f"Searching for top {k} results in collection {settings.QDRANT_COLLECTION}")
 
         try:
             response = await self.client.query_points(
@@ -96,9 +92,7 @@ class RetrieverService:
         if not self.client:
             raise RuntimeError("RetrieverService not connected. Call connect() first.")
 
-        logger.info(
-            f"Fetching profile chunk from collection {settings.QDRANT_COLLECTION}"
-        )
+        logger.info(f"Fetching profile chunk from collection {settings.QDRANT_COLLECTION}")
 
         try:
             result = await self.client.scroll(
@@ -119,9 +113,6 @@ class RetrieverService:
                 }
 
             logger.info("No profile chunk found")
-            return None
-        except Exception as e:
-            logger.error(f"Error fetching profile chunk: {e}")
             return None
         except Exception as e:
             logger.error(f"Error fetching profile chunk: {e}")
