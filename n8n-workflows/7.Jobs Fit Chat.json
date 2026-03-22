@@ -1,0 +1,340 @@
+{
+  "name": "7.Jobs Fit Chat",
+  "nodes": [
+    {
+      "parameters": {
+        "description": "Internal reasoning tool for the AI agent. Scores job postings against the user’s profile from the Vector Store, producing an integer match percentage and a concise explanation. Also answers recruiter questions about skills and experience. All reasoning is internal; outputs are factual, deterministic, and based only on Vector Store data."
+      },
+      "type": "@n8n/n8n-nodes-langchain.toolThink",
+      "typeVersion": 1,
+      "position": [
+        928,
+        224
+      ],
+      "id": "82848ef2-d04e-4717-ad24-92f3f7c231b0",
+      "name": "Think"
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "={{ $('Chat').item.json.chatInput }}",
+        "options": {
+          "systemMessage": "={{ $json.prompt }}",
+          "maxIterations": 30
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 3.1,
+      "position": [
+        800,
+        0
+      ],
+      "id": "db7ecb74-1d19-4fc2-94c3-259edb12463a",
+      "name": "Jobs Fit"
+    },
+    {
+      "parameters": {
+        "public": true,
+        "mode": "webhook",
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.chatTrigger",
+      "typeVersion": 1.4,
+      "position": [
+        0,
+        0
+      ],
+      "id": "e3de6a92-40b3-489f-9d12-30206ad3c266",
+      "name": "Chat",
+      "webhookId": "2faf8edb-f103-4860-8ef5-6b95814421eb"
+    },
+    {
+      "parameters": {
+        "mode": "retrieve-as-tool",
+        "toolDescription": "# Qdrant Vector Store – Kandidaten-Skills\n\n**Beschreibung:**  \nDer Qdrant Vector Store speichert **repräsentative Vektor-Embeddings von Kandidatenprofilen**, insbesondere deren **technische Skills, Projekterfahrungen und Tool-Expertise**. Jeder Kandidat wird als **hochdimensionaler Vektor** abgebildet, sodass **ähnliche Kandidaten oder relevante Skills schnell und präzise gefunden** werden können.  \n\n**Zweck im Recruiting-Prompt:**  \n- Ermöglicht dem Modell, vor jeder Analyse **relevante Kandidateninformationen** zu laden.  \n- Unterstützt das **Think Tool** bei der aktiven Bewertung von Jobanforderungen gegenüber Kandidaten-Skills.  \n- Macht das Matching zwischen Job und Kandidat **datenbasiert, nachvollziehbar und reproduzierbar**.  \n\n**Beispielhafte Inhalte:**  \n- Programmiersprachen (PHP, Python, JavaScript)  \n- Frameworks (Magento, Symfony, Laravel)  \n- APIs / Schnittstellen (REST, GraphQL)  \n- Frontend / Backend / Fullstack Expertise  \n- Projektbezogene Erfahrungen (E-Commerce, CI/CD, Cloud)  \n\n**Hinweis:**  \nDer Vector Store dient **ausschließlich als interner Referenzspeicher für Kandidateninformationen**. Das Modell **greift automatisch auf die relevanten Vektoren zu**, bevor es Job-Matching oder fachliche Analysen erstellt.\n",
+        "qdrantCollection": {
+          "__rl": true,
+          "value": "resume",
+          "mode": "list",
+          "cachedResultName": "resume"
+        },
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.vectorStoreQdrant",
+      "typeVersion": 1.3,
+      "position": [
+        1056,
+        224
+      ],
+      "id": "8ca99255-fb1b-49c7-a782-c583d2f565ba",
+      "name": "Qdrant Vector Store",
+      "credentials": {
+        "qdrantApi": {
+          "id": "5zLckKlW4WMSmDEm",
+          "name": "QdrantApi account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "model": "mistral-large-latest",
+        "options": {
+          "temperature": 0.1
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatMistralCloud",
+      "typeVersion": 1,
+      "position": [
+        672,
+        224
+      ],
+      "id": "498ab791-fba7-495b-8f72-ba1410473d59",
+      "name": "Mistral",
+      "credentials": {
+        "mistralCloudApi": {
+          "id": "yy2J74r8rO6wyA97",
+          "name": "Mistral Cloud account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "tableName": "Job_Fit_History",
+        "contextWindowLength": 500
+      },
+      "type": "@n8n/n8n-nodes-langchain.memoryPostgresChat",
+      "typeVersion": 1.3,
+      "position": [
+        800,
+        224
+      ],
+      "id": "88de206a-5638-4327-aa56-8c8a63946d77",
+      "name": "Memory",
+      "credentials": {
+        "postgres": {
+          "id": "ceRmvobzfi3fViKu",
+          "name": "Postgres account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.embeddingsMistralCloud",
+      "typeVersion": 1,
+      "position": [
+        1136,
+        432
+      ],
+      "id": "d2e64d2c-9043-4dc2-a70a-b6b11bea7bbc",
+      "name": "Embeddings Mistral Cloud",
+      "credentials": {
+        "mistralCloudApi": {
+          "id": "yy2J74r8rO6wyA97",
+          "name": "Mistral Cloud account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "e07022ab-97eb-4bca-b856-666d8b89770f",
+              "name": "path",
+              "value": "/home/node/.n8n-files/Prompts/jobs/job-fit.md",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        224,
+        0
+      ],
+      "id": "6f84b7e3-e317-45d8-a489-3ef25f95cc10",
+      "name": "Edit Fields"
+    },
+    {
+      "parameters": {
+        "model": {
+          "__rl": true,
+          "value": "glm-5",
+          "mode": "list",
+          "cachedResultName": "glm-5"
+        },
+        "responsesApiEnabled": false,
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatOpenAi",
+      "typeVersion": 1.3,
+      "position": [
+        0,
+        640
+      ],
+      "id": "c8b22b83-c0da-44b6-9cda-d3c8dc238275",
+      "name": "Z.ai",
+      "alwaysOutputData": true,
+      "disabled": true,
+      "onError": "continueRegularOutput"
+    },
+    {
+      "parameters": {
+        "model": "qwen/qwen3-4b:free",
+        "options": {
+          "temperature": 0.2
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatOpenRouter",
+      "typeVersion": 1,
+      "position": [
+        0,
+        432
+      ],
+      "id": "4aacdc8c-cab3-4d5c-b9a2-4ddd28426752",
+      "name": "OpenRouter",
+      "disabled": true
+    },
+    {
+      "parameters": {
+        "workflowId": {
+          "__rl": true,
+          "value": "zFGgPWznMsH88ZqR",
+          "mode": "list",
+          "cachedResultUrl": "/workflow/zFGgPWznMsH88ZqR",
+          "cachedResultName": "Prompt"
+        },
+        "workflowInputs": {
+          "mappingMode": "defineBelow",
+          "value": {},
+          "matchingColumns": [],
+          "schema": [],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": true
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.executeWorkflow",
+      "typeVersion": 1.3,
+      "position": [
+        432,
+        0
+      ],
+      "id": "bab58adc-f04d-459c-be88-cfcd6adebcf2",
+      "name": "Call 'Prompt'"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Think": {
+      "ai_tool": [
+        [
+          {
+            "node": "Jobs Fit",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Chat": {
+      "main": [
+        [
+          {
+            "node": "Edit Fields",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Qdrant Vector Store": {
+      "ai_tool": [
+        [
+          {
+            "node": "Jobs Fit",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Mistral": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "Jobs Fit",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Memory": {
+      "ai_memory": [
+        [
+          {
+            "node": "Jobs Fit",
+            "type": "ai_memory",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Embeddings Mistral Cloud": {
+      "ai_embedding": [
+        [
+          {
+            "node": "Qdrant Vector Store",
+            "type": "ai_embedding",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Edit Fields": {
+      "main": [
+        [
+          {
+            "node": "Call 'Prompt'",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Call 'Prompt'": {
+      "main": [
+        [
+          {
+            "node": "Jobs Fit",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate"
+  },
+  "versionId": "06a0249e-ac31-4ae6-8511-8e1fc95886b8",
+  "meta": {
+    "instanceId": "b751e283d167317e522f290d63e0b956085524c7c105edc03e657e7409fe8050"
+  },
+  "id": "cUlm7RlyYrLtMe54",
+  "tags": [
+    {
+      "updatedAt": "2026-03-20T09:53:00.595Z",
+      "createdAt": "2026-03-20T09:53:00.595Z",
+      "id": "lw4tE7ESajawvgkE",
+      "name": "jobs"
+    }
+  ]
+}

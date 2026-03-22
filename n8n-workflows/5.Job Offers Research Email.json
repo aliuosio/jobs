@@ -1,0 +1,833 @@
+{
+  "name": "5.Job Offers Research Email",
+  "nodes": [
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "SELECT \n\tjo.id, jo.company, jo.company_url, jo.title, jo.expired\nFROM \n\tjob_offers jo\nWHERE \n\tid \nIN(\n\tSELECT \n\t\tjop.job_offers_id \n\tfrom\n\t\tjob_offers_process jop \n\twhere\n\t\tjop.research_email = false\n)\n;",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.6,
+      "position": [
+        -448,
+        544
+      ],
+      "id": "7c375313-58ce-4a82-b68b-1359061f010b",
+      "name": "Offers Research Email",
+      "retryOnFail": false,
+      "waitBetweenTries": 5000,
+      "credentials": {
+        "postgres": {
+          "id": "ceRmvobzfi3fViKu",
+          "name": "Postgres account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=### MANDATORY METADATA\nThe following values MUST be included in the JSON object:\n- id: {{ $json.id }}\n- title: {{ $json.title }}\n- expired: {{ $json.expired }}\n\n### HTML CONTENT FOR EXTRACTION\n{{ $json.text }}",
+        "hasOutputParser": true,
+        "messages": {
+          "messageValues": [
+            {
+              "message": "=### ROLE\nHigh-precision data extraction engine. Output ONLY valid JSON. \n\n### PROTOCOLS\n1. **Immutable id**: Use the provided id exactly as given.\n2. **Immutable title**: Use the provided title exactly as given.\n2. **Email Extraction**: Scan HTML for a valid email address. If not found, return null. \n3. **No Inference**: Do not guess or use external knowledge. \n4. **Constraint**: No markdown (no ```), no conversational filler, no headers."
+            }
+          ]
+        },
+        "batching": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.chainLlm",
+      "typeVersion": 1.9,
+      "position": [
+        2592,
+        192
+      ],
+      "id": "489de2e8-8ba7-46ec-b7eb-b0f969cc8c1f",
+      "name": "Research Email",
+      "onError": "continueRegularOutput"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "loose",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "6ef09feb-4e70-4b04-85cf-546f3b774924",
+              "leftValue": "={{ $json.body }}",
+              "rightValue": "0",
+              "operator": {
+                "type": "string",
+                "operation": "notEmpty",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "looseTypeValidation": true,
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        2368,
+        192
+      ],
+      "id": "a38d8439-aea6-40b1-aaf6-1e3d34463340",
+      "name": "If1"
+    },
+    {
+      "parameters": {
+        "model": "mistral-large-latest",
+        "options": {
+          "temperature": 0.1
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatMistralCloud",
+      "typeVersion": 1,
+      "position": [
+        2608,
+        416
+      ],
+      "id": "83473908-2baf-4969-9f0b-d0715bbae723",
+      "name": "Mistral  Large",
+      "credentials": {
+        "mistralCloudApi": {
+          "id": "yy2J74r8rO6wyA97",
+          "name": "Mistral Cloud account"
+        }
+      },
+      "onError": "continueRegularOutput"
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=### Input Data\n[\n  {\n  \"title\": \"{{ $('Loop').item.json.title }}\",\n  \"company\": \"{{ $('Loop').item.json.company }}\",\n  \"company_url\": \"{{ $('Loop').item.json.company_url }}\",\n  \"results\": {{ JSON.stringify($json.results) }}\n  }\n]\n",
+        "messages": {
+          "messageValues": [
+            {
+              "message": "=---\n\n**Task**\nFrom the provided **`results` array**, select **exactly one** URL where a **job-application email address is most likely to be found**, based on page purpose and structure — **even if no email address is visible in the search snippet**.\n\n**Important Assumption**\n\n* You **will NOT see the email address directly** in the search result snippets.\n* You must **infer** the most probable URL where a valid job-application email would exist if the page were opened.\n\n**Selection Priority (highest to lowest)**\n\n1. Company careers or jobs pages (e.g., `/careers`, `/jobs`, `/work-with-us`)\n2. Company legal, imprint, or contact pages (e.g., `/imprint`, `/impressum`, `/legal`, `/contact`)\n3. Company homepage\n4. Other URLs **only if** they are plausibly relevant for finding a job-application email\n\n**Hard Constraints**\n\n* You **must choose only from URLs present in the `results` array**.\n* Select **one URL only**.\n* **EXCLUDE** any URLs from the following domains (including subdomains/international versions):\n* stepstone.de\n* linkedin.com\n* xing.com\n* glassdoor.de\n* jooble.org\n* stellenanzeigen.de\n* remotely.de\n* itsteps.de\n* jobs.heise.de\n* smarterinterim.de\n* jobs.noz.de\n* jobs.stellencockpit.de\n\n\n* If **no URL reasonably qualifies**, return `null`.\n\n**Output Format (strict)**\nReturn **only** the following JSON array.\nNo explanations, no markdown, no additional text.\n\n```\n[{\"url\":\"string|null\"}]\n\n```\n\n---\n"
+            }
+          ]
+        },
+        "batching": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.chainLlm",
+      "typeVersion": 1.9,
+      "position": [
+        672,
+        192
+      ],
+      "id": "f37f0e22-1133-499f-afcc-25b4b9bc5fef",
+      "name": "Filter Links"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "9da45b28-304c-438e-99e7-1a154de6eb43",
+              "leftValue": "={{ $json.url }}",
+              "rightValue": "",
+              "operator": {
+                "type": "string",
+                "operation": "notEmpty",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        1472,
+        192
+      ],
+      "id": "97e613c0-0468-409d-b753-c1a03783c646",
+      "name": "If4"
+    },
+    {
+      "parameters": {
+        "model": "mistral-large-latest",
+        "options": {
+          "temperature": 0.1
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatMistralCloud",
+      "typeVersion": 1,
+      "position": [
+        752,
+        416
+      ],
+      "id": "d91de1e6-50f2-408a-ab40-c4dafc79c01e",
+      "name": "Mistral Small2",
+      "credentials": {
+        "mistralCloudApi": {
+          "id": "yy2J74r8rO6wyA97",
+          "name": "Mistral Cloud account"
+        }
+      },
+      "onError": "continueRegularOutput"
+    },
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "triggerAtHour": 12
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.3,
+      "position": [
+        -896,
+        544
+      ],
+      "id": "e7f5802b-e6e1-4f6f-96af-f8628d958c50",
+      "name": "Research Email noon"
+    },
+    {
+      "parameters": {
+        "url": "http://chrome:9222/json/version",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Host",
+              "value": "localhost"
+            }
+          ]
+        },
+        "options": {
+          "response": {
+            "response": {
+              "responseFormat": "json"
+            }
+          }
+        }
+      },
+      "id": "c891d1f8-6a6f-4f2d-a7e5-c25bc904cdb6",
+      "name": "Get Chrome WS Endpoint",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.3,
+      "position": [
+        -672,
+        544
+      ],
+      "retryOnFail": true,
+      "maxTries": 3,
+      "waitBetweenTries": 1000
+    },
+    {
+      "parameters": {
+        "amount": "={{ Math.floor(Math.random() * 9) + 1 }}"
+      },
+      "type": "n8n-nodes-base.wait",
+      "typeVersion": 1.1,
+      "position": [
+        2944,
+        320
+      ],
+      "id": "10f753f5-7dc0-41d4-b67a-ab73922b564a",
+      "name": "Wait",
+      "webhookId": "9902db1a-63ba-4996-afb1-bcf1f0c614e1"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "bed2a4cc-bf0e-49f0-b21d-f33c8d48ab80",
+              "name": "=id",
+              "value": "={{ $('Loop').item.json.id }}",
+              "type": "number"
+            },
+            {
+              "id": "973eb031-10b1-431c-bcc6-0cf2f79148c4",
+              "name": "title",
+              "value": "={{ $('Loop').item.json.title }}",
+              "type": "string"
+            },
+            {
+              "id": "4481e92b-31e4-4c20-ad34-c74c0dabbc69",
+              "name": "body",
+              "value": "={{ $json.body }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        2144,
+        192
+      ],
+      "id": "81eb2596-eb32-4f2d-8527-81bf22dcf56a",
+      "name": "Set Vars",
+      "onError": "continueRegularOutput"
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "n8n-nodes-base.splitInBatches",
+      "typeVersion": 3,
+      "position": [
+        -224,
+        544
+      ],
+      "id": "4bd8d77e-e2e7-435b-86f7-b0699717ba1a",
+      "name": "Loop"
+    },
+    {
+      "parameters": {
+        "jsCode": "return $input.all().map(item => {\n  item.json.process = \"Research_Email\";\n  return item;\n});"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        0,
+        0
+      ],
+      "id": "1e1340b3-ec6c-437b-8e60-986eb45ae5e8",
+      "name": "Add Process To Output"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "82747e9e-51c9-4ae6-9fc9-58aba7aac213",
+              "name": "id",
+              "value": "={{ $('Loop').item.json.id }}",
+              "type": "number"
+            },
+            {
+              "id": "6947144b-db4c-464a-9020-906679647aa3",
+              "name": "title",
+              "value": "={{ $('Loop').item.json.title }}",
+              "type": "string"
+            },
+            {
+              "id": "1a8f6018-4c72-47bd-9a6d-4d58fdfe7df4",
+              "name": "url",
+              "value": "={{ $json.url }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        1248,
+        192
+      ],
+      "id": "e77936fb-3e1b-41ee-99ee-5557a90abc6a",
+      "name": "Edit Fields"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "5c3f0dda-6183-4ab3-9a3a-bde9a49c84b6",
+              "leftValue": "={{ $json.results }}",
+              "rightValue": 0,
+              "operator": {
+                "type": "array",
+                "operation": "lengthGt",
+                "rightType": "number"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        448,
+        192
+      ],
+      "id": "efdf632f-4f77-49ec-8205-e464cf919f71",
+      "name": "If"
+    },
+    {
+      "parameters": {
+        "jsCode": "const text = $input.first().json.body;\n\nif (!text || typeof text !== 'string') {\n  return {\n    json: {\n      error: true\n    }\n  };\n}\n\nconst cleaned = text\n  // Remove script tags\n  .replace(/<script[\\s\\S]*?<\\/script>/gi, '')\n  // Remove style tags\n  .replace(/<style[\\s\\S]*?<\\/style>/gi, '')\n  // Remove link tags\n  .replace(/<link[\\s\\S]*?>/gi, '')\n  // Remove meta tags\n  .replace(/<meta[\\s\\S]*?>/gi, '')\n  // Remove inline styles\n  .replace(/\\sstyle=\"[^\"]*\"/gi, '')\n  // Remove inline JS handlers\n  .replace(/\\son\\w+=\"[^\"]*\"/gi, '');\n\nreturn {\n  json: {\n    body: cleaned\n  }\n};"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1920,
+        192
+      ],
+      "id": "8e507f88-3a46-4279-a038-e7b6ba754463",
+      "name": "Strip CSS JS1"
+    },
+    {
+      "parameters": {
+        "workflowId": {
+          "__rl": true,
+          "value": "2Jhn0sUN3eLhZCe0wcvFS",
+          "mode": "list",
+          "cachedResultUrl": "/workflow/2Jhn0sUN3eLhZCe0wcvFS",
+          "cachedResultName": "JSON - encode"
+        },
+        "workflowInputs": {
+          "mappingMode": "defineBelow",
+          "value": {},
+          "matchingColumns": [],
+          "schema": [],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": true
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.executeWorkflow",
+      "typeVersion": 1.3,
+      "position": [
+        1024,
+        192
+      ],
+      "id": "f8642012-c2bf-4e86-a635-f547c74490f2",
+      "name": "JSON - encode"
+    },
+    {
+      "parameters": {
+        "url": "={{ $json.url }}",
+        "options": {
+          "browserWSEndpoint": "={{ $('Get Chrome WS Endpoint').item.json.webSocketDebuggerUrl.replace('localhost', 'chrome:9222') }}",
+          "device": "iPad Pro",
+          "timeout": 60000,
+          "protocolTimeout": 60000,
+          "waitUntil": "networkidle2",
+          "pageCaching": true
+        }
+      },
+      "type": "CUSTOM.puppeteer",
+      "typeVersion": 1,
+      "position": [
+        1696,
+        192
+      ],
+      "id": "238a19c3-3e41-44ba-86a6-01befd1dcad9",
+      "name": "Puppeteer",
+      "onError": "continueRegularOutput"
+    },
+    {
+      "parameters": {
+        "schemaType": "manual",
+        "inputSchema": "{\n  \"type\": \"array\",\n  \"items\": {\n    \"type\": \"object\",\n    \"properties\": {\n      \"company\": { \"type\": [\"string\", \"null\"] },\n      \"title\": { \"type\": [\"string\", \"null\"] },\n      \"email\": { \"type\": [\"string\", \"null\"] },\n      \"url\": { \"type\": [\"string\", \"null\"], \"format\": \"uri\" },\n      \"description\": { \"type\": [\"string\", \"null\"] },\n      \"location\": { \"type\": [\"string\", \"null\"] },\n      \"salary\": { \"type\": [\"string\", \"null\"] },\n      \"schedule_type\": { \"type\": [\"string\", \"null\"] },\n      \"posted\": { \"type\": [\"string\", \"null\"], \"pattern\": \"^\\\\d{4}-\\\\d{2}-\\\\d{2} \\\\d{2}:\\\\d{2}:\\\\d{2}$\" },\n      \"via\": { \"type\": [\"string\", \"null\"] }\n    },\n    \"required\": [\"company\",\"title\",\"email\",\"url\",\"description\",\"location\",\"salary\",\"schedule_type\",\"posted\",\"via\"]\n  }\n}\n"
+      },
+      "type": "@n8n/n8n-nodes-langchain.outputParserStructured",
+      "typeVersion": 1.3,
+      "position": [
+        2736,
+        416
+      ],
+      "id": "ed90516a-4a14-4a1e-8925-c04f2f8e73b0",
+      "name": "Structured Output Parser"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "http://searxng_app:8080/search",
+        "sendQuery": true,
+        "queryParameters": {
+          "parameters": [
+            {
+              "name": "q",
+              "value": "={{ \n  [\n    'site:',\n    $json.company_url && $json.company_url != 'null' ? $json.company_url : '',\n    $json.company && $json.company != 'null' ? $json.company : '',\n    $json.title\n  ].filter(Boolean).join(' ')\n}}\n"
+            },
+            {
+              "name": "format",
+              "value": "json"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.4,
+      "position": [
+        224,
+        176
+      ],
+      "id": "ae7bcecc-460e-4742-8b3a-df5ae3748d6e",
+      "name": "HTTP Request"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "c3250ab7-2d11-40d8-a64b-a9f57ba5592f",
+              "leftValue": "={{ $json.company.length > 0 && $json.company != 'null' }}",
+              "rightValue": "",
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              }
+            },
+            {
+              "id": "bc1161ac-df06-4282-85b4-3809a9e4c1c1",
+              "leftValue": "={{ $json.company_url.length > 0 && $json.company_url != 'null' }}",
+              "rightValue": "",
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "or"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        0,
+        192
+      ],
+      "id": "e40df3d9-6248-4055-afae-b6ab6ea73596",
+      "name": "If2"
+    },
+    {
+      "parameters": {
+        "workflowId": {
+          "__rl": true,
+          "value": "LHkRO7NbYVvWkxt2",
+          "mode": "list",
+          "cachedResultUrl": "/workflow/LHkRO7NbYVvWkxt2",
+          "cachedResultName": "Job Offers - store"
+        },
+        "workflowInputs": {
+          "mappingMode": "defineBelow",
+          "value": {},
+          "matchingColumns": [],
+          "schema": [],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": true
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.executeWorkflow",
+      "typeVersion": 1.3,
+      "position": [
+        208,
+        0
+      ],
+      "id": "cddf636b-6b9c-45dd-864d-ec29732304e9",
+      "name": "Call 'Job Offers - store'"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Offers Research Email": {
+      "main": [
+        [
+          {
+            "node": "Loop",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Research Email": {
+      "main": [
+        [
+          {
+            "node": "Wait",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "If1": {
+      "main": [
+        [
+          {
+            "node": "Research Email",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Loop",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Mistral  Large": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "Research Email",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Filter Links": {
+      "main": [
+        [
+          {
+            "node": "JSON - encode",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "If4": {
+      "main": [
+        [],
+        [
+          {
+            "node": "Loop",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Mistral Small2": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "Filter Links",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Research Email noon": {
+      "main": [
+        [
+          {
+            "node": "Get Chrome WS Endpoint",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get Chrome WS Endpoint": {
+      "main": [
+        [
+          {
+            "node": "Offers Research Email",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Wait": {
+      "main": [
+        [
+          {
+            "node": "Loop",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Set Vars": {
+      "main": [
+        [
+          {
+            "node": "If1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Loop": {
+      "main": [
+        [
+          {
+            "node": "Add Process To Output",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "If2",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Add Process To Output": {
+      "main": [
+        [
+          {
+            "node": "Call 'Job Offers - store'",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Edit Fields": {
+      "main": [
+        [
+          {
+            "node": "If4",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "If": {
+      "main": [
+        [
+          {
+            "node": "Filter Links",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Loop",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Strip CSS JS1": {
+      "main": [
+        [
+          {
+            "node": "Set Vars",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "JSON - encode": {
+      "main": [
+        [
+          {
+            "node": "Edit Fields",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Structured Output Parser": {
+      "ai_outputParser": [
+        [
+          {
+            "node": "Research Email",
+            "type": "ai_outputParser",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "HTTP Request": {
+      "main": [
+        [
+          {
+            "node": "If",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "If2": {
+      "main": [
+        [
+          {
+            "node": "HTTP Request",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Loop",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate"
+  },
+  "versionId": "b3f24d14-43a2-43a2-baa3-eb3dd69fa355",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "b751e283d167317e522f290d63e0b956085524c7c105edc03e657e7409fe8050"
+  },
+  "id": "qBKqgeovCAxztdTU",
+  "tags": [
+    {
+      "updatedAt": "2026-03-20T09:53:00.595Z",
+      "createdAt": "2026-03-20T09:53:00.595Z",
+      "id": "lw4tE7ESajawvgkE",
+      "name": "jobs"
+    }
+  ]
+}

@@ -1,0 +1,632 @@
+{
+  "name": "1.Job Offers Extractor",
+  "nodes": [
+    {
+      "parameters": {
+        "amount": "={{ Math.floor(Math.random() * 30) + 1 }}"
+      },
+      "type": "n8n-nodes-base.wait",
+      "typeVersion": 1.1,
+      "position": [
+        -304,
+        576
+      ],
+      "id": "2b4e4a79-7718-4a0f-ad91-6216aecf24e1",
+      "name": "Wait",
+      "webhookId": "94e8563b-32b3-4c49-bb01-b85c176a9a96"
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "n8n-nodes-base.splitInBatches",
+      "typeVersion": 3,
+      "position": [
+        -976,
+        400
+      ],
+      "id": "95f86d4e-7fdf-417d-8953-c069d97d892a",
+      "name": "Loop",
+      "alwaysOutputData": true
+    },
+    {
+      "parameters": {
+        "operation": "select",
+        "schema": {
+          "__rl": true,
+          "mode": "list",
+          "value": "public"
+        },
+        "table": {
+          "__rl": true,
+          "value": "job_offers",
+          "mode": "list",
+          "cachedResultName": "job_offers"
+        },
+        "limit": 1,
+        "sort": {
+          "values": [
+            {
+              "column": "id",
+              "direction": "DESC"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.6,
+      "position": [
+        -1872,
+        400
+      ],
+      "id": "0d975187-5beb-4227-b513-1baf8f79d60e",
+      "name": "Get Last Created",
+      "alwaysOutputData": true,
+      "retryOnFail": false,
+      "waitBetweenTries": 5000,
+      "credentials": {
+        "postgres": {
+          "id": "ceRmvobzfi3fViKu",
+          "name": "Postgres account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "// 1. Grab inputs\nconst createdAtRaw = $('Get Last Created').first().json.created_at; \nconst defaultDate = \"2026-01-01\";\n\n// 2. Setup \"Today\" at midnight for comparison\nconst today = new Date();\ntoday.setHours(0, 0, 0, 0);\n\nlet since;\n\nconst createdAtDate = new Date(createdAtRaw);\n\n// Create a copy of createdAtDate set to midnight to compare only the calendar date\nconst createdAtMidnight = new Date(createdAtDate);\ncreatedAtMidnight.setHours(0, 0, 0, 0);\n\nif (createdAtMidnight <= today) {\n    // Scenario: Date is strictly in the past (yesterday or older)\n    since = createdAtDate.toISOString().split('T')[0];\n} else {\n    // Scenario: Date is Today or in the future\n    since = defaultDate;\n}\n\n// Return the appropriate values\nreturn { since };\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -1648,
+        400
+      ],
+      "id": "8b0ae304-997e-4478-86b8-18db908c7fa2",
+      "name": "Since"
+    },
+    {
+      "parameters": {
+        "fieldToSplitOut": "output",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.splitOut",
+      "typeVersion": 1,
+      "position": [
+        -640,
+        0
+      ],
+      "id": "562c76b0-0dc5-462a-9276-40135c1e4477",
+      "name": "Split Out"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "e07022ab-97eb-4bca-b856-666d8b89770f",
+              "name": "path",
+              "value": "/home/node/.n8n-files/Prompts/jobs/extractor.md",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        -2320,
+        400
+      ],
+      "id": "009af0db-3d04-4245-adbe-6daf9be65ba9",
+      "name": "Edit Fields"
+    },
+    {
+      "parameters": {
+        "model": {
+          "__rl": true,
+          "value": "glm-4.5-air",
+          "mode": "list",
+          "cachedResultName": "glm-4.5-air"
+        },
+        "responsesApiEnabled": false,
+        "options": {
+          "temperature": 0.1
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatOpenAi",
+      "typeVersion": 1.3,
+      "position": [
+        -2544,
+        1040
+      ],
+      "id": "3c5801af-3888-489d-8814-951752c248b3",
+      "name": "Z.ai",
+      "alwaysOutputData": true,
+      "credentials": {
+        "openAiApi": {
+          "id": "MQadmJOopKGHLaj3",
+          "name": "Z.AI"
+        }
+      },
+      "disabled": true,
+      "onError": "continueRegularOutput"
+    },
+    {
+      "parameters": {
+        "schemaType": "manual",
+        "inputSchema": "{\n  \"type\": \"array\",\n  \"items\": {\n    \"type\": \"object\",\n    \"properties\": {\n      \"company\": { \"type\": [\"string\", \"null\"] },\n      \"title\": { \"type\": [\"string\", \"null\"] },\n      \"email\": { \"type\": [\"string\", \"null\"] },\n      \"url\": { \"type\": [\"string\", \"null\"], \"format\": \"uri\" },\n      \"description\": { \"type\": [\"string\", \"null\"] },\n      \"location\": { \"type\": [\"string\", \"null\"] },\n      \"salary\": { \"type\": [\"string\", \"null\"] },\n      \"schedule_type\": { \"type\": [\"string\", \"null\"] },\n      \"posted\": { \"type\": [\"string\", \"null\"], \"pattern\": \"^\\\\d{4}-\\\\d{2}-\\\\d{2} \\\\d{2}:\\\\d{2}:\\\\d{2}$\" },\n      \"via\": { \"type\": [\"string\", \"null\"] }\n    },\n    \"required\": [\"company\",\"title\",\"email\",\"url\",\"description\",\"location\",\"salary\",\"schedule_type\",\"posted\",\"via\"]\n  }\n}\n",
+        "autoFix": true
+      },
+      "type": "@n8n/n8n-nodes-langchain.outputParserStructured",
+      "typeVersion": 1.3,
+      "position": [
+        -672,
+        624
+      ],
+      "id": "b14d4d5f-40d3-49dd-96c3-cd7b8c6bc820",
+      "name": "Structured Output Parser",
+      "alwaysOutputData": true,
+      "onError": "continueRegularOutput"
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "={{ $json.textContent }}",
+        "hasOutputParser": true,
+        "messages": {
+          "messageValues": [
+            {
+              "message": "={{ $('Call \\'Prompt\\'').item.json.prompt }}"
+            }
+          ]
+        },
+        "batching": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.chainLlm",
+      "typeVersion": 1.8,
+      "position": [
+        -752,
+        400
+      ],
+      "id": "a2675c07-ff80-4bd9-a105-958aef177151",
+      "name": "Extractor",
+      "alwaysOutputData": true,
+      "onError": "continueRegularOutput"
+    },
+    {
+      "parameters": {
+        "workflowId": {
+          "__rl": true,
+          "value": "rGIluizJ8qfWnidf",
+          "mode": "list",
+          "cachedResultUrl": "/workflow/rGIluizJ8qfWnidf",
+          "cachedResultName": "Prompt"
+        },
+        "workflowInputs": {
+          "mappingMode": "defineBelow",
+          "value": {},
+          "matchingColumns": [],
+          "schema": [],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": true
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.executeWorkflow",
+      "typeVersion": 1.3,
+      "position": [
+        -2096,
+        400
+      ],
+      "id": "361cb201-fefa-41d9-8c8a-a396bf2f1e9b",
+      "name": "Call 'Prompt'"
+    },
+    {
+      "parameters": {
+        "workflowId": {
+          "__rl": true,
+          "value": "LHkRO7NbYVvWkxt2",
+          "mode": "list",
+          "cachedResultUrl": "/workflow/LHkRO7NbYVvWkxt2",
+          "cachedResultName": "Job Offers - store"
+        },
+        "workflowInputs": {
+          "mappingMode": "defineBelow",
+          "value": {},
+          "matchingColumns": [],
+          "schema": [],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": true
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.executeWorkflow",
+      "typeVersion": 1.3,
+      "position": [
+        -304,
+        0
+      ],
+      "id": "64751ea9-a3fd-4da2-9fa6-bf69b5bba212",
+      "name": "Call 'Job Offers - store'"
+    },
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "triggerAtHour": 10
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.3,
+      "position": [
+        -2544,
+        400
+      ],
+      "id": "028a0871-ae73-4461-b42f-99460b56906e",
+      "name": "10am"
+    },
+    {
+      "parameters": {
+        "model": "mistral-small-latest",
+        "options": {
+          "temperature": 0.1
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatMistralCloud",
+      "typeVersion": 1,
+      "position": [
+        -688,
+        832
+      ],
+      "id": "fa4d7639-9f07-4cb1-a754-dedb58de1ec9",
+      "name": "Mistral",
+      "credentials": {
+        "mistralCloudApi": {
+          "id": "yy2J74r8rO6wyA97",
+          "name": "Mistral Cloud account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "model": "arcee-ai/trinity-mini:free",
+        "options": {
+          "temperature": 0.2
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatOpenRouter",
+      "typeVersion": 1,
+      "position": [
+        -2544,
+        1248
+      ],
+      "id": "9d58d383-378e-4954-99c0-387f53aec46e",
+      "name": "OpenRouter",
+      "credentials": {
+        "openRouterApi": {
+          "id": "zu7P2kOLjfI1ih6a",
+          "name": "OpenRouter account"
+        }
+      },
+      "disabled": true
+    },
+    {
+      "parameters": {
+        "model": "llama-3.3-70b-versatile",
+        "options": {
+          "temperature": 0.2
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatGroq",
+      "typeVersion": 1,
+      "position": [
+        -2544,
+        832
+      ],
+      "id": "374f7ffe-0b97-4dbc-afb2-f53c48d37dba",
+      "name": "Groq",
+      "credentials": {
+        "groqApi": {
+          "id": "f1hXxdcTqz0UL7r6",
+          "name": "Groq account"
+        }
+      },
+      "disabled": true,
+      "onError": "continueRegularOutput"
+    },
+    {
+      "parameters": {},
+      "type": "n8n-nodes-base.merge",
+      "typeVersion": 3.2,
+      "position": [
+        -1200,
+        400
+      ],
+      "id": "14b64a05-b54b-4091-bb6f-b2959f62a3c8",
+      "name": "Merge"
+    },
+    {
+      "parameters": {
+        "resource": "email",
+        "mailboxes": [
+          "NewsLetter",
+          "Notification"
+        ],
+        "emailDateRange": {
+          "since": "={{ $json.since }}"
+        },
+        "emailFlags": {},
+        "customLabels": {},
+        "emailSearchFilters": {
+          "from": "=donotreply@match.indeed.com"
+        },
+        "includeParts": [
+          "textContent"
+        ],
+        "limit": null
+      },
+      "type": "n8n-nodes-imap-enhanced.imapEnhanced",
+      "typeVersion": 1,
+      "position": [
+        -1424,
+        496
+      ],
+      "id": "2e2f5e54-4f93-4c1f-96ff-1803e42e6eac",
+      "name": "DEVHH - Indeed",
+      "credentials": {
+        "imapApi": {
+          "id": "6xf5db8A9PS90YYN",
+          "name": "IMAP Credentials account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "resource": "email",
+        "mailboxes": [
+          "NewsLetter",
+          "Notification"
+        ],
+        "emailDateRange": {
+          "since": "={{ $json.since }}"
+        },
+        "emailFlags": {},
+        "customLabels": {},
+        "emailSearchFilters": {
+          "from": "=job*"
+        },
+        "includeParts": [
+          "textContent"
+        ],
+        "limit": null
+      },
+      "type": "n8n-nodes-imap-enhanced.imapEnhanced",
+      "typeVersion": 1,
+      "position": [
+        -1424,
+        304
+      ],
+      "id": "1de0d2a7-7d05-49b6-9afe-4cc975f18d8a",
+      "name": "DEVHH - Xing & LinkedIn",
+      "credentials": {
+        "imapApi": {
+          "id": "6xf5db8A9PS90YYN",
+          "name": "IMAP Credentials account"
+        }
+      }
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Wait": {
+      "main": [
+        [
+          {
+            "node": "Loop",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Loop": {
+      "main": [
+        [
+          {
+            "node": "Split Out",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Extractor",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get Last Created": {
+      "main": [
+        [
+          {
+            "node": "Since",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Since": {
+      "main": [
+        [
+          {
+            "node": "DEVHH - Xing & LinkedIn",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "DEVHH - Indeed",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Split Out": {
+      "main": [
+        [
+          {
+            "node": "Call 'Job Offers - store'",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Edit Fields": {
+      "main": [
+        [
+          {
+            "node": "Call 'Prompt'",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Structured Output Parser": {
+      "ai_outputParser": [
+        [
+          {
+            "node": "Extractor",
+            "type": "ai_outputParser",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Extractor": {
+      "main": [
+        [
+          {
+            "node": "Wait",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Z.ai": {
+      "ai_languageModel": [
+        []
+      ]
+    },
+    "Call 'Prompt'": {
+      "main": [
+        [
+          {
+            "node": "Get Last Created",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "10am": {
+      "main": [
+        [
+          {
+            "node": "Edit Fields",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Mistral": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "Structured Output Parser",
+            "type": "ai_languageModel",
+            "index": 0
+          },
+          {
+            "node": "Extractor",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "OpenRouter": {
+      "ai_languageModel": [
+        []
+      ]
+    },
+    "Groq": {
+      "ai_languageModel": [
+        []
+      ]
+    },
+    "Merge": {
+      "main": [
+        [
+          {
+            "node": "Loop",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "DEVHH - Indeed": {
+      "main": [
+        [
+          {
+            "node": "Merge",
+            "type": "main",
+            "index": 1
+          }
+        ]
+      ]
+    },
+    "DEVHH - Xing & LinkedIn": {
+      "main": [
+        [
+          {
+            "node": "Merge",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate"
+  },
+  "versionId": "a9bc623c-2a75-4754-acdd-0d10e3470d7b",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "b751e283d167317e522f290d63e0b956085524c7c105edc03e657e7409fe8050"
+  },
+  "id": "w6c98CkosO18bBuW",
+  "tags": [
+    {
+      "updatedAt": "2026-03-20T09:53:00.595Z",
+      "createdAt": "2026-03-20T09:53:00.595Z",
+      "id": "lw4tE7ESajawvgkE",
+      "name": "jobs"
+    }
+  ]
+}
