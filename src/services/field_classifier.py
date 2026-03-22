@@ -327,20 +327,25 @@ def extract_field_value_from_payload(
         elif field_type == SemanticFieldType.LINKEDIN:
             val = _get_by_path(profile, "social.li")
         elif field_type == SemanticFieldType.FIRST_NAME:
-            val = _get_by_path(profile, "fn")
+            full_name = _get_by_path(profile, "fn")
+            if full_name:
+                name_parts = full_name.strip().split()
+                if len(name_parts) > 1:
+                    return name_parts[0]
+                return full_name
+            val = payload.get("firstname")
         elif field_type == SemanticFieldType.EMAIL:
             val = _get_by_path(profile, "em")
         elif field_type == SemanticFieldType.PHONE:
             val = _get_by_path(profile, "ph")
         elif field_type == SemanticFieldType.LAST_NAME:
-            # Extract lastname from full name (last word)
             full_name = _get_by_path(profile, "fn")
             if full_name:
                 name_parts = full_name.strip().split()
                 if len(name_parts) > 1:
-                    return name_parts[-1]  # Return last word as lastname
-                return full_name  # If only one name, use it as lastname
-            val = _get_by_path(profile, "ln")
+                    return name_parts[-1]
+                return full_name
+            val = payload.get("lastname")
         else:
             val = None
         if val is not None:
@@ -396,7 +401,7 @@ def _extract_name_from_text(text: str) -> str | None:
         r"^([A-Z][a-zA-Z]+\s+[A-Z][a-zA-Z]+)",  # "John Doe" at start of line
         r"Contact:\s*([A-Z][a-zA-Z]+\s+[A-Z][a-zA-Z]+)",  # "Contact: John Doe"
     ]
-    
+
     for pattern in name_patterns:
         match = re.search(pattern, text, re.IGNORECASE)
         if match:
