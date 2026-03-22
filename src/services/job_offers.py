@@ -14,7 +14,7 @@ from src.config import settings
 logger = logging.getLogger(__name__)
 
 # CSV column headers for export (no 'applied' column since all exported jobs are applied)
-CSV_COLUMNS = ["company", "email", "company_url", "title", "url", "posted"]
+CSV_COLUMNS = ["company", "email", "company_url", "title", "url", "posted", "created_at"]
 
 
 class JobOffersService:
@@ -305,7 +305,8 @@ class JobOffersService:
                 jo.company,
                 jo.email,
                 jo.company_url,
-                jo.posted
+                jo.posted,
+                jo.created_at
             FROM job_offers jo
             INNER JOIN job_offers_process jop ON jo.id = jop.job_offers_id
             WHERE jop.applied = true
@@ -326,6 +327,7 @@ class JobOffersService:
                     "email": row.get("email"),
                     "company_url": row.get("company_url"),
                     "posted": row.get("posted"),
+                    "created_at": row.get("created_at"),
                 }
             )
 
@@ -370,6 +372,7 @@ def generate_csv_bytes(job_offers: list[dict[str, Any]]) -> bytes:
             offer.get("title", ""),
             offer.get("url", ""),
             str(offer.get("posted", "")) if offer.get("posted") else "",
+            str(offer.get("created_at", "")) if offer.get("created_at") else "",
         ]
         writer.writerow(row)
 
