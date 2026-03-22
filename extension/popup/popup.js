@@ -15,7 +15,8 @@ const STORAGE_KEYS = {
   LAST_URL: 'lastUrl',
   LAST_TAB: 'lastTab',
   STORAGE_VERSION: 'storageVersion',
-  LAST_CLICKED_JOB_ID: 'lastClickedJobId'
+  LAST_CLICKED_JOB_ID: 'lastClickedJobId',
+  SHOW_APPLIED_FILTER: 'showAppliedFilter'
 };
 
 /** @type {number} Stale threshold in milliseconds (1 hour) */
@@ -42,6 +43,8 @@ let jobLinks = [];
 let lastClickedJobId = null;
 /** @type {?string} Current page URL for field cache validation */
 let currentUrl = null;
+/** @type {boolean} Filter state for showing applied jobs */
+let showAppliedFilter = false;
 
 // DOM Elements
 const elements = {
@@ -90,6 +93,7 @@ async function init() {
   await restoreTabPreference();
   await restoreLastClickedJobId();
   await restoreFormFieldsState();
+  await restoreShowAppliedFilter();
   await loadJobLinks();
 }
 
@@ -159,6 +163,12 @@ function setupEventListeners() {
   if (elements.retryBtn) {
     elements.retryBtn.addEventListener('click', handleRetryClick);
   }
+  
+  // Show applied filter toggle
+  const showAppliedToggle = document.getElementById('show-applied-toggle');
+  if (showAppliedToggle) {
+    showAppliedToggle.addEventListener('change', handleShowAppliedToggle);
+  }
 }
 
 /**
@@ -218,8 +228,8 @@ async function loadJobLinks() {
     if (cachedOffers.length > 0) {
       jobLinks = cachedOffers;
       hideLoading();
-      const notAppliedLinks = filterNotAppliedLinks(jobLinks);
-      renderJobLinksList(notAppliedLinks);
+      const filteredLinks = filterJobLinks(jobLinks, showAppliedFilter);
+      renderJobLinksList(filteredLinks);
       
       if (isStale) {
         updateStaleIndicator(true);
@@ -231,8 +241,8 @@ async function loadJobLinks() {
       console.log('[Popup] fetchJobOffers returned:', links.length, 'items');
       jobLinks = links;
       hideLoading();
-      const notAppliedLinks = filterNotAppliedLinks(jobLinks);
-      renderJobLinksList(notAppliedLinks);
+      const filteredLinks = filterJobLinks(jobLinks, showAppliedFilter);
+      renderJobLinksList(filteredLinks);
       
       await cacheJobOffers();
     }
@@ -250,8 +260,8 @@ async function fetchAndCacheJobOffers() {
     const links = await fetchJobOffers();
     jobLinks = links;
     
-    const notAppliedLinks = filterNotAppliedLinks(jobLinks);
-    renderJobLinksList(notAppliedLinks);
+    const filteredLinks = filterJobLinks(jobLinks, showAppliedFilter);
+    renderJobLinksList(filteredLinks);
     
     await cacheJobOffers();
     updateStaleIndicator(false);
@@ -275,12 +285,51 @@ async function cacheJobOffers() {
 }
 
 /**
+ * Filter job links based on applied status filter
+ * @param {Array} links - Job links to filter
+ * @param {boolean} showApplied - Whether to show applied jobs
+ * @returns {Array} Filtered links
+ */
+function filterJobLinks(links, showApplied) {
+  if (showApplied) {
+    return links;
+  }
+  return links.filter(link => !link.applied);
+}
+
+/**
  * Filter job links to show only "not applied for" jobs
  * @param {Array} links
  * @returns {Array} Filtered links where applied is false or null
  */
 function filterNotAppliedLinks(links) {
   return links.filter(link => !link.applied);
+}
+
+/**
+ * Restore show applied filter state from storage
+ */
+async function restoreShowAppliedFilter() {
+  try {
+    const state = await loadStateFromStorage();
+    showAppliedFilter = state[STORAGE_KEYS.SHOW_APPLIED_FILTER] || false;
+    const checkbox = document.getElementById('show-applied-toggle');
+    if (checkbox) {
+      checkbox.checked = showAppliedFilter;
+    }
+  } catch (error) {
+    console.error('[Popup] Failed to restore showAppliedFilter:', error);
+  }
+}
+
+/**
+ * Handle show applied toggle change
+ */
+async function handleShowAppliedToggle() {
+  showAppliedFilter = document.getElementById('show-applied-toggle').checked;
+  await saveStateToStorage({ [STORAGE_KEYS.SHOW_APPLIED_FILTER]: showAppliedFilter });
+  const filteredLinks = filterJobLinks(jobLinks, showAppliedFilter);
+  renderJobLinksList(filteredLinks);
 }
 
 /**
@@ -766,25 +815,25 @@ async function handleStatusClick(jobId) {
       
       await persistJobOffersState();
       
-      // Only show non-applied jobs after successful toggle
-      const notAppliedLinks = filterNotAppliedLinks(jobLinks);
-      renderJobLinksList(notAppliedLinks);
+      // Re-render with current filter state
+      const filteredLinks = filterJobLinks(jobLinks, showAppliedFilter);
+      renderJobLinksList(filteredLinks);
     } else {
       link.pending = false;
       link.applied = oldApplied;
       link.error = true;
       showToggleError('Failed to update status');
-      // Revert UI to show only non-applied jobs
-      const notAppliedLinks = filterNotAppliedLinks(jobLinks);
-      renderJobLinksList(notAppliedLinks);
+      // Revert UI with current filter state
+      const filteredLinks = filterJobLinks(jobLinks, showAppliedFilter);
+      renderJobLinksList(filteredLinks);
     }
   } catch (err) {
     link.pending = false;
     link.applied = oldApplied;
     link.error = true;
-    // Revert UI to show only non-applied jobs
-    const notAppliedLinks = filterNotAppliedLinks(jobLinks);
-    renderJobLinksList(notAppliedLinks);
+    // Revert UI with current filter state
+    const filteredLinks = filterJobLinks(jobLinks, showAppliedFilter);
+    renderJobLinksList(filteredLinks);
     showToggleError('Failed to update status');
   }
 }
