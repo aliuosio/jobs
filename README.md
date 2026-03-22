@@ -7,7 +7,7 @@ An AI-powered system that automatically fills job application forms using resume
 Job Forms Helper consists of two main components:
 
 1. **Backend API** - A FastAPI service that processes form field labels and generates answers based on resume data stored in a vector database
-2. **Firefox Extension** - A browser extension that detects form fields on job application pages and fills them using the backend API
+2. **Firefox Extension** - A browser extension that detects form fields on job application pages and fills them using the backend API, with built-in job links management for tracking and navigating job postings
 
 ## Architecture
 
@@ -376,6 +376,7 @@ docker-compose up -d
 - **Form Observer**: MutationObserver for dynamic form detection
 - **Signal Extractor**: Extracts autocomplete, label, name attributes for field classification
 - **API Client**: 10-second timeout HTTP client with structured error handling
+- **Job Links Manager**: Displays tracked job links with applied status filtering and visited link tracking
 
 ### Job Offers API
 
