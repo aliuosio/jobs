@@ -32,9 +32,15 @@ Job Forms Helper consists of two main components:
 │  │(Mistral)     │  │ (Qdrant)     │  │ (Mistral)    │          │
 │  └──────────────┘  └──────────────┘  └──────────────┘          │
 │                                                                   │
-│  ┌──────────────┐  ┌──────────────┐                             │
-│  │Field Classif.│  │Validation Svc│                             │
-│  └──────────────┘  └──────────────┘                             │
+│  ┌──────────────┐  ┌──────────────┐  ┌──────────────┐          │
+│  │Field Classif.│  │Validation Svc│  │Job Offers Svc│          │
+│  └──────────────┘  └──────────────┘  └──────────────┘          │
+│                                              │                   │
+│                                              ↓                   │
+│                                    ┌──────────────┐             │
+│                                    │  PostgreSQL  │             │
+│                                    │  + Redis     │             │
+│                                    └──────────────┘             │
 └─────────────────────────────────────────────────────────────────┘
 ```
 
@@ -166,6 +172,13 @@ curl http://localhost:8000/validate
 | `/health` | GET | Service health check |
 | `/validate` | GET | Configuration validation |
 | `/fill-form` | POST | Generate answer for form field |
+| `/job-offers` | GET | List all job offers |
+| `/job-offers` | POST | Create a new job offer |
+| `/job-offers/{id}` | GET | Get a specific job offer |
+| `/job-offers/{id}` | PUT | Update a job offer |
+| `/job-offers/{id}` | PATCH | Partially update a job offer |
+| `/job-offers/{id}` | DELETE | Delete a job offer |
+| `/job-offers/stream` | GET | SSE stream for real-time job status updates |
 
 ## Configuration
 
@@ -182,6 +195,8 @@ curl http://localhost:8000/validate
 | `RETRIEVAL_K` | No | `5` | Number of context chunks |
 | `MAX_RETRIES` | No | `4` | Max retry attempts |
 | `RETRY_BASE_DELAY` | No | `1.0` | Base delay between retries |
+| `POSTGRES_URL` | No | `postgresql://postgres:postgres@postgres:5432/jobs` | PostgreSQL connection URL |
+| `REDIS_URL` | No | `redis://redis:6379` | Redis connection URL |
 
 ### Docker Ports
 
@@ -204,6 +219,7 @@ curl http://localhost:8000/validate
 │   │   ├── retriever.py   # Qdrant vector search
 │   │   ├── generator.py   # LLM answer generation
 │   │   ├── field_classifier.py  # Semantic field detection
+│   │   ├── job_offers.py  # Job offers CRUD operations
 │   │   └── validation.py  # Config validation
 │   ├── utils/             # Utility functions
 │   │   └── retry.py       # Retry logic
@@ -224,11 +240,15 @@ curl http://localhost:8000/validate
 │   └── ingest_profile.py  # Profile ingestion
 ├── tests/                 # Test files
 ├── specs/                 # Feature specifications
-│   ├── 001-docker-infra/  # Docker setup spec
-│   ├── 002-rag-backend/   # RAG pipeline spec
-│   ├── 003-form-filler-extension/ # Extension spec
-│   ├── 004-config-validation/ # Validation spec
-│   └── 005-label-field-type-detection/ # Field detection spec
+│   ├── 002-dynamic-field-detection/ # Dynamic field detection
+│   ├── 003-unit-tests-english/ # English unit tests
+│   ├── 004-job-links-selector/ # Job links selector
+│   ├── 005-job-links-selector/ # Job links selector v2
+│   ├── 006-job-offers-api/ # Job offers API
+│   ├── 007-update-job-offer-api/ # Update job offer API
+│   ├── 008-job-applied-toggle/ # Job applied toggle
+│   ├── 011-job-status-filter-fix/ # Status filter fix
+│   └── 012-job-status-sync/ # Real-time status sync
 ├── docs/                  # Documentation
 ├── docker-compose.yml     # Docker services
 ├── Dockerfile             # Backend container
@@ -345,6 +365,7 @@ docker-compose up -d
 - **Retriever Service**: Performs semantic search against Qdrant vector database
 - **Generator Service**: Produces grounded answers using `mistral-small-latest` with anti-hallucination prompts
 - **Field Classifier Service**: Detects field types (email, phone, name, etc.) from form signals
+- **Job Offers Service**: Manages job offers with PostgreSQL storage and real-time sync
 - **Validation Service**: Runs health checks on DNS, endpoints, and API configuration
 
 ### Extension Components
@@ -355,6 +376,48 @@ docker-compose up -d
 - **Form Observer**: MutationObserver for dynamic form detection
 - **Signal Extractor**: Extracts autocomplete, label, name attributes for field classification
 - **API Client**: 10-second timeout HTTP client with structured error handling
+
+### Job Offers API
+
+The Job Offers API provides CRUD operations for managing job applications with real-time status synchronization:
+
+**Features:**
+- Full CRUD operations (Create, Read, Update, Delete)
+- PostgreSQL database for persistent storage
+- Redis caching for improved performance
+- Server-Sent Events (SSE) for real-time status updates
+- Applied status toggle (applied/not_applied/in_progress)
+- Job link tracking and filtering
+
+**Example Usage:**
+
+```bash
+# List all job offers
+curl http://localhost:8000/job-offers
+
+# Create a new job offer
+curl -X POST http://localhost:8000/job-offers \
+  -H "Content-Type: application/json" \
+  -d '{"url": "https://example.com/job/123", "title": "Software Engineer", "company": "Tech Corp"}'
+
+# Update job offer status
+curl -X PATCH http://localhost:8000/job-offers/1 \
+  -H "Content-Type: application/json" \
+  -d '{"applied": true}'
+
+# Stream real-time updates
+curl http://localhost:8000/job-offers/stream
+```
+
+**Data Model:**
+- `id`: Unique identifier
+- `url`: Job posting URL
+- `title`: Job title
+- `company`: Company name
+- `applied`: Application status (boolean)
+- `status`: Application state (applied/not_applied/in_progress)
+- `created_at`: Creation timestamp
+- `updated_at`: Last update timestamp
 
 ## Troubleshooting
 
