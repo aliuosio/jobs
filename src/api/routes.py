@@ -6,8 +6,8 @@ import logging
 import time
 from typing import Any
 
-from fastapi import APIRouter, HTTPException, Request
-from starlette.responses import StreamingResponse
+from fastapi import APIRouter, HTTPException, Query, Request
+from starlette.responses import Response, StreamingResponse
 
 from src.api.schemas import (
     AnswerRequest,
@@ -202,22 +202,58 @@ async def fill_form(request: Request, answer_request: AnswerRequest) -> AnswerRe
 
 @router.get(
     "/job-offers",
-    response_model=JobOffersListResponse,
+    response_model=None,
     responses={
+        400: {"model": ErrorResponse, "description": "Invalid format parameter"},
         503: {"model": ErrorResponse, "description": "Database unavailable"},
         500: {"model": ErrorResponse, "description": "Internal server error"},
     },
     tags=["job-offers"],
 )
 async def get_job_offers(
-    limit: int | None = None, offset: int | None = None
-) -> JobOffersListResponse:
-    """Retrieve job offers with processing metadata."""
+    limit: int | None = None,
+    offset: int | None = None,
+    format: str | None = Query(default=None, description="Response format: 'json' or 'csv'"),
+) -> JobOffersListResponse | Response:  # type: ignore[valid-type]
+    """Retrieve job offers with processing metadata.
+
+    Supports optional format parameter to return CSV export of applied jobs.
+    """
     from asyncpg import PostgresError
 
-    from src.services.job_offers import job_offers_service
+    from src.services.job_offers import (
+        generate_csv_bytes,
+        generate_csv_filename,
+        job_offers_service,
+    )
+
+    # Handle format parameter validation
+    if format is not None:
+        format = format.lower().strip()
+        if format not in ("json", "csv"):
+            raise HTTPException(
+                status_code=400,
+                detail="Invalid format parameter. Must be 'json' or 'csv'.",
+            )
 
     try:
+        if format == "csv":
+            # Return CSV export of applied jobs only
+            applied_jobs = await job_offers_service.get_applied_jobs_for_csv()
+            csv_bytes = generate_csv_bytes(applied_jobs)
+            filename = generate_csv_filename()
+            logger.info(
+                f"[job-offers] CSV export: {len(applied_jobs)} applied jobs, filename={filename}"
+            )
+            return Response(
+                content=csv_bytes,
+                media_type="text/csv; charset=utf-8",
+                headers={
+                    "Content-Disposition": f'attachment; filename="{filename}"',
+                },
+            )
+
+        # Default: return JSON
         offers = await job_offers_service.get_job_offers(limit=limit, offset=offset)
         return JobOffersListResponse(job_offers=[JobOfferWithProcess(**o) for o in offers])
     except PostgresError as e:

@@ -1,7 +1,10 @@
 """Database service for job offers data retrieval from PostgreSQL."""
 
 import asyncio
+import csv
+import io
 import logging
+from datetime import datetime, timezone
 from typing import Any
 
 import asyncpg
@@ -9,6 +12,9 @@ import asyncpg
 from src.config import settings
 
 logger = logging.getLogger(__name__)
+
+# CSV column headers for export (no 'applied' column since all exported jobs are applied)
+CSV_COLUMNS = ["company", "email", "company_url", "title", "url", "posted"]
 
 
 class JobOffersService:
@@ -275,5 +281,98 @@ class JobOffersService:
             await self.broadcast(all_offers)
         return result
 
+    async def get_applied_jobs_for_csv(
+        self,
+    ) -> list[dict[str, Any]]:
+        """Get all applied job offers formatted for CSV export.
+
+        Returns:
+            List of job offer dictionaries with company, email, company_url,
+            title, url, and posted fields for CSV export.
+
+        Raises:
+            RuntimeError: If database pool not initialized.
+            asyncpg.PostgresError: Database query failure.
+        """
+        if not self._pool:
+            raise RuntimeError("Database pool not initialized")
+
+        query = """
+            SELECT
+                jo.id,
+                jo.title,
+                jo.url,
+                jo.company,
+                jo.email,
+                jo.company_url,
+                jo.posted
+            FROM job_offers jo
+            INNER JOIN job_offers_process jop ON jo.id = jop.job_offers_id
+            WHERE jop.applied = true
+            ORDER BY jo.id ASC
+        """
+
+        async with self._pool.acquire() as conn:
+            rows = await conn.fetch(query)
+
+        result = []
+        for row in rows:
+            result.append(
+                {
+                    "id": row["id"],
+                    "title": row["title"],
+                    "url": row["url"],
+                    "company": row.get("company"),
+                    "email": row.get("email"),
+                    "company_url": row.get("company_url"),
+                    "posted": row.get("posted"),
+                }
+            )
+
+        logger.info(f"Retrieved {len(result)} applied job offers for CSV export")
+        return result
+
 
 job_offers_service = JobOffersService()
+
+
+def generate_csv_filename() -> str:
+    """Generate a timestamped filename for CSV export.
+
+    Returns:
+        Filename in format: applied-jobs-{YYYY-MM-DD}T{HHMMSS}.csv
+    """
+    now = datetime.now(timezone.utc)
+    return f"applied-jobs-{now.strftime('%Y-%m-%dT%H%M%S')}.csv"
+
+
+def generate_csv_bytes(job_offers: list[dict[str, Any]]) -> bytes:
+    """Generate CSV content from job offers list.
+
+    Args:
+        job_offers: List of job offer dictionaries.
+
+    Returns:
+        UTF-8 encoded CSV bytes with BOM for Excel compatibility.
+    """
+    output = io.StringIO()
+    writer = csv.writer(output, quoting=csv.QUOTE_MINIMAL)
+
+    # Write header row
+    writer.writerow(CSV_COLUMNS)
+
+    # Write data rows
+    for offer in job_offers:
+        row = [
+            offer.get("company", ""),
+            offer.get("email", ""),
+            offer.get("company_url", ""),
+            offer.get("title", ""),
+            offer.get("url", ""),
+            str(offer.get("posted", "")) if offer.get("posted") else "",
+        ]
+        writer.writerow(row)
+
+    # Get CSV content and encode with UTF-8 BOM for Excel compatibility
+    csv_content = output.getvalue()
+    return "\ufeff".encode("utf-8") + csv_content.encode("utf-8")

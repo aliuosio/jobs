@@ -66,6 +66,7 @@ const elements = {
   
   // Links Tab Elements
   refreshLinksBtn: document.getElementById('refresh-links-btn'),
+  exportAppliedBtn: document.getElementById('export-applied-btn'),
   jobLinksList: document.getElementById('job-links-list'),
   jobLinksLoading: document.getElementById('job-links-loading'),
   jobLinksError: document.getElementById('job-links-error'),
@@ -213,6 +214,11 @@ function setupEventListeners() {
   
   // Links tab buttons
   elements.refreshLinksBtn.addEventListener('click', handleRefreshLinksClick);
+  
+  // Export applied jobs button
+  if (elements.exportAppliedBtn) {
+    elements.exportAppliedBtn.addEventListener('click', handleExportAppliedClick);
+  }
   
   // Retry button for loading failures
   if (elements.retryBtn) {
@@ -840,6 +846,63 @@ async function persistTabPreference(tabName) {
  */
 async function handleRefreshLinksClick() {
   await loadJobLinks();
+}
+
+/**
+ * Handle Export Applied button click
+ */
+async function handleExportAppliedClick() {
+  const btn = elements.exportAppliedBtn;
+  if (!btn || btn.disabled) return;
+  
+  btn.disabled = true;
+  const originalText = btn.textContent;
+  btn.textContent = 'Exporting...';
+  
+  try {
+    const apiUrl = await getApiUrl();
+    const response = await fetch(`${apiUrl}/job-offers?format=csv`);
+    
+    if (!response.ok) {
+      const errorData = await response.json().catch(() => ({ detail: 'Export failed' }));
+      throw new Error(errorData.detail || `Export failed: ${response.status}`);
+    }
+    
+    const blob = await response.blob();
+    const contentDisposition = response.headers.get('Content-Disposition');
+    let filename = `applied-jobs-${new Date().toISOString().replace(/[:.]/g, '-').slice(0, 19)}.csv`;
+    
+    if (contentDisposition) {
+      const match = contentDisposition.match(/filename="?([^";]+)"?/);
+      if (match) {
+        filename = match[1];
+      }
+    }
+    
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = filename;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+    
+    showSuccess(`Exported ${filename}`);
+  } catch (error) {
+    console.error('[Popup] Export failed:', error);
+    showToggleError(error.message || 'Export failed');
+  } finally {
+    btn.disabled = false;
+    btn.textContent = originalText;
+  }
+}
+
+/**
+ * Get API base URL for extension
+ */
+async function getApiUrl() {
+  return 'http://localhost:8000';
 }
 
 // Initialize on DOM ready

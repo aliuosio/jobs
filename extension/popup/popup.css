@@ -261,6 +261,11 @@ body {
   align-items: center;
 }
 
+.refresh-buttons {
+  display: flex;
+  gap: 8px;
+}
+
 .refresh-section .btn {
   margin-right: 0;
 }
