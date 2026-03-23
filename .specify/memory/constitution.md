@@ -27,14 +27,11 @@
 * **Structure**: Services must be modular (Retriever, Generator, Validator) with Dependency Injection.
 
 ### 2. Technical Constraints
-* **Embeddings**: Mistral `mistral-embed` (1024-dim).
-* **Retrieval**: Fixed $k=5$ context chunks (tunable pending evaluation data).
 * **LLM Ops**: Temp `0.3` (configurable per use-case). System prompts must be grounded; fabrication triggers an immediate "information not found" fallback.
 * **Frontend/API**: Backend must support CORS for extension origins. DOM updates must dispatch bubbling `input`/`change` events.
-* **Automation**: Use Playwright (Async API) for all scraping/tests. Headless in CI. Browser contexts must be isolated per session.
 
 ### 3. Workflow & Quality
-* **Git**: Git-Flow (main, develop, feature/, bugfix/, hotfix/). Atomic commits only. No direct merges to protected branches. **Review pending**: Consider GitHub Flow for reduced overhead.
+* **Git**: Git-Flow (main, develop, feature/, bugfix/, hotfix/). Atomic commits only. No direct merges to protected branches. Use git-flow skill
 * **Docker**: All execution/testing occurs via `docker-compose exec api-backend`.
 * **Testing**: Unit (utils), Integration (API), Manual (health/fill-form).
 * **Docs**: Docstrings required for all functions (Args/Returns/Raises). Inline comments must explain "Why," never "What."
