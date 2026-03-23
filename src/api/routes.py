@@ -41,6 +41,25 @@ def _calculate_confidence(avg_score: float, chunk_count: int) -> ConfidenceLevel
     return ConfidenceLevel.LOW
 
 
+def _combine_confidence(
+    retrieval_confidence: ConfidenceLevel,
+    llm_confidence: ConfidenceLevel,
+    field_value: str | None,
+) -> ConfidenceLevel:
+    confidence_order = [
+        ConfidenceLevel.NONE,
+        ConfidenceLevel.LOW,
+        ConfidenceLevel.MEDIUM,
+        ConfidenceLevel.HIGH,
+    ]
+    retrieval_idx = confidence_order.index(retrieval_confidence)
+    llm_idx = confidence_order.index(llm_confidence)
+    base_idx = max(retrieval_idx, llm_idx)
+    if field_value:
+        base_idx = min(base_idx + 1, 3)
+    return confidence_order[base_idx]
+
+
 def _assemble_context(chunks: list[dict]) -> str:
     context_parts = []
     for i, chunk in enumerate(chunks, 1):
@@ -103,13 +122,11 @@ async def fill_form(request: Request, answer_request: AnswerRequest) -> AnswerRe
     logger.info(f"[fill-form] label={label!r} signals={signals}")
 
     try:
-        # Embedding latency
         embed_start = time.time()
         query_vector = await embedder.embed(label)
         embed_latency_ms = (time.time() - embed_start) * 1000
         logger.info(f"[fill-form] embedding_latency_ms={embed_latency_ms:.1f}")
 
-        # Retrieval latency
         retrieval_start = time.time()
         chunks = await retriever.search(query_vector)
         retrieval_latency_ms = (time.time() - retrieval_start) * 1000
@@ -128,67 +145,53 @@ async def fill_form(request: Request, answer_request: AnswerRequest) -> AnswerRe
             )
 
         avg_score = sum(c.get("score", 0) for c in chunks) / chunk_count
-        confidence = _calculate_confidence(avg_score, chunk_count)
-        logger.info(
-            f"[fill-form] retrieval_stats avg_score={avg_score:.3f} confidence={confidence.value}"
-        )
-
-        # Field classification latency
-        classify_start = time.time()
-        field_type = classify_field_type(signals)
-        classify_latency_ms = (time.time() - classify_start) * 1000
-        logger.info(
-            f"[fill-form] classify_latency_ms={classify_latency_ms:.1f} field_type={field_type}"
-        )
-
-        field_value = None
-        field_type_str = None
-
-        if field_type:
-            extraction_start = time.time()
-            field_value = _extract_direct_field_value(chunks, field_type)
-            if not field_value:
-                profile_chunk = await retriever.get_profile_chunk()
-                if profile_chunk:
-                    chunks.insert(0, profile_chunk)
-                    field_value = _extract_direct_field_value([profile_chunk], field_type)
-            extraction_latency_ms = (time.time() - extraction_start) * 1000
-
-            if field_value:
-                field_type_str = field_type.value
-                logger.info(
-                    f"[fill-form] field_extraction field_type={field_type_str} "
-                    f"value={field_value!r} extraction_latency_ms={extraction_latency_ms:.1f}"
-                )
-            else:
-                logger.info(
-                    f"[fill-form] field_extraction_failed field_type={field_type.value} "
-                    f"extraction_latency_ms={extraction_latency_ms:.1f}"
-                )
-
+        retrieval_confidence = _calculate_confidence(avg_score, chunk_count)
         context = _assemble_context(chunks)
 
-        # Generation latency
         gen_start = time.time()
-        answer = await generator.generate_answer(context, label)
+        classification = await generator.classify_and_extract(
+            context=context,
+            label=label,
+            signals=signals,
+        )
         gen_latency_ms = (time.time() - gen_start) * 1000
         logger.info(f"[fill-form] generation_latency_ms={gen_latency_ms:.1f}")
+
+        llm_confidence_str = classification.confidence.lower()
+        if llm_confidence_str == "high":
+            llm_confidence = ConfidenceLevel.HIGH
+        elif llm_confidence_str == "medium":
+            llm_confidence = ConfidenceLevel.MEDIUM
+        elif llm_confidence_str == "low":
+            llm_confidence = ConfidenceLevel.LOW
+        else:
+            llm_confidence = ConfidenceLevel.NONE
+
+        confidence = _combine_confidence(
+            retrieval_confidence, llm_confidence, classification.field_value
+        )
+
+        has_data = (
+            classification.field_value is not None
+            or classification.answer != "I don't have information about that in the resume."
+        )
 
         total_latency_ms = (time.time() - request_start) * 1000
         logger.info(
             f"[fill-form] request_complete total_latency_ms={total_latency_ms:.1f} "
             f"embed_ms={embed_latency_ms:.1f} retrieval_ms={retrieval_latency_ms:.1f} "
-            f"classify_ms={classify_latency_ms:.1f} gen_ms={gen_latency_ms:.1f} "
-            f"chunks={chunk_count} confidence={confidence.value}"
+            f"gen_ms={gen_latency_ms:.1f} chunks={chunk_count} "
+            f"retrieval_conf={retrieval_confidence.value} llm_conf={llm_confidence.value} "
+            f"combined_conf={confidence.value} field_type={classification.field_type}"
         )
 
         return AnswerResponse(
-            answer=answer,
-            has_data=True,
+            answer=classification.answer,
+            has_data=has_data,
             confidence=confidence,
             context_chunks=chunk_count,
-            field_value=field_value,
-            field_type=field_type_str,
+            field_value=classification.field_value,
+            field_type=classification.field_type,
         )
 
     except ConnectionError as e:

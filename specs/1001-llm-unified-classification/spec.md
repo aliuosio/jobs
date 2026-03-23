@@ -59,10 +59,10 @@ The API should clearly indicate confidence level so the extension can make infor
 ### Edge Cases
 
 - What happens when LLM returns malformed JSON? → Fall back to plain-text answer generation
-- How does system handle extremely long context (> max tokens)?
+- How does system handle extremely long context (> max tokens)? → Truncate to first N chunks (N=10) to fit token limit
 - What if LLM API is unavailable (rate limit, network error)? → Use regex classifier as fallback for known field types
-- How to handle ambiguous field labels that could match multiple types?
-- What about fields that should NOT be filled (password reset links, referral codes)?
+- How to handle ambiguous field labels that could match multiple types? → Return field_type="unknown" with generated answer
+- What about fields that should NOT be filled (password reset links, referral codes)? → Extension filters by autocomplete="new-password" and ignores non-standard fields
 
 ## Requirements *(mandatory)*
 

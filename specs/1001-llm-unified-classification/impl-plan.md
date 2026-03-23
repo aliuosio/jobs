@@ -146,8 +146,8 @@ Total: 10 hours
 
 | File | Changes |
 |------|---------|
-| `extension/content/api-client.js` | Handle new response |
-| `extension/content/field-filler.js` | Use field_value if available |
+| `extension/content/api-client.js` | Handle new response, parse field_type/field_value |
+| `extension/content/field-filler.js` | Use field_value when field_type is known, add confidence-based decision logic |
 
 ## Success Criteria Validation
 
