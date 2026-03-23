@@ -66,6 +66,7 @@ cp .env.example .env
 
 ```bash
 docker-compose up -d
+docker compose logs -f n8n # wait for the workflows to be imported
 ```
 
 This starts:
