@@ -10,15 +10,28 @@
 - Github: https://github.com/aliuosio
 - LinkedIn: https://www.linkedin.com/in/osiozekhai-aliu-908036185/
 
-## Tech Stack
+## Summary
 
-### Backend
-- PHP, Python, Bash
+**20 years of professional experience** – including 13 years as a freelance web developer specializing in e-commerce, primarily Magento 1 & 2. Backend specialist with extensive knowledge in Linux, Docker, and workflow automation (n8n). Publishes configurable Docker stacks on GitHub and develops AI-powered solutions with measurable results. Work approach is based on SOLID, KISS, DRY, and YAGNI principles. Intensive engagement with AI technologies and low-code automation for the past two years.
 
-### Frontend
-- JavaScript (jQuery, React, Vue.js, Alpine, Angular, Nextjs)
-- CSS3 (Tailwind, Bootstrap, SASS, LESS)
-- HTML5 (PWA)
+---
+
+## Core Competencies
+
+### E-Commerce & Backend
+- **Magento 1 & 2:** 13+ years of experience (migrations, custom development, API integration)
+- **Frameworks:** Symfony, Laravel, CodeIgniter
+- **Frontend:** JavaScript (jQuery, React, Vue.js, Alpine), CSS3 (Tailwind, Bootstrap, SASS, LESS), HTML5 (PWA)
+
+### DevOps & Infrastructure
+- **Linux:** Mint, Ubuntu, Debian, FreeBSD, Windows, OSX
+- **Docker:** Container orchestration, Docker Compose stack for Magento 2
+- **Automation:** n8n, Google Apps Script, CI/CD
+
+### AI & Innovation
+- **Workflow Automation:** 2 years of experience with n8n and low-code solutions
+- **AI Integration:** Context Engineering, RAG systems, LLM Fine-Tuning
+- **Tools:** GitHub Spec-Kit, Vibe Coding, n8n, AI-powered development tools
 
 ### Frameworks
 - Symfony, Laravel, CodeIgniter
@@ -36,45 +49,22 @@
 - Test Driven Development, SOLID principles, Design Patterns
 
 
-## Summary
-
-**20 years of professional experience** - 13 years as a freelance web developer focusing on e-commerce, primarily Magento 1 & 2. Backend specialist with solid knowledge of Linux, Docker and workflow automation (n8n). Publishes configurable Docker stacks on GitHub and develops AI-powered solutions with measurable results. Work approach is based on SOLID, KISS, DRY and YAGNI principles. Intensive engagement with AI technologies and low-code automation for the past two years.
-
----
-
-## Core Competencies
-
-### E-Commerce & Backend
-- **Magento 1 & 2:** 13+ years of experience (migrations, custom development, API integration)
-- **Frameworks:** Symfony, Laravel, CodeIgniter
-- **Frontend:** JavaScript (jQuery, React, Vue.js, Alpine), CSS3 (Tailwind, Bootstrap, SASS, LESS), HTML5 (PWA)
-
-### DevOps & Infrastructure
-- **Linux:** Mint, Ubuntu, Debian, FreeBSD, Windows, OSX
-- **Docker:** Container orchestration, Docker Compose Stack for Magento 2
-- **Automation:** n8n, Google Apps Script, CI/CD
-
-### AI & Innovation
-- **Workflow Automation:** 2 years of experience with n8n and low-code solutions
-- **AI Integration:** Context Engineering, RAG systems, LLM Fine-Tuning
-- **Tools:** GitHub Spec-Kit, Vibe Coding, AI-powered development tools
-
 ---
 
 ## Professional Experience
 
 ### Freelance Web Developer
-**2012 – today** (13 years)
+**2012 – present** (13 years)
 
 **Project focus: E-commerce with Magento 1 & 2**
 
-- Development and maintenance of Magento 2 modules for enterprise customers
+- Development and maintenance of Magento 2 modules for enterprise clients
 - Migrations from Magento 1 to Magento 2 (complete data structure, functions, templates)
 - Integration of REST and GraphQL APIs for third-party system connections
-- Docker-based development environments set up and maintained for teams
+- Setup and maintenance of Docker-based development environments for teams
 - Development of custom workflows for business process automation
-- Team leadership and mentoring for developer teams
-- Performance optimization (Redis Cache, CDN, image optimization)
+- Team leadership and mentoring for development teams
+- Performance optimization (Redis cache, CDN, image optimization)
 
 **Technologies:** Magento 2, PHP, Symfony, Docker, n8n, GraphQL, REST API, MySQL, ElasticSearch
 
@@ -83,26 +73,25 @@
 
 ## Selected Projects
 
-**mage2.docker** (58 GitHub Stars)
+**[mage2.docker](https://github.com/aliuosio/mage2.docker)** (58 GitHub Stars)
+
 **Since 2017 – ongoing open-source project**
-- Configurable, self-installable Docker Compose Stack for Magento 2
+- Configurable, self-installable Docker Compose stack for Magento 2
 - Supports Debian-based Linux systems and macOS
 - Flexible and easily adaptable development environment for Magento 2
 - Regular updates and community support
 
-**GitHub:** github.com/aliuosio/mage2.docker
 
-
-**MagentoAutoPatch**
+**[MagentoAutoPatch](https://github.com/aliuosio/MagentoAutoPatch)**
 - Automation of Magento 2 patch processes with email notification
 - Integration into Magento's patch management system
-- Secures currency and security of Magento installations
+- Ensures currency and security of Magento installations
 
 
 **jobs** (AI and n8n workflow)
 - Automated workflows for job applications and tracking
 - Integration with databases and email systems
-- **Special features:**
+- **Features:**
   - Firefox extension for job portals with AI-powered form filling
   - REST API for job offer management with LLM classification
   - n8n workflows for automated job research and application processes
@@ -110,14 +99,14 @@
   - AI integration for intelligent job matching and content generation
 
 
-**NewCoins – Open-Source Tool for New Cryptocurrencies**
-- Open-source tool for automatic detection of coins traded exclusively on MEXC and launched within the next 24 hours
+**[NewCoins – Open-Source Tool for New Cryptocurrencies](https://github.com/aliuosio/NewCoins)**
+- Open-source tool for automatic detection of coins exclusively traded on MEXC and launched within the next 24 hours
 - Evaluation based on technical and social indicators with clear recommendations: BUY | HOLD | WATCH | AVOID
-- **Special features:**
-  - Analysis of volume, liquidity and whale activity
-  - Social sentiment, developer activity and token distribution
+- **Features:**
+  - Analysis of volume, liquidity, and whale activity
+  - Social sentiment, developer activity, and token distribution
   - Docker setup for easy deployment
-  - Automated data aggregation in real-time
+  - Automated real-time data aggregation
   - Transparent and traceable evaluation algorithms
 
 ---
@@ -126,30 +115,20 @@
 
 ### E-Commerce & Magento Module
 
-**magento2docker** (3 GitHub Stars)
+**[mage2.docker](https://github.com/aliuosio/mage2.docker)** (58 GitHub Stars)
 - Fast demo environment and development environment for Magento 2
-- Includes Nginx, PHP, MariaDB, Redis, Elasticsearch in a single Docker image
+- Includes Nginx, PHP, MariaDB, Redis, Elasticsearch in a Docker image
 - Ideal for rapid prototyping and testing
 
-**MagentoMailAttachment** (1 GitHub Star)
+**[MagentoMailAttachment](https://github.com/aliuosio/MagentoMailAttachment)**
 - Magento 2 module for sending emails with attachments
-- Extends Magento's standard email sending functionality
+- Extends Magento's standard email functionality
 
-**magento-multiple-category-images**
-- Magento 2 module for multiple category images
-- First image serves as main category image
-- Flexible image management for categories
-
-**ShopwareQueueMonitor**
-- Monitoring of queueing services (RabbitMQ) for Shopware
-- Email and Slack notifications on errors
-
-**RabbitMQMailPlugin**
+**[ShopwareQueueMonitor](https://github.com/aliuosio/ShopwareQueueMonitor)**
+- Monitoring of queuing services (RabbitMQ) for Shopware
 - Shopware 6 plugin for email routing via RabbitMQ
-- Symfony Messenger integration for reliable email delivery
-- Decoupling of email sending from main system
 
-**AssemblyService** (1 GitHub Star)
+**[AssemblyService](https://github.com/aliuosio/AssemblyService)**
 - Integration service for product assembly with dynamic pricing calculation
 - Price calculation based on product complexity and postal code
 
@@ -174,10 +153,10 @@
 
 - AI-powered pipeline for 24-hour crypto forecasts with automated futures trading recommendations
 - Integration of technical indicators (MACD, RSI, Bollinger Bands, ATR) for precise market analysis
-- **Special features:**
+- **Features:**
   - Automated data collection of crypto pairs in real-time
   - AI-powered technical analysis with multiple indicators
-  - Generation of clear trading strategies with entry, stop-loss and take-profit targets
+  - Generation of clear trading strategies with entry, stop-loss, and take-profit targets
   - Logging of recommendations in PostgreSQL database (LLM, Coin, Price, Recommendation)
   - Scalable architecture for any crypto pairs
 
@@ -188,9 +167,9 @@ Development of a suite of workflow AI/n8n for group disturbances with WhatsApp a
 
 - Capture of handwritten time tracking via Google Forms
 - Automatic processing of customer requests
-- Positioning of individual employees via GPS
+- Position determination of individual employees via GPS
 - Automatic sending of time tracking to supervisors
-- Cumulated projects sent as invoices
+- Cumulative projects sent as invoices
 
 ---
 
@@ -199,13 +178,13 @@ Development of a suite of workflow AI/n8n for group disturbances with WhatsApp a
 **openclaw**
 - Issue interviewer following GitHub Spec Driven Framework
 - Creates issues after interview on GitHub issues belonging to a repo
-- **Special features:** Automated requirements capture and issue generation
+- **Features:** Automated requirements gathering and issue generation
 
 **opencode(oh-my-opencode)**
 - Picks up tasks one by one and implements them
 - Commits to a branch and opens pull requests
 - openclaw reviews the pull requests
-- **Special features:** Automated code generation and review processes
+- **Features:** Automated code generation and review processes
 
 **Github Spec-Driven Development**
 - VibeCoding Specifications Vorkagen for schema-driven development for Context Engineering 
@@ -231,14 +210,14 @@ Development of a suite of workflow AI/n8n for group disturbances with WhatsApp a
 - **LLM Fine-Tuning** and optimization
 
 ### Open Source Contributions
-- workflows-shared (Workflow templates and examples)
+- workflows-shared (workflow templates and examples)
 - Active participation in open-source communities
 
 ---
 
 ## Soft Skills
 
-- **Analytical Thinking:** Problem solving through structured approach
+- **Analytical Thinking:** Problem-solving through structured approach
 - **Communication:** Clear collaboration with developers and stakeholders
 - **Adaptability:** Quick learning of new technologies
 - **Passion for Innovation:** Continuous engagement with new trends

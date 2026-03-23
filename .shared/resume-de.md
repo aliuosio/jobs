@@ -11,32 +11,6 @@
 - Github: https://github.com/aliuosio
 - LinkedIn: https://www.linkedin.com/in/osiozekhai-aliu-908036185/
 
-## Tech Stack
-
-### Backend
-- PHP, Python, Bash
-
-### Frontend
-- JavaScript (jQuery, React, Vue.js, Alpine, Angular, Nextjs)
-- CSS3 (Tailwind, Bootstrap, SASS, LESS)
-- HTML5 (PWA)
-
-### Frameworks
-- Symfony, Laravel, CodeIgniter
-
-### E-Commerce
-- Magento, Shopware, Shopify
-
-### Databases
-- MySQL, MariaDB, PostgreSQL, MS-SQL, Oracle, Mongo DB, ElasticSearch, OpenSearch
-
-### Operating Systems
-- Linux Mint, Ubuntu, Debian, FreeBSD, Windows, OSX, CachyOS
-
-### Methodologies OOP
-- Test Driven Development, SOLID principles, Design Patterns
-
-
 ## Zusammenfassung
 
 **20 Jahre Berufserfahrung** – davon 13 Jahre als freiberuflicher Webentwickler mit Fokus auf E-Commerce, primär Magento 1 & 2. Backend-Spezialist mit fundierten Kenntnissen in Linux, Docker und Workflow-Automatisierung (n8n). Veröffentlicht konfigurierbare Docker-Stacks auf GitHub und entwickelt KI-gestützte Lösungen mit messbaren Ergebnissen. Arbeitsweise orientiert sich an SOLID, KISS, DRY und YAGNI Prinzipien. Seit zwei Jahren intensive Auseinandersetzung mit KI-Technologien und Lowcode-Automatisierung.
@@ -58,7 +32,23 @@
 ### KI & Innovation
 - **Workflow-Automatisierung:** 2 Jahre Erfahrung mit n8n und Lowcode-Lösungen
 - **KI-Integration:** Context Engineering, RAG-Systeme, LLM Fine-Tuning
-- **Tools:** GitHub Spec-Kit, Vibe Coding, KI-gestützte Entwicklungstools
+- **Tools:** GitHub Spec-Kit, Vibe Coding, n8n, KI-gestützte Entwicklungstools
+
+### Frameworks
+- Symfony, Laravel, CodeIgniter
+
+### E-Commerce
+- Magento, Shopware, Shopify
+
+### Databases
+- MySQL, MariaDB, PostgreSQL, MS-SQL, Oracle, Mongo DB, ElasticSearch, OpenSearch
+
+### Operating Systems
+- Linux Mint, Ubuntu, Debian, FreeBSD, Windows, OSX, CachyOS
+
+### Methodologies OOP
+- Test Driven Development, SOLID principles, Design Patterns
+
 
 ---
 
@@ -84,17 +74,16 @@
 
 ## Ausgewählte Projekte
 
-**mage2.docker** (58 GitHub Stars)
+**[mage2.docker](https://github.com/aliuosio/mage2.docker)** (58 GitHub Stars)
+
 **Seit 2017 – laufendes Open-Source-Projekt**
 - Konfigurierbarer, selbstinstallierbarer Docker Compose Stack für Magento 2
 - Unterstützt Debian-basierte Linux-Systeme und macOS
 - Flexible und leicht anpassbare Entwicklungsumgebung für Magento 2
 - Regelmäßige Updates und Community-Support
 
-**GitHub:** github.com/aliuosio/mage2.docker
 
-
-**MagentoAutoPatch**
+**[MagentoAutoPatch](https://github.com/aliuosio/MagentoAutoPatch)**
 - Automatisierung von Magento 2 Patch-Prozessen mit E-Mail-Benachrichtigung
 - Integration in Magentos Patch-Management-System
 - Sichert Aktualität und Sicherheit von Magento-Installationen
@@ -111,7 +100,7 @@
   - KI-Integration für intelligente Job-Matching und Content-Generierung
 
 
-**NewCoins – Open-Source-Tool für neue Kryptowährungen**
+**[NewCoins – Open-Source-Tool für neue Kryptowährungen](https://github.com/aliuosio/NewCoins)**
 - Open-Source-Tool zur automatischen Erkennung von Coins, die exklusiv auf MEXC gehandelt werden und innerhalb der nächsten 24 Stunden gelauncht werden
 - Bewertung basierend auf technischen und sozialen Indikatoren mit klaren Empfehlungen: BUY | HOLD | WATCH | AVOID
 - **Besonderheiten:**
@@ -127,30 +116,20 @@
 
 ### E-Commerce & Magento Module
 
-**magento2docker** (3 GitHub Stars)
+**[mage2.docker](https://github.com/aliuosio/mage2.docker)** (58 GitHub Stars)
 - Schnelle Demo-Umgebung und Entwicklungsumgebung für Magento 2
 - Beinhaltet Nginx, PHP, MariaDB, Redis, Elasticsearch in einem Docker-Image
 - Ideal für schnelle Prototypen und Testing
 
-**MagentoMailAttachment** (1 GitHub Star)
+**[MagentoMailAttachment](https://github.com/aliuosio/MagentoMailAttachment)**
 - Magento 2 Modul zum Senden von E-Mails mit Anhängen
 - Erweitert Magento's Standard-Funktionalität für E-Mail-Versand
 
-**magento-multiple-category-images**
-- Magento 2 Modul für mehrere Kategoriemengbilder
-- Erstes Bild dient als Hauptkategorie-Bild
-- Flexibles Bildmanagement für Kategorien
-
-**ShopwareQueueMonitor**
+**[ShopwareQueueMonitor](https://github.com/aliuosio/ShopwareQueueMonitor)**
 - Überwachung von Queueing-Services (RabbitMQ) für Shopware
-- E-Mail- und Slack-Benachrichtigungen bei Fehlern
-
-**RabbitMQMailPlugin**
 - Shopware 6 Plugin zur E-Mail-Routing über RabbitMQ
-- Symfony Messenger Integration für zuverlässigen E-Mail-Versand
-- Entkopplung von E-Mail-Sendung vom Hauptsystem
 
-**AssemblyService** (1 GitHub Star)
+**[AssemblyService](https://github.com/aliuosio/AssemblyService)**
 - Integrationsdienst für Produkt-Montage mit dynamischer Preisberechnung
 - Preiskalkulation basierend auf Produktkomplexität und Postleitzahl
 
