@@ -360,6 +360,14 @@ async function handleUpdateApplied(data) {
  * Handle single field fill request
  */
 async function handleFillForm(data) {
+  console.log('[Background] fill-form request:', JSON.stringify({
+    label: data.label,
+    context_hints: data.context_hints || null,
+    field_type: data.field_type || null,
+    form_url: data.form_url || null,
+    signals: data.signals || null
+  }));
+  
   try {
     const response = await fetch(`${API_ENDPOINT}/fill-form`, {
       method: 'POST',
@@ -388,6 +396,7 @@ async function handleFillForm(data) {
     }
 
     const fillResponse = await response.json();
+    console.log('[Background] fill-form response:', JSON.stringify(fillResponse));
     
     // Use clean field_value for forms; fall back to conversational answer if unavailable
     const value = fillResponse.field_value || fillResponse.answer;

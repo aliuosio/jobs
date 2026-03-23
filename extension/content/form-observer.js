@@ -170,6 +170,33 @@ class FormObserver {
     return 'unknown'
   }
 
+  /**
+   * Check if an element is fillable (not readonly, disabled, hidden, or password)
+   * @param {HTMLElement} element
+   * @returns {boolean}
+   */
+  _isFieldFillable(element) {
+    if (!element) return false
+    
+    // Skip password fields
+    if (element.type === 'password') return false
+    
+    // Skip readonly fields
+    if (element.readOnly) return false
+    
+    // Skip disabled fields
+    if (element.disabled) return false
+    
+    // Skip hidden fields
+    if (element.type === 'hidden') return false
+    
+    // Skip elements not visible in the DOM
+    const style = window.getComputedStyle(element)
+    if (style.display === 'none' || style.visibility === 'hidden') return false
+    
+    return true
+  }
+
   _generateSelector(element) {
     if (element.id) return `#${element.id}`
     
