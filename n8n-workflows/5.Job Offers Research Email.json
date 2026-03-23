@@ -396,56 +396,6 @@
     },
     {
       "parameters": {
-        "workflowId": {
-          "__rl": true,
-          "value": "2Jhn0sUN3eLhZCe0wcvFS",
-          "mode": "list",
-          "cachedResultUrl": "/workflow/2Jhn0sUN3eLhZCe0wcvFS",
-          "cachedResultName": "JSON - encode"
-        },
-        "workflowInputs": {
-          "mappingMode": "defineBelow",
-          "value": {},
-          "matchingColumns": [],
-          "schema": [],
-          "attemptToConvertTypes": false,
-          "convertFieldsToString": true
-        },
-        "options": {}
-      },
-      "type": "n8n-nodes-base.executeWorkflow",
-      "typeVersion": 1.3,
-      "position": [
-        1024,
-        192
-      ],
-      "id": "f8642012-c2bf-4e86-a635-f547c74490f2",
-      "name": "JSON - encode"
-    },
-    {
-      "parameters": {
-        "url": "={{ $json.url }}",
-        "options": {
-          "browserWSEndpoint": "={{ $('Get Chrome WS Endpoint').item.json.webSocketDebuggerUrl.replace('localhost', 'chrome:9222') }}",
-          "device": "iPad Pro",
-          "timeout": 60000,
-          "protocolTimeout": 60000,
-          "waitUntil": "networkidle2",
-          "pageCaching": true
-        }
-      },
-      "type": "CUSTOM.puppeteer",
-      "typeVersion": 1,
-      "position": [
-        1696,
-        192
-      ],
-      "id": "238a19c3-3e41-44ba-86a6-01befd1dcad9",
-      "name": "Puppeteer",
-      "onError": "continueRegularOutput"
-    },
-    {
-      "parameters": {
         "schemaType": "manual",
         "inputSchema": "{\n  \"type\": \"array\",\n  \"items\": {\n    \"type\": \"object\",\n    \"properties\": {\n      \"company\": { \"type\": [\"string\", \"null\"] },\n      \"title\": { \"type\": [\"string\", \"null\"] },\n      \"email\": { \"type\": [\"string\", \"null\"] },\n      \"url\": { \"type\": [\"string\", \"null\"], \"format\": \"uri\" },\n      \"description\": { \"type\": [\"string\", \"null\"] },\n      \"location\": { \"type\": [\"string\", \"null\"] },\n      \"salary\": { \"type\": [\"string\", \"null\"] },\n      \"schedule_type\": { \"type\": [\"string\", \"null\"] },\n      \"posted\": { \"type\": [\"string\", \"null\"], \"pattern\": \"^\\\\d{4}-\\\\d{2}-\\\\d{2} \\\\d{2}:\\\\d{2}:\\\\d{2}$\" },\n      \"via\": { \"type\": [\"string\", \"null\"] }\n    },\n    \"required\": [\"company\",\"title\",\"email\",\"url\",\"description\",\"location\",\"salary\",\"schedule_type\",\"posted\",\"via\"]\n  }\n}\n"
       },
@@ -616,7 +566,7 @@
       "main": [
         [
           {
-            "node": "JSON - encode",
+            "node": "Edit Fields",
             "type": "main",
             "index": 0
           }
@@ -759,17 +709,6 @@
         ]
       ]
     },
-    "JSON - encode": {
-      "main": [
-        [
-          {
-            "node": "Edit Fields",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
     "Structured Output Parser": {
       "ai_outputParser": [
         [
@@ -811,12 +750,12 @@
       ]
     }
   },
-  "active": false,
+  "active": true,
   "settings": {
     "executionOrder": "v1",
     "binaryMode": "separate"
   },
-  "versionId": "b3f24d14-43a2-43a2-baa3-eb3dd69fa355",
+  "versionId": "844cfe95-2b40-471c-a20b-7fc571cda09d",
   "meta": {
     "templateCredsSetupCompleted": true,
     "instanceId": "b751e283d167317e522f290d63e0b956085524c7c105edc03e657e7409fe8050"
