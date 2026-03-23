@@ -138,8 +138,8 @@
       "type": "@n8n/n8n-nodes-langchain.lmChatOpenAi",
       "typeVersion": 1.3,
       "position": [
-        -2544,
-        1040
+        -928,
+        832
       ],
       "id": "3c5801af-3888-489d-8814-951752c248b3",
       "name": "Z.ai",
@@ -150,7 +150,6 @@
           "name": "Z.AI"
         }
       },
-      "disabled": true,
       "onError": "continueRegularOutput"
     },
     {
@@ -280,8 +279,8 @@
       "type": "@n8n/n8n-nodes-langchain.lmChatMistralCloud",
       "typeVersion": 1,
       "position": [
-        -688,
-        832
+        -896,
+        1056
       ],
       "id": "fa4d7639-9f07-4cb1-a754-dedb58de1ec9",
       "name": "Mistral",
@@ -290,7 +289,8 @@
           "id": "yy2J74r8rO6wyA97",
           "name": "Mistral Cloud account"
         }
-      }
+      },
+      "disabled": true
     },
     {
       "parameters": {
@@ -525,7 +525,18 @@
     },
     "Z.ai": {
       "ai_languageModel": [
-        []
+        [
+          {
+            "node": "Structured Output Parser",
+            "type": "ai_languageModel",
+            "index": 0
+          },
+          {
+            "node": "Extractor",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
       ]
     },
     "Call 'Prompt'": {
@@ -552,18 +563,7 @@
     },
     "Mistral": {
       "ai_languageModel": [
-        [
-          {
-            "node": "Structured Output Parser",
-            "type": "ai_languageModel",
-            "index": 0
-          },
-          {
-            "node": "Extractor",
-            "type": "ai_languageModel",
-            "index": 0
-          }
-        ]
+        []
       ]
     },
     "OpenRouter": {
@@ -610,12 +610,12 @@
       ]
     }
   },
-  "active": false,
+  "active": true,
   "settings": {
     "executionOrder": "v1",
     "binaryMode": "separate"
   },
-  "versionId": "a9bc623c-2a75-4754-acdd-0d10e3470d7b",
+  "versionId": "b47cae19-6858-428f-b653-1b36256418d6",
   "meta": {
     "templateCredsSetupCompleted": true,
     "instanceId": "b751e283d167317e522f290d63e0b956085524c7c105edc03e657e7409fe8050"
