@@ -25,6 +25,16 @@ services:
       - n8n_data:${MAIN_WORKDIR}
       - ${PROMPTS_FOLDER_JOBS}:/home/node/.n8n-files/Prompts/jobs
       - ./.shared/:/home/node/.n8n-files/.shared
+      - ./n8n-workflows:/home/node/import:ro   # mount your JSON files here
+    entrypoint: >
+      sh -c 
+      "
+        if [ ! -f /home/node/.n8n/.imported ]; then
+          n8n import:workflow --separate --input=:/home/node/import &&
+          touch /home/node/.n8n/.imported
+        fi &&
+        n8n start
+      "
     ports:
       - 5678:5678
     depends_on:
