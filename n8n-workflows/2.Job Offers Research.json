@@ -78,18 +78,6 @@
               "type": "string",
               "value": "/home/node/.n8n-files/Prompts/jobs/research.md"
             },
-            {
-              "id": "83114999-2145-4d88-bde7-0a368b3eab79",
-              "name": "mistral_api_key",
-              "type": "string",
-              "value": "pF8g3Q7cIt8flY3SDcu6kc6TwXWGiGhJ"
-            },
-            {
-              "id": "be33fa53-d699-4633-ba84-55c4d36c4ecd",
-              "name": "zai_api_key",
-              "type": "string",
-              "value": "0a3b138ea62943b5835e9d6650be5a32.W8zS4LhkdCNAxQpb"
-            }
           ]
         },
         "options": {}
