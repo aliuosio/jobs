@@ -99,3 +99,5 @@ n8nac-config.json
 .ruff_cache
 .specify
 !.specify/memory/constitution.md
+.shared/*.sql
+.shared/*.snapshot
