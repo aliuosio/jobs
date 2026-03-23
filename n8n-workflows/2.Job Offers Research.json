@@ -82,13 +82,13 @@
               "id": "83114999-2145-4d88-bde7-0a368b3eab79",
               "name": "mistral_api_key",
               "type": "string",
-              "value": "pF8g3Q7cIt8flY3SDcu6kc6TwXWGiGhJ"
+              "value": ""
             },
             {
               "id": "be33fa53-d699-4633-ba84-55c4d36c4ecd",
               "name": "zai_api_key",
               "type": "string",
-              "value": "0a3b138ea62943b5835e9d6650be5a32.W8zS4LhkdCNAxQpb"
+              "value": ""
             }
           ]
         },
@@ -610,14 +610,14 @@
       ]
     }
   },
-  "active": true,
+  "active": false,
   "settings": {
     "executionOrder": "v1",
     "binaryMode": "separate",
     "callerPolicy": "workflowsFromSameOwner",
     "availableInMCP": false
   },
-  "versionId": "f1668530-cdbb-49fd-8a8b-9ff5d88736e2",
+  "versionId": "4ebc1524-6353-4602-96f3-20f55241feab",
   "meta": {
     "templateCredsSetupCompleted": true,
     "instanceId": "b751e283d167317e522f290d63e0b956085524c7c105edc03e657e7409fe8050"
