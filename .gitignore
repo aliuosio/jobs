@@ -97,7 +97,5 @@ n8nac-config.json
 =0.29.0
 .sisyphus/
 .ruff_cache
-.specify
-!.specify/memory/constitution.md
 .shared/*.sql
 .shared/*.snapshot
