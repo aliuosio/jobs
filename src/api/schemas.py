@@ -21,9 +21,7 @@ class ConfidenceLevel(str, Enum):
 class AnswerRequest(BaseModel):
     """Request payload for form field answer generation."""
 
-    label: Annotated[
-        str, Field(min_length=1, max_length=1000, description="Form field label text")
-    ]
+    label: Annotated[str, Field(min_length=1, max_length=1000, description="Form field label text")]
     signals: dict | None = Field(
         default=None,
         description="Optional signals for semantic field classification (autocomplete, label_text, input_name, html_type)",
@@ -89,9 +87,7 @@ class CheckResult(BaseModel):
     name: CheckName = Field(description="Check identifier")
     status: CheckStatus = Field(description="Check result status")
     message: str = Field(description="Human-readable result or error details")
-    duration_ms: Annotated[
-        int, Field(ge=0, description="Execution time in milliseconds")
-    ]
+    duration_ms: Annotated[int, Field(ge=0, description="Execution time in milliseconds")]
     details: dict | None = Field(default=None, description="Optional additional data")
 
 
@@ -143,3 +139,14 @@ class ProcessUpdateRequest(BaseModel):
     applied: bool | None = Field(
         default=None, description="Whether job application has been submitted"
     )
+
+
+class SparseVector(BaseModel):
+    indices: list[int] = Field(description="Token IDs from vocabulary")
+    values: list[float] = Field(description="BM25-weighted values")
+
+
+class HybridWeights(BaseModel):
+    vector_weight: float = Field(default=0.7, description="Weight for dense vector similarity")
+    bm25_weight: float = Field(default=0.3, description="Weight for BM25 score")
+    phrase_bonus_weight: float = Field(default=0.1, description="Weight for phrase bonus")

@@ -27,14 +27,27 @@ class Settings(BaseSettings):
     RETRY_BASE_DELAY: float = 1.0
 
     # PostgreSQL Configuration
-    DATABASE_URL: str = (
-        "postgresql://postgres:zuiCh6ohw4oofee9zei+woo@postgres:5432/n8n"
-    )
+    DATABASE_URL: str = "postgresql://postgres:zuiCh6ohw4oofee9zei+woo@postgres:5432/n8n"
     DATABASE_POOL_SIZE: int = 10
 
     # Redis Configuration (for caching and pip cachecontrol)
     REDIS_URL: str = "redis://redis:6379/0"
     REDIS_ENABLED: bool = True
+
+    HYBRID_ENABLED: bool = True
+    HYBRID_VECTOR_WEIGHT: float = 0.7
+    HYBRID_BM25_WEIGHT: float = 0.3
+    HYBRID_PHRASE_BONUS: float = 0.1
+
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
+        if self.HYBRID_ENABLED:
+            total = self.HYBRID_VECTOR_WEIGHT + self.HYBRID_BM25_WEIGHT
+            if abs(total - 1.0) > 0.001:
+                raise ValueError(
+                    f"HYBRID_VECTOR_WEIGHT ({self.HYBRID_VECTOR_WEIGHT}) + "
+                    f"HYBRID_BM25_WEIGHT ({self.HYBRID_BM25_WEIGHT}) must sum to 1.0, got {total}"
+                )
 
     class Config:
         env_file = ".env"

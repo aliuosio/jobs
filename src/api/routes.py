@@ -128,7 +128,7 @@ async def fill_form(request: Request, answer_request: AnswerRequest) -> AnswerRe
         logger.info(f"[fill-form] embedding_latency_ms={embed_latency_ms:.1f}")
 
         retrieval_start = time.time()
-        chunks = await retriever.search(query_vector)
+        chunks = await retriever.hybrid_search(label, query_vector)
         retrieval_latency_ms = (time.time() - retrieval_start) * 1000
         chunk_count = len(chunks)
         logger.info(
