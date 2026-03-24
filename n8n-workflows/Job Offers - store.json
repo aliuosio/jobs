@@ -8,10 +8,10 @@
       "type": "n8n-nodes-base.executeWorkflowTrigger",
       "typeVersion": 1.1,
       "position": [
-        -896,
-        192
+        -1392,
+        880
       ],
-      "id": "b56eca32-08fb-48d9-997a-98041ba019c8",
+      "id": "d9fe61f4-ed49-45c4-a7dd-cb7443e46231",
       "name": "When Executed by Another Workflow"
     },
     {
@@ -42,10 +42,10 @@
       "type": "n8n-nodes-base.filter",
       "typeVersion": 2.3,
       "position": [
-        -672,
-        192
+        -1168,
+        880
       ],
-      "id": "79aa4e70-5c79-42c4-a0cc-e76ca7d05935",
+      "id": "aedc854f-cac0-4764-ab82-9f376da10035",
       "name": "Filter"
     },
     {
@@ -76,10 +76,10 @@
       "type": "n8n-nodes-base.if",
       "typeVersion": 2.3,
       "position": [
-        -224,
-        192
+        -720,
+        880
       ],
-      "id": "9e7619fb-9384-4171-84b8-01129124494f",
+      "id": "66f9f2f0-ad1b-411c-87c9-1b7151cfff6c",
       "name": "If"
     },
     {
@@ -93,10 +93,10 @@
       "type": "n8n-nodes-base.postgres",
       "typeVersion": 2.6,
       "position": [
-        0,
-        0
+        -496,
+        688
       ],
-      "id": "c701415b-707e-4b6d-b006-745c55f41b94",
+      "id": "eba4c760-69de-4b4f-bb9d-a723eececdf0",
       "name": "Insert",
       "executeOnce": false,
       "alwaysOutputData": true,
@@ -104,8 +104,8 @@
       "waitBetweenTries": 5000,
       "credentials": {
         "postgres": {
-          "id": "ceRmvobzfi3fViKu",
-          "name": "Postgres account"
+          "id": "wthjjnZmr2Hf72m0",
+          "name": "Postgres account 2"
         }
       }
     },
@@ -116,10 +116,10 @@
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        -448,
-        192
+        -944,
+        880
       ],
-      "id": "3e5f4468-8736-4b08-8c68-e8ee05a7306a",
+      "id": "3e379a55-3850-4b03-b8e7-c0de437f27df",
       "name": "Filter Out HTML"
     },
     {
@@ -140,7 +140,8 @@
           "value": {
             "research": "=false",
             "job_offers_id": "={{$json.id}}",
-            "research_email": "=false"
+            "research_email": "=false",
+            "applied": false
           },
           "matchingColumns": [
             "job_offers_id"
@@ -157,13 +158,23 @@
               "removed": true
             },
             {
+              "id": "job_offers_id",
+              "displayName": "job_offers_id",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "number",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
               "id": "research",
               "displayName": "research",
               "required": false,
               "defaultMatch": false,
               "display": true,
               "type": "boolean",
-              "canBeUsedToMatch": false
+              "canBeUsedToMatch": true
             },
             {
               "id": "research_email",
@@ -172,16 +183,16 @@
               "defaultMatch": false,
               "display": true,
               "type": "boolean",
-              "canBeUsedToMatch": false,
+              "canBeUsedToMatch": true,
               "removed": false
             },
             {
-              "id": "job_offers_id",
-              "displayName": "job_offers_id",
+              "id": "applied",
+              "displayName": "applied",
               "required": false,
               "defaultMatch": false,
               "display": true,
-              "type": "number",
+              "type": "boolean",
               "canBeUsedToMatch": true,
               "removed": false
             }
@@ -194,18 +205,18 @@
       "type": "n8n-nodes-base.postgres",
       "typeVersion": 2.6,
       "position": [
-        448,
-        0
+        -48,
+        688
       ],
-      "id": "6654854d-ed10-4be8-8083-dca205d968a0",
+      "id": "d81a1bf3-d21d-4b6e-a956-766e37792914",
       "name": "Process Insert",
       "executeOnce": false,
       "retryOnFail": true,
       "waitBetweenTries": 5000,
       "credentials": {
         "postgres": {
-          "id": "ceRmvobzfi3fViKu",
-          "name": "Postgres account"
+          "id": "wthjjnZmr2Hf72m0",
+          "name": "Postgres account 2"
         }
       }
     },
@@ -220,17 +231,17 @@
       "type": "n8n-nodes-base.postgres",
       "typeVersion": 2.6,
       "position": [
-        0,
-        192
+        -496,
+        880
       ],
-      "id": "792479b9-9e80-4582-b2f1-195b1c490c66",
+      "id": "d5f6c1ad-a9c0-475f-9e34-9293d1878bfa",
       "name": "Process Update",
       "retryOnFail": true,
       "waitBetweenTries": 5000,
       "credentials": {
         "postgres": {
-          "id": "ceRmvobzfi3fViKu",
-          "name": "Postgres account"
+          "id": "wthjjnZmr2Hf72m0",
+          "name": "Postgres account 2"
         }
       }
     },
@@ -262,10 +273,10 @@
       "type": "n8n-nodes-base.filter",
       "typeVersion": 2.3,
       "position": [
-        224,
-        0
+        -272,
+        688
       ],
-      "id": "bc2a9909-11db-4e6a-b0fb-afb8056b8416",
+      "id": "62e646b5-d63f-4370-81a1-4440aa88ed5a",
       "name": "Filter1"
     },
     {
@@ -279,17 +290,17 @@
       "type": "n8n-nodes-base.postgres",
       "typeVersion": 2.6,
       "position": [
-        0,
-        384
+        -496,
+        1072
       ],
-      "id": "24239554-f5d3-4cdc-9918-725ae205a956",
+      "id": "cc27b242-9ff3-438e-bc84-b9a24e2c5c2d",
       "name": "Update",
       "retryOnFail": true,
       "waitBetweenTries": 5000,
       "credentials": {
         "postgres": {
-          "id": "ceRmvobzfi3fViKu",
-          "name": "Postgres account"
+          "id": "wthjjnZmr2Hf72m0",
+          "name": "Postgres account 2"
         }
       }
     }
@@ -375,12 +386,17 @@
       ]
     }
   },
-  "active": true,
+  "active": false,
   "settings": {
     "executionOrder": "v1",
-    "binaryMode": "separate"
+    "binaryMode": "separate",
+    "timeSavedMode": "fixed",
+    "callerPolicy": "workflowsFromSameOwner",
+    "availableInMCP": false,
+    "saveDataSuccessExecution": "all",
+    "saveManualExecutions": true
   },
-  "versionId": "478b1033-1deb-4703-8e2d-dedc1a8a8b0c",
+  "versionId": "092b0b16-4cc6-41e9-a1b8-5a3e59005599",
   "meta": {
     "templateCredsSetupCompleted": true,
     "instanceId": "b751e283d167317e522f290d63e0b956085524c7c105edc03e657e7409fe8050"
