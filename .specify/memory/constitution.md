@@ -1,18 +1,16 @@
 <!--
 ## Sync Impact Report
 
-**Version change**: 1.3.1 → 1.4.0
+**Version change**: 1.5.1 → 1.5.2
 **Modified principles**:
-  - Section 1: Type Safety relaxed to "target 100%" with stub allowance
-  - Section 3: Git-Flow noted as review-pending for simplification
+  - Section 3: Added Knowledge Gathering principle with tool priority order
 **Added sections**:
-  - Section 8: Performance Budget
+  - Section 3: Knowledge Gathering (context7 → websearch → firecrawl-MCP)
 **Removed sections**: N/A
 **Templates requiring updates**:
-  - ✅ All templates align
+  - ✅ No template files found in .specify/templates/
 **Follow-up TODOs**:
-  - Evaluate Git-Flow → GitHub Flow migration
-  - Document k=5 retrieval rationale
+  - None
 
 -->
 
@@ -31,7 +29,10 @@
 * **Frontend/API**: Backend must support CORS for extension origins. DOM updates must dispatch bubbling `input`/`change` events.
 
 ### 3. Workflow & Quality
-* **Git**: Git-Flow (main, develop, feature/, bugfix/, hotfix/). Atomic commits only. No direct merges to protected branches. Use git-flow skill
+* **Git**: Git-Flow (main, develop, feature/, bugfix/, hotfix/). Atomic commits only. No direct merges to protected branches. **MUST** use the opencode git-flow skill (`/git-flow` or `git-flow` skill) for all git operations.
+* **Memory MCP**: Before starting any implementation, **MUST** check the project structure in the memory MCP (via `memory_read_graph`). After completing each implementation, **MUST** update the memory MCP with new entities, relations, or observations via `memory_create_entities`, `memory_create_relations`, or `memory_add_observations`.
+* **Sequential Thinking**: **MUST** use the `sequential-thinking` tool (`sequential-thinking_sequentialthinking`) to gather thoughts before making decisions, especially when analyzing complex requests or when the user's intent is unclear.
+* **Knowledge Gathering**: When missing knowledge, **MUST** use tools in this priority order: (1) `context7` (context7_query-docs) for library/framework documentation — **FIRST**, (2) `websearch` (websearch_web_search_exa) for general web search — **SECOND** if context7 lacks the info, (3) `firecrawl-MCP` (firecrawl-mcp_firecrawl_search/scrape) for specific page content — **THIRD** if websearch lacks the info.
 * **Docker**: All execution/testing occurs via `docker-compose exec api-backend`.
 * **Testing**: Unit (utils), Integration (API), Manual (health/fill-form).
 * **Docs**: Docstrings required for all functions (Args/Returns/Raises). Inline comments must explain "Why," never "What."
@@ -39,7 +40,7 @@
 ### 4. Governance
 * **Amendments**: Require rationale, impact assessment, SemVer update, and migration path for breaking changes.
 * **Hierarchy**: This constitution supersedes all local READMEs or conflicting patterns.
-* **Version**: 1.4.0 | **Updated**: 2026-03-22
+* **Version**: 1.5.2 | **Updated**: 2026-03-24
 
 ### 5. Reliability
 * **Retries**: Exponential backoff (1s→2s→4s with 20% jitter); max 3 retries. Retry on 5xx/timeout only; fail-fast on 4xx.

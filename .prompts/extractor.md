@@ -5,7 +5,7 @@
 ---
 ROLE: Data extraction assistant.
 
-TASK: Parse TOON-formatted text and output valid job listings as JSON.
+TASK: text and output valid job listings as JSON.
 
 RULES:
 1. EXCLUDE JOB if title (case-insensitive) contains:

@@ -8,10 +8,10 @@
       "type": "n8n-nodes-base.wait",
       "typeVersion": 1.1,
       "position": [
-        -528,
-        272
+        784,
+        192
       ],
-      "id": "2b4e4a79-7718-4a0f-ad91-6216aecf24e1",
+      "id": "0622dba5-a5c6-431d-a326-15cf3cc4347e",
       "name": "Wait",
       "webhookId": "94e8563b-32b3-4c49-bb01-b85c176a9a96"
     },
@@ -22,10 +22,10 @@
       "type": "n8n-nodes-base.splitInBatches",
       "typeVersion": 3,
       "position": [
-        -976,
-        192
+        -336,
+        16
       ],
-      "id": "95f86d4e-7fdf-417d-8953-c069d97d892a",
+      "id": "678f65b4-fce0-4488-8a79-192292811729",
       "name": "Loop",
       "alwaysOutputData": true
     },
@@ -57,10 +57,10 @@
       "type": "n8n-nodes-base.postgres",
       "typeVersion": 2.6,
       "position": [
-        -1872,
-        192
+        -1232,
+        16
       ],
-      "id": "0d975187-5beb-4227-b513-1baf8f79d60e",
+      "id": "27c3c14f-56cf-4b52-be5c-841615424856",
       "name": "Get Last Created",
       "alwaysOutputData": true,
       "retryOnFail": false,
@@ -79,25 +79,11 @@
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        -1648,
-        192
+        -1008,
+        16
       ],
-      "id": "8b0ae304-997e-4478-86b8-18db908c7fa2",
+      "id": "770c4806-f30d-42ef-b1cd-5d7b2d6637a2",
       "name": "Since"
-    },
-    {
-      "parameters": {
-        "fieldToSplitOut": "output",
-        "options": {}
-      },
-      "type": "n8n-nodes-base.splitOut",
-      "typeVersion": 1,
-      "position": [
-        -752,
-        0
-      ],
-      "id": "562c76b0-0dc5-462a-9276-40135c1e4477",
-      "name": "Split Out"
     },
     {
       "parameters": {
@@ -116,11 +102,53 @@
       "type": "n8n-nodes-base.set",
       "typeVersion": 3.4,
       "position": [
-        -2320,
-        192
+        -1680,
+        16
       ],
-      "id": "009af0db-3d04-4245-adbe-6daf9be65ba9",
+      "id": "fe9d883e-b355-462e-9f2d-f4baa5697328",
       "name": "Edit Fields"
+    },
+    {
+      "parameters": {
+        "schemaType": "manual",
+        "inputSchema": "{\n  \"type\": \"array\",\n  \"items\": {\n    \"type\": \"object\",\n    \"properties\": {\n      \"company\": { \"type\": [\"string\", \"null\"] },\n      \"title\": { \"type\": [\"string\", \"null\"] },\n      \"email\": { \"type\": [\"string\", \"null\"] },\n      \"url\": { \"type\": [\"string\", \"null\"], \"format\": \"uri\" },\n      \"description\": { \"type\": [\"string\", \"null\"] },\n      \"location\": { \"type\": [\"string\", \"null\"] },\n      \"salary\": { \"type\": [\"string\", \"null\"] },\n      \"schedule_type\": { \"type\": [\"string\", \"null\"] },\n      \"posted\": { \"type\": [\"string\", \"null\"], \"pattern\": \"^\\\\d{4}-\\\\d{2}-\\\\d{2} \\\\d{2}:\\\\d{2}:\\\\d{2}$\" },\n      \"via\": { \"type\": [\"string\", \"null\"] }\n    },\n    \"required\": [\"company\",\"title\",\"email\",\"url\",\"description\",\"location\",\"salary\",\"schedule_type\",\"posted\",\"via\"]\n  }\n}\n",
+        "autoFix": true
+      },
+      "type": "@n8n/n8n-nodes-langchain.outputParserStructured",
+      "typeVersion": 1.3,
+      "position": [
+        416,
+        240
+      ],
+      "id": "726f471b-6b85-4a9e-bf20-cfbe348f683a",
+      "name": "Structured Output Parser",
+      "alwaysOutputData": true,
+      "onError": "continueRegularOutput"
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "={{ $json.trimmedString }}",
+        "hasOutputParser": true,
+        "messages": {
+          "messageValues": [
+            {
+              "message": "={{ $('Call \\'Prompt\\'').item.json.prompt }}"
+            }
+          ]
+        },
+        "batching": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.chainLlm",
+      "typeVersion": 1.8,
+      "position": [
+        336,
+        16
+      ],
+      "id": "6d6048b9-c47a-497d-ae72-a575b820dee9",
+      "name": "Extractor",
+      "alwaysOutputData": true,
+      "onError": "continueRegularOutput"
     },
     {
       "parameters": {
@@ -135,21 +163,44 @@
       "type": "n8n-nodes-base.scheduleTrigger",
       "typeVersion": 1.3,
       "position": [
-        -2544,
-        192
+        -1904,
+        16
       ],
-      "id": "028a0871-ae73-4461-b42f-99460b56906e",
+      "id": "a88cd93e-94ae-48e7-9ea2-9ed0746f277b",
       "name": "10am"
+    },
+    {
+      "parameters": {
+        "model": "mistral-small-latest",
+        "options": {
+          "temperature": 0.1
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatMistralCloud",
+      "typeVersion": 1,
+      "position": [
+        -1904,
+        448
+      ],
+      "id": "e5ade157-974f-4e1d-8854-65443dc4b0de",
+      "name": "Mistral",
+      "credentials": {
+        "mistralCloudApi": {
+          "id": "mNGknH3RPQM36hPs",
+          "name": "Mistral Cloud account"
+        }
+      },
+      "disabled": true
     },
     {
       "parameters": {},
       "type": "n8n-nodes-base.merge",
       "typeVersion": 3.2,
       "position": [
-        -1200,
-        192
+        -560,
+        16
       ],
-      "id": "14b64a05-b54b-4091-bb6f-b2959f62a3c8",
+      "id": "24880f1f-a979-48c3-83e7-953402dc12b3",
       "name": "Merge"
     },
     {
@@ -170,15 +221,15 @@
         "includeParts": [
           "textContent"
         ],
-        "limit": {}
+        "limit": null
       },
       "type": "n8n-nodes-imap-enhanced.imapEnhanced",
       "typeVersion": 1,
       "position": [
-        -1424,
-        272
+        -784,
+        112
       ],
-      "id": "2e2f5e54-4f93-4c1f-96ff-1803e42e6eac",
+      "id": "5f89c2f0-212b-4a8b-9603-2f57b92a0a8e",
       "name": "DEVHH - Indeed",
       "credentials": {
         "imapApi": {
@@ -205,15 +256,15 @@
         "includeParts": [
           "textContent"
         ],
-        "limit": {}
+        "limit": null
       },
       "type": "n8n-nodes-imap-enhanced.imapEnhanced",
       "typeVersion": 1,
       "position": [
-        -1424,
-        80
+        -784,
+        -80
       ],
-      "id": "1de0d2a7-7d05-49b6-9afe-4cc975f18d8a",
+      "id": "0c9a5381-dd67-497b-a453-85fd6b0933e6",
       "name": "DEVHH - Xing & LinkedIn",
       "credentials": {
         "imapApi": {
@@ -244,10 +295,10 @@
       "type": "n8n-nodes-base.executeWorkflow",
       "typeVersion": 1.3,
       "position": [
-        -2096,
-        192
+        -1456,
+        16
       ],
-      "id": "5ab2a857-a280-4036-94fa-9046676d2350",
+      "id": "33ba7b1e-b443-4f14-b0c8-e054973ad6e6",
       "name": "Call 'Prompt'"
     },
     {
@@ -272,24 +323,79 @@
       "type": "n8n-nodes-base.executeWorkflow",
       "typeVersion": 1.3,
       "position": [
-        -528,
-        0
+        112,
+        -176
       ],
-      "id": "391ee88d-ded8-4a12-829b-47d32fdb1d57",
+      "id": "df4972c3-d682-4cf7-ad85-588144cc3b30",
       "name": "Call 'Job Offers - store'"
     },
     {
       "parameters": {
-        "jsCode": "const item = $input.first().json;\n\n// ── Field is \"textContent\" ────────────────────────────────────────────────────\nconst inputText = item.textContent;\nif (!inputText) throw new Error('textContent field is empty or missing');\n\n// ── Extract clean job URL from job ID only ────────────────────────────────────\nfunction cleanLinkedInUrl(rawUrl) {\n  const m = rawUrl.match(/linkedin\\.com(?:\\/comm)?\\/jobs\\/view\\/(\\d+)/);\n  return m ? `https://www.linkedin.com/jobs/view/${m[1]}/` : null;\n}\n\n// ── Timestamp ─────────────────────────────────────────────────────────────────\nconst now = new Date();\nconst posted = [\n  now.getFullYear(),\n  String(now.getMonth() + 1).padStart(2, '0'),\n  String(now.getDate()).padStart(2, '0'),\n].join('-') + ' ' + [\n  String(now.getHours()).padStart(2, '0'),\n  String(now.getMinutes()).padStart(2, '0'),\n  String(now.getSeconds()).padStart(2, '0'),\n].join(':');\n\n// ── Split into blocks by separator lines ─────────────────────────────────────\nconst blocks = inputText.split(/-{5,}/);\n\nconst jobs = [];\n\nfor (const block of blocks) {\n  const urlMatch = block.match(/Jobangebot ansehen:\\s*(https:\\/\\/www\\.linkedin\\.com\\/[^\\s\\n]+)/);\n  if (!urlMatch) continue;\n\n  const url = cleanLinkedInUrl(urlMatch[1]);\n  if (!url) continue;\n\n  const lines = block\n    .split('\\n')\n    .map(l => l.trim())\n    .filter(l =>\n      l.length > 0 &&\n      !l.startsWith('Jobangebot ansehen') &&\n      !l.startsWith('Dieses Unternehmen') &&\n      !l.startsWith('http')\n    );\n\n  const title    = lines[0] || null;\n  const company  = lines[1] || null;\n  const location = lines[2] || null;\n\n  jobs.push({\n    json: {\n      company,\n      title,\n      email:         null,\n      url,\n      description:   null,\n      location,\n      salary:        null,\n      schedule_type: null,\n      posted,\n      via:           'linkedin',\n    }\n  });\n}\n\nif (jobs.length === 0) {\n  throw new Error('No jobs parsed from textContent. Check input format.');\n}\n\nreturn jobs;"
+        "jsCode": "// Input: email text in item.json.text\nreturn items.map(item => {\n    const text = $input.first().json.textContent || '';\n\n    // Regex to capture LinkedIn job URLs with view ID\n    const regex = /https?:\\/\\/www\\.linkedin\\.com\\/comm\\/jobs\\/view\\/(\\d+)([^\\s]*)/g;\n\n    // Replace each match with a clean URL\n    const cleanedText = text.replace(regex, (match, viewId) => {\n        return `https://www.linkedin.com/comm/jobs/view/${viewId}/`;\n    });\n\n    return {\n        json: {\n            cleanedText\n        }\n    };\n});"
       },
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        -752,
-        192
+        -112,
+        16
       ],
-      "id": "e5a4c578-18a9-4f01-9f24-17acd3d3c6f2",
-      "name": "Get Offers"
+      "id": "da665ddb-ae1a-40c0-aa8d-37c155fb7d10",
+      "name": "Remove Tracking From URLs"
+    },
+    {
+      "parameters": {
+        "model": {
+          "__rl": true,
+          "value": "glm-4.5-air",
+          "mode": "list",
+          "cachedResultName": "glm-4.5-air"
+        },
+        "responsesApiEnabled": false,
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatOpenAi",
+      "typeVersion": 1.3,
+      "position": [
+        416,
+        448
+      ],
+      "id": "a4195f86-0be6-4eed-82ce-5d3c6738f193",
+      "name": "Z.ai",
+      "alwaysOutputData": true,
+      "credentials": {
+        "openAiApi": {
+          "id": "CWVXgnblua4xzZyp",
+          "name": "OpenAi account"
+        }
+      },
+      "onError": "continueRegularOutput"
+    },
+    {
+      "parameters": {
+        "fieldToSplitOut": "output",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.splitOut",
+      "typeVersion": 1,
+      "position": [
+        -112,
+        -176
+      ],
+      "id": "4664ba69-2fb9-469d-8220-39db4fcb5dfc",
+      "name": "Split Out"
+    },
+    {
+      "parameters": {
+        "jsCode": "const needle = \"Alle Jobs anzeigen\";\n\n// Assume the input comes from the first item\nconst input = $input.first().json.cleanedText; // replace 'fullString' with your field name\n\n// Trim string if needle exists\nconst outputString = input.includes(needle) ? input.split(needle)[0] : input;\n\n// Return as array of objects (n8n-compatible)\nreturn [{ json: { trimmedString: outputString } }];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        112,
+        16
+      ],
+      "id": "e6e6685b-ed0c-42eb-80d7-6a9240e6e437",
+      "name": "Job Offers Only"
     }
   ],
   "pinData": {},
@@ -316,7 +422,7 @@
         ],
         [
           {
-            "node": "Get Offers",
+            "node": "Remove Tracking From URLs",
             "type": "main",
             "index": 0
           }
@@ -350,22 +456,33 @@
         ]
       ]
     },
-    "Split Out": {
+    "Edit Fields": {
       "main": [
         [
           {
-            "node": "Call 'Job Offers - store'",
+            "node": "Call 'Prompt'",
             "type": "main",
             "index": 0
           }
         ]
       ]
     },
-    "Edit Fields": {
+    "Structured Output Parser": {
+      "ai_outputParser": [
+        [
+          {
+            "node": "Extractor",
+            "type": "ai_outputParser",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Extractor": {
       "main": [
         [
           {
-            "node": "Call 'Prompt'",
+            "node": "Wait",
             "type": "main",
             "index": 0
           }
@@ -381,6 +498,11 @@
             "index": 0
           }
         ]
+      ]
+    },
+    "Mistral": {
+      "ai_languageModel": [
+        []
       ]
     },
     "Merge": {
@@ -427,11 +549,49 @@
         ]
       ]
     },
-    "Get Offers": {
+    "Remove Tracking From URLs": {
       "main": [
         [
           {
-            "node": "Wait",
+            "node": "Job Offers Only",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Z.ai": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "Structured Output Parser",
+            "type": "ai_languageModel",
+            "index": 0
+          },
+          {
+            "node": "Extractor",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Split Out": {
+      "main": [
+        [
+          {
+            "node": "Call 'Job Offers - store'",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Job Offers Only": {
+      "main": [
+        [
+          {
+            "node": "Extractor",
             "type": "main",
             "index": 0
           }
@@ -444,12 +604,12 @@
     "executionOrder": "v1",
     "binaryMode": "separate"
   },
-  "versionId": "f2bf3b11-017f-4f34-a809-8c19e216f3c2",
+  "versionId": "dfdea1be-5462-4b53-8e42-9ccd45522ee3",
   "meta": {
     "templateCredsSetupCompleted": true,
     "instanceId": "b751e283d167317e522f290d63e0b956085524c7c105edc03e657e7409fe8050"
   },
-  "id": "w6c98CkosO18bBuW",
+  "id": "T0n6peG7krZLH0bz",
   "tags": [
     {
       "updatedAt": "2026-03-20T09:53:00.595Z",

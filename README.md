@@ -1,13 +1,15 @@
-# Job Forms Helper
+# Jobs
 
-An AI-powered system that automatically fills job application forms using resume data. The system uses a RAG (Retrieval-Augmented Generation) pipeline to match form fields with relevant resume content.
+An AI-powered system for job application management: automatically fills job application forms using resume data (RAG pipeline) and tracks job postings with application status. The extension provides a Job Links Manager to monitor applied, in-progress, and pending job applications.
 
 ## Overview
 
 Job Forms Helper consists of two main components:
 
 1. **Backend API** - A FastAPI service that processes form field labels and generates answers based on resume data stored in a vector database
-2. **Firefox Extension** - A browser extension that detects form fields on job application pages and fills them using the backend API, with built-in job links management for tracking and navigating job postings
+2. **Firefox Extension** - A browser extension with two main features:
+   - **Job Forms Helper** - Detects form fields on job application pages and fills them using the backend API
+   - **Job Links Manager** - Tracks job postings with application status (Applied/In Progress/Not Applied), displays job lists, and exports applied jobs as CSV
 
 ## Architecture
 
@@ -161,10 +163,34 @@ curl http://localhost:8000/validate
 
 ### Using the Extension
 
+The extension has two tabs in the popup:
+
+#### Job Links Tab
+
+The **Job Links** tab displays tracked job postings with their application status:
+
+1. Click the extension icon in the toolbar
+2. The **Job Links** tab shows all job offers from the backend
+3. Each job shows:
+   - Job title and company
+   - Application status badge (Applied/Not Applied/In Progress)
+   - Link to the original job posting
+4. Use **"Show Applied"** checkbox to filter visibility
+5. Click **"Refresh Jobs"** to reload from backend
+6. Click **"Export Applied"** to download applied jobs as CSV
+
+**Job Status Indicators:**
+- 🟢 **Applied** - Application submitted
+- 🟡 **In Progress** - Currently working on application
+- ⚪ **Not Applied** - Not yet applied
+
+#### Job Forms Helper Tab
+
 1. Navigate to a job application page
-2. Click the extension icon in the toolbar
-3. Click "Fill Form" to auto-fill detected form fields
-4. Review and submit the form
+2. Switch to **"Job Forms Helper"** tab
+3. Click **"Scan Page"** to detect form fields
+4. Click **"Fill All Fields"** to auto-fill detected fields
+5. Review and submit the form
 
 ## API Endpoints
 
