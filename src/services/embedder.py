@@ -1,44 +1,23 @@
-"""Embedder service for generating text embeddings.
-
-Implements async embedding generation using Mistral's mistral-embed model
-via OpenAI-compatible API.
-"""
-
 import logging
 
 from openai import AsyncOpenAI
 
 from src.config import settings
+from src.services.sparse_tokenizer import tokenize, compute_tf
 
 logger = logging.getLogger(__name__)
 
+SIMPLE_VOCAB: dict[str, int] = {}
+
 
 class EmbedderService:
-    """Service for generating text embeddings using Mistral API.
-
-    Uses OpenAI-compatible client to generate embeddings with the
-    mistral-embed model (1024 dimensions).
-    """
-
     def __init__(self):
-        """Initialize embedder with Mistral API client."""
         self.client = AsyncOpenAI(
             api_key=settings.MISTRAL_API_KEY,
             base_url=settings.MISTRAL_BASE_URL,
         )
 
     async def embed(self, text: str) -> list[float]:
-        """Generate embedding vector for input text.
-
-        Args:
-            text: Input text to embed.
-
-        Returns:
-            1024-dimensional embedding vector.
-
-        Raises:
-            APIError: If embedding generation fails.
-        """
         logger.info(f"Generating embedding for text: {text[:50]}...")
 
         response = await self.client.embeddings.create(
@@ -50,6 +29,20 @@ class EmbedderService:
         logger.info(f"Generated {len(vector)}-dimensional embedding")
         return vector
 
+    def generate_sparse_vector(self, text: str) -> tuple[list[int], list[float]]:
+        tokens = tokenize(text)
+        tf = compute_tf(tokens)
+        global SIMPLE_VOCAB
+        for term in tf:
+            if term not in SIMPLE_VOCAB:
+                SIMPLE_VOCAB[term] = len(SIMPLE_VOCAB)
+        indices = []
+        values = []
+        for term, tf_score in tf.items():
+            if term in SIMPLE_VOCAB:
+                indices.append(SIMPLE_VOCAB[term])
+                values.append(tf_score)
+        return indices, values
 
-# Global embedder instance
+
 embedder = EmbedderService()
