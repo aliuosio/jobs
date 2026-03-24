@@ -76,14 +76,18 @@ class EmbedderService:
 - Returns top-k similar vectors (default k=5, Constitution II compliance)
 - Connection lifecycle management (connect/close)
 - Health check capability
+- Hybrid search with BM25 fallback
 
 ```python
 class RetrieverService:
     async def connect(self) -> None
     async def close(self) -> None
     async def search(self, query_vector: list[float], k: int | None = None) -> list[dict]
+    async def hybrid_search(self, query_text: str, dense_vector: list[float], k: int | None = None) -> list[dict]
     async def health_check(self) -> bool
 ```
+
+**Hybrid Search**: Combines dense vector similarity (70%) with BM25 sparse matching (30%) for improved domain-specific term matching. Includes phrase bonus for multi-word queries.
 
 #### Generator Service (`src/services/generator.py`)
 
