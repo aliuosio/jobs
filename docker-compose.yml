@@ -138,23 +138,6 @@ services:
     volumes:
       - ./.docker/nginx/searxng.conf:/etc/nginx/conf.d/default.conf:ro
 
-  crawl4ai:
-    image: unclecode/crawl4ai:latest
-    container_name: ${NAMESPACE}_crawl4ai
-    pull_policy: always
-    ports:
-      - "11235:11235"
-    volumes:
-      - crawl4ai_data:/root/.crawl4ai
-      - ./.docker/crawl4ai/supervisord.conf:/app/supervisord.conf:ro
-    env_file:
-      - .env
-    environment:
-      - REDIS_HOST=redis
-      - REDIS_PORT=6379
-    networks:
-      - jobs
-
   qdrant:
     image: qdrant/qdrant
     pull_policy: always
