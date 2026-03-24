@@ -3,13 +3,27 @@
   "nodes": [
     {
       "parameters": {
+        "amount": "={{ Math.floor(Math.random() * 30) + 1 }}"
+      },
+      "type": "n8n-nodes-base.wait",
+      "typeVersion": 1.1,
+      "position": [
+        -304,
+        576
+      ],
+      "id": "2b4e4a79-7718-4a0f-ad91-6216aecf24e1",
+      "name": "Wait",
+      "webhookId": "94e8563b-32b3-4c49-bb01-b85c176a9a96"
+    },
+    {
+      "parameters": {
         "options": {}
       },
       "type": "n8n-nodes-base.splitInBatches",
       "typeVersion": 3,
       "position": [
         -976,
-        144
+        400
       ],
       "id": "95f86d4e-7fdf-417d-8953-c069d97d892a",
       "name": "Loop",
@@ -44,7 +58,7 @@
       "typeVersion": 2.6,
       "position": [
         -1872,
-        144
+        400
       ],
       "id": "0d975187-5beb-4227-b513-1baf8f79d60e",
       "name": "Get Last Created",
@@ -53,8 +67,8 @@
       "waitBetweenTries": 5000,
       "credentials": {
         "postgres": {
-          "id": "wthjjnZmr2Hf72m0",
-          "name": "Postgres account 2"
+          "id": "ceRmvobzfi3fViKu",
+          "name": "Postgres account"
         }
       }
     },
@@ -66,10 +80,24 @@
       "typeVersion": 2,
       "position": [
         -1648,
-        144
+        400
       ],
       "id": "8b0ae304-997e-4478-86b8-18db908c7fa2",
       "name": "Since"
+    },
+    {
+      "parameters": {
+        "fieldToSplitOut": "output",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.splitOut",
+      "typeVersion": 1,
+      "position": [
+        -640,
+        0
+      ],
+      "id": "562c76b0-0dc5-462a-9276-40135c1e4477",
+      "name": "Split Out"
     },
     {
       "parameters": {
@@ -89,29 +117,83 @@
       "typeVersion": 3.4,
       "position": [
         -2320,
-        144
+        400
       ],
       "id": "009af0db-3d04-4245-adbe-6daf9be65ba9",
       "name": "Edit Fields"
     },
     {
       "parameters": {
-        "rule": {
-          "interval": [
-            {
-              "triggerAtHour": 10
-            }
-          ]
+        "model": {
+          "__rl": true,
+          "value": "glm-4.5-air",
+          "mode": "list",
+          "cachedResultName": "glm-4.5-air"
+        },
+        "responsesApiEnabled": false,
+        "options": {
+          "temperature": 0.1
         }
       },
-      "type": "n8n-nodes-base.scheduleTrigger",
+      "type": "@n8n/n8n-nodes-langchain.lmChatOpenAi",
       "typeVersion": 1.3,
       "position": [
         -2544,
-        144
+        1040
       ],
-      "id": "028a0871-ae73-4461-b42f-99460b56906e",
-      "name": "10am"
+      "id": "3c5801af-3888-489d-8814-951752c248b3",
+      "name": "Z.ai",
+      "alwaysOutputData": true,
+      "credentials": {
+        "openAiApi": {
+          "id": "MQadmJOopKGHLaj3",
+          "name": "Z.AI"
+        }
+      },
+      "disabled": true,
+      "onError": "continueRegularOutput"
+    },
+    {
+      "parameters": {
+        "schemaType": "manual",
+        "inputSchema": "{\n  \"type\": \"array\",\n  \"items\": {\n    \"type\": \"object\",\n    \"properties\": {\n      \"company\": { \"type\": [\"string\", \"null\"] },\n      \"title\": { \"type\": [\"string\", \"null\"] },\n      \"email\": { \"type\": [\"string\", \"null\"] },\n      \"url\": { \"type\": [\"string\", \"null\"], \"format\": \"uri\" },\n      \"description\": { \"type\": [\"string\", \"null\"] },\n      \"location\": { \"type\": [\"string\", \"null\"] },\n      \"salary\": { \"type\": [\"string\", \"null\"] },\n      \"schedule_type\": { \"type\": [\"string\", \"null\"] },\n      \"posted\": { \"type\": [\"string\", \"null\"], \"pattern\": \"^\\\\d{4}-\\\\d{2}-\\\\d{2} \\\\d{2}:\\\\d{2}:\\\\d{2}$\" },\n      \"via\": { \"type\": [\"string\", \"null\"] }\n    },\n    \"required\": [\"company\",\"title\",\"email\",\"url\",\"description\",\"location\",\"salary\",\"schedule_type\",\"posted\",\"via\"]\n  }\n}\n",
+        "autoFix": true
+      },
+      "type": "@n8n/n8n-nodes-langchain.outputParserStructured",
+      "typeVersion": 1.3,
+      "position": [
+        -672,
+        624
+      ],
+      "id": "b14d4d5f-40d3-49dd-96c3-cd7b8c6bc820",
+      "name": "Structured Output Parser",
+      "alwaysOutputData": true,
+      "onError": "continueRegularOutput"
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "={{ $json.textContent }}",
+        "hasOutputParser": true,
+        "messages": {
+          "messageValues": [
+            {
+              "message": "={{ $('Call \\'Prompt\\'').item.json.prompt }}"
+            }
+          ]
+        },
+        "batching": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.chainLlm",
+      "typeVersion": 1.8,
+      "position": [
+        -752,
+        400
+      ],
+      "id": "a2675c07-ff80-4bd9-a105-958aef177151",
+      "name": "Extractor",
+      "alwaysOutputData": true,
+      "onError": "continueRegularOutput"
     },
     {
       "parameters": {
@@ -136,9 +218,9 @@
       "typeVersion": 1.3,
       "position": [
         -2096,
-        144
+        400
       ],
-      "id": "5ab2a857-a280-4036-94fa-9046676d2350",
+      "id": "361cb201-fefa-41d9-8c8a-a396bf2f1e9b",
       "name": "Call 'Prompt'"
     },
     {
@@ -163,59 +245,110 @@
       "type": "n8n-nodes-base.executeWorkflow",
       "typeVersion": 1.3,
       "position": [
-        -752,
+        -304,
         0
       ],
-      "id": "391ee88d-ded8-4a12-829b-47d32fdb1d57",
+      "id": "64751ea9-a3fd-4da2-9fa6-bf69b5bba212",
       "name": "Call 'Job Offers - store'"
     },
     {
       "parameters": {
-        "jsCode": "const raw = $input.first().json.textContent;\nif (!raw) throw new Error('textContent field is empty or missing');\n\nconst inputText = raw.replace(/\\\\n/g, '\\n').replace(/\\\\t/g, '\\t');\nconst now = new Date();\nconst posted = now.toISOString().split('T')[0] + ' ' + now.toTimeString().split(' ')[0];\n\nconst jobs = [];\nconst seenUrls = new Set();\n\nconst noisePhrases = [\n  \"suchergebnisse anzeigen\", \"aktiv auf suche\", \"offen für angebote\", \n  \"suche gerade nichts\", \"jobbenachrichtigungen verwalten\", \"abbestellen\", \n  \"hilfe\", \"impressum\", \"datenschutz\", \"profil anzeigen\"\n];\n\nconst cleanUrl = (url) => {\n  if (!url) return null;\n  let cleaned = url.trim().replace(/[.,;)\\]]+$/, '').split('?')[0];\n  if (cleaned.includes('linkedin.com')) {\n    const m = cleaned.match(/linkedin\\.com(?:\\/comm)?\\/jobs\\/view\\/(\\d+)/);\n    if (m) return `https://www.linkedin.com/jobs/view/${m[1]}/`;\n  }\n  return cleaned;\n};\n\nconst blocks = inputText.split(/(?:-{10,}|~{10,})/);\n\nfor (let block of blocks) {\n  const lines = block.split('\\n').map(l => l.trim()).filter(l => l.length > 0);\n  if (lines.length < 2) continue;\n\n  const blockText = lines.join(' ');\n  let extracted = {};\n\n  // ── LINKEDIN ─────────────────────────────────────────────────────────────\n  if (blockText.includes('linkedin.com')) {\n    const urlMatch = block.match(/(https:\\/\\/www\\.linkedin\\.com\\/(?:comm\\/)?jobs\\/view\\/\\d+[^\\s\\n]*)/);\n    if (!urlMatch) continue;\n\n    const dataLines = lines.filter(l => \n      !l.match(/Jobangebot ansehen|Stelle ansehen|View job|Dieses Unternehmen|Jobs via/i) &&\n      !l.startsWith('http')\n    );\n\n    extracted = {\n      title: dataLines[0],\n      company: dataLines[1],\n      location: dataLines[2],\n      url: cleanUrl(urlMatch[1]),\n      via: 'linkedin'\n    };\n  }\n\n  // ── XING ───────────────────────────────────────────────────────────────\n  else if (blockText.includes('xing.com')) {\n    const urlMatch = block.match(/=>\\s*(https:\\/\\/www\\.xing\\.com\\/m\\/[^\\s\\n]+)/);\n    if (!urlMatch) continue;\n\n    const urlLineIndex = lines.findIndex(l => l.includes('=>'));\n    let title = lines[urlLineIndex - 1] || \"\";\n\n    if (title.includes(\"Zu den Ersten\") && urlLineIndex > 1) {\n      title = lines[urlLineIndex - 2]; \n    }\n\n    extracted = {\n      title: title.replace(':', ''),\n      company: lines[urlLineIndex + 1],\n      location: lines[urlLineIndex + 2],\n      salary: lines.find(l => l.includes('€')),\n      url: cleanUrl(urlMatch[1]),\n      via: 'xing'\n    };\n  }\n\n  // ── INDEED ──────────────────────────────────────────────────────────────\n  else if (blockText.includes('indeed.com') || blockText.includes('Wir glauben')) {\n    const metaMatch = blockText.match(/passt:\\s*(.+?)\\s+bei\\s+(.+?)\\s+in\\s+(.+?)\\./i);\n    const urlMatch = block.match(/(https:\\/\\/cts\\.indeed\\.com\\/\\S+)/);\n\n    if (metaMatch && urlMatch) {\n      extracted = {\n        title: metaMatch[1],\n        company: metaMatch[2],\n        location: metaMatch[3],\n        url: cleanUrl(urlMatch[1]),\n        via: 'indeed'\n      };\n    }\n  }\n\n  // ── Validation, Mapping & Null Enforcement ───────────────────────────────\n  if (extracted.title && extracted.url) {\n    const isNoise = noisePhrases.some(phrase => extracted.title.toLowerCase().includes(phrase));\n    \n    if (!isNoise && extracted.title.length > 3 && !seenUrls.has(extracted.url)) {\n      seenUrls.add(extracted.url);\n      \n      jobs.push({\n        json: {\n          company:       extracted.company || null,\n          email:         null, // Not available in standard newsletter text\n          title:         extracted.title || null,\n          url:           extracted.url || null,\n          description:   null, // Requires scraping the destination URL\n          location:      extracted.location || null,\n          salary:        extracted.salary || null,\n          schedule_type: null, // Requires scraping the destination URL\n          posted,\n          via:           extracted.via || null\n        }\n      });\n    }\n  }\n}\n\nreturn jobs.length > 0 ? jobs : [{ json: { _debug: \"No valid jobs found\" } }];"
+        "rule": {
+          "interval": [
+            {
+              "triggerAtHour": 10
+            }
+          ]
+        }
       },
-      "type": "n8n-nodes-base.code",
-      "typeVersion": 2,
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.3,
       "position": [
-        -752,
-        192
+        -2544,
+        400
       ],
-      "id": "e5a4c578-18a9-4f01-9f24-17acd3d3c6f2",
-      "name": "Get Offers"
+      "id": "028a0871-ae73-4461-b42f-99460b56906e",
+      "name": "10am"
     },
     {
       "parameters": {
-        "resource": "email",
-        "mailboxes": [
-          "NewsLetter",
-          "Notification"
-        ],
-        "emailDateRange": {
-          "since": "={{ $json.since }}"
-        },
-        "emailFlags": {},
-        "customLabels": {},
-        "emailSearchFilters": {
-          "from": "=job*"
-        },
-        "includeParts": [
-          "textContent"
-        ],
-        "limit": {}
+        "model": "mistral-small-latest",
+        "options": {
+          "temperature": 0.1
+        }
       },
-      "type": "n8n-nodes-imap-enhanced.imapEnhanced",
+      "type": "@n8n/n8n-nodes-langchain.lmChatMistralCloud",
       "typeVersion": 1,
       "position": [
-        -1424,
-        0
+        -688,
+        832
       ],
-      "id": "1de0d2a7-7d05-49b6-9afe-4cc975f18d8a",
-      "name": "LinkedIn & Xing",
+      "id": "fa4d7639-9f07-4cb1-a754-dedb58de1ec9",
+      "name": "Mistral",
       "credentials": {
-        "imapApi": {
-          "id": "TFG2gg5FUgDD4Oyd",
-          "name": "IMAP Credentials account"
+        "mistralCloudApi": {
+          "id": "yy2J74r8rO6wyA97",
+          "name": "Mistral Cloud account"
         }
       }
+    },
+    {
+      "parameters": {
+        "model": "arcee-ai/trinity-mini:free",
+        "options": {
+          "temperature": 0.2
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatOpenRouter",
+      "typeVersion": 1,
+      "position": [
+        -2544,
+        1248
+      ],
+      "id": "9d58d383-378e-4954-99c0-387f53aec46e",
+      "name": "OpenRouter",
+      "credentials": {
+        "openRouterApi": {
+          "id": "zu7P2kOLjfI1ih6a",
+          "name": "OpenRouter account"
+        }
+      },
+      "disabled": true
+    },
+    {
+      "parameters": {
+        "model": "llama-3.3-70b-versatile",
+        "options": {
+          "temperature": 0.2
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatGroq",
+      "typeVersion": 1,
+      "position": [
+        -2544,
+        832
+      ],
+      "id": "374f7ffe-0b97-4dbc-afb2-f53c48d37dba",
+      "name": "Groq",
+      "credentials": {
+        "groqApi": {
+          "id": "f1hXxdcTqz0UL7r6",
+          "name": "Groq account"
+        }
+      },
+      "disabled": true,
+      "onError": "continueRegularOutput"
+    },
+    {
+      "parameters": {},
+      "type": "n8n-nodes-base.merge",
+      "typeVersion": 3.2,
+      "position": [
+        -1200,
+        400
+      ],
+      "id": "14b64a05-b54b-4091-bb6f-b2959f62a3c8",
+      "name": "Merge"
     },
     {
       "parameters": {
@@ -241,43 +374,78 @@
       "typeVersion": 1,
       "position": [
         -1424,
-        192
+        496
       ],
-      "id": "1c5c95da-6926-4312-8229-cda513a2afb8",
-      "name": "Indeed",
+      "id": "2e2f5e54-4f93-4c1f-96ff-1803e42e6eac",
+      "name": "DEVHH - Indeed",
       "credentials": {
         "imapApi": {
-          "id": "TFG2gg5FUgDD4Oyd",
+          "id": "6xf5db8A9PS90YYN",
           "name": "IMAP Credentials account"
         }
       }
     },
     {
-      "parameters": {},
-      "type": "n8n-nodes-base.merge",
-      "typeVersion": 3.2,
+      "parameters": {
+        "resource": "email",
+        "mailboxes": [
+          "NewsLetter",
+          "Notification"
+        ],
+        "emailDateRange": {
+          "since": "={{ $json.since }}"
+        },
+        "emailFlags": {},
+        "customLabels": {},
+        "emailSearchFilters": {
+          "from": "=job*"
+        },
+        "includeParts": [
+          "textContent"
+        ],
+        "limit": null
+      },
+      "type": "n8n-nodes-imap-enhanced.imapEnhanced",
+      "typeVersion": 1,
       "position": [
-        -1200,
-        144
+        -1424,
+        304
       ],
-      "id": "c36aa1d4-478c-4a85-b3d1-847023d5f8b3",
-      "name": "Merge"
+      "id": "1de0d2a7-7d05-49b6-9afe-4cc975f18d8a",
+      "name": "DEVHH - Xing & LinkedIn",
+      "credentials": {
+        "imapApi": {
+          "id": "6xf5db8A9PS90YYN",
+          "name": "IMAP Credentials account"
+        }
+      }
     }
   ],
   "pinData": {},
   "connections": {
+    "Wait": {
+      "main": [
+        [
+          {
+            "node": "Loop",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
     "Loop": {
       "main": [
         [
           {
-            "node": "Call 'Job Offers - store'",
+            "node": "Split Out",
             "type": "main",
             "index": 0
           }
         ],
         [
           {
-            "node": "Get Offers",
+            "node": "Extractor",
             "type": "main",
             "index": 0
           }
@@ -299,12 +467,23 @@
       "main": [
         [
           {
-            "node": "LinkedIn & Xing",
+            "node": "DEVHH - Xing & LinkedIn",
             "type": "main",
             "index": 0
           },
           {
-            "node": "Indeed",
+            "node": "DEVHH - Indeed",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Split Out": {
+      "main": [
+        [
+          {
+            "node": "Call 'Job Offers - store'",
             "type": "main",
             "index": 0
           }
@@ -322,15 +501,31 @@
         ]
       ]
     },
-    "10am": {
+    "Structured Output Parser": {
+      "ai_outputParser": [
+        [
+          {
+            "node": "Extractor",
+            "type": "ai_outputParser",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Extractor": {
       "main": [
         [
           {
-            "node": "Edit Fields",
+            "node": "Wait",
             "type": "main",
             "index": 0
           }
         ]
+      ]
+    },
+    "Z.ai": {
+      "ai_languageModel": [
+        []
       ]
     },
     "Call 'Prompt'": {
@@ -344,37 +539,41 @@
         ]
       ]
     },
-    "Get Offers": {
+    "10am": {
       "main": [
         [
           {
-            "node": "Loop",
+            "node": "Edit Fields",
             "type": "main",
             "index": 0
           }
         ]
       ]
     },
-    "LinkedIn & Xing": {
-      "main": [
+    "Mistral": {
+      "ai_languageModel": [
         [
           {
-            "node": "Merge",
-            "type": "main",
+            "node": "Structured Output Parser",
+            "type": "ai_languageModel",
+            "index": 0
+          },
+          {
+            "node": "Extractor",
+            "type": "ai_languageModel",
             "index": 0
           }
         ]
       ]
     },
-    "Indeed": {
-      "main": [
-        [
-          {
-            "node": "Merge",
-            "type": "main",
-            "index": 1
-          }
-        ]
+    "OpenRouter": {
+      "ai_languageModel": [
+        []
+      ]
+    },
+    "Groq": {
+      "ai_languageModel": [
+        []
       ]
     },
     "Merge": {
@@ -387,6 +586,28 @@
           }
         ]
       ]
+    },
+    "DEVHH - Indeed": {
+      "main": [
+        [
+          {
+            "node": "Merge",
+            "type": "main",
+            "index": 1
+          }
+        ]
+      ]
+    },
+    "DEVHH - Xing & LinkedIn": {
+      "main": [
+        [
+          {
+            "node": "Merge",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
     }
   },
   "active": false,
@@ -394,7 +615,7 @@
     "executionOrder": "v1",
     "binaryMode": "separate"
   },
-  "versionId": "90e051f0-15cc-4d08-bb7e-25eab861a512",
+  "versionId": "a9bc623c-2a75-4754-acdd-0d10e3470d7b",
   "meta": {
     "templateCredsSetupCompleted": true,
     "instanceId": "b751e283d167317e522f290d63e0b956085524c7c105edc03e657e7409fe8050"
