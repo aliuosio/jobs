@@ -2,7 +2,7 @@ version: "1.0"
 extensions:
   - name: "opencode-memory"
     type: "mcp"
-    endpoint: "http://localhost:4096
+    endpoint: "http://localhost:4096"
     tools:
       - memory_read_graph
       - memory_create_entities
