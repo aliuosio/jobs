@@ -5,69 +5,75 @@
 ```json
 {
   "urls": ["URL"],
+  "extraction_config": {
+    "type": "CssExtractionStrategy",
+    "params": {
+      "selector": [
+        "div.jobs-description__content",
+        "div.jobs-box__html-content",
+        "div.jobs-description"
+      ],
+      "min_text_length": 200
+    }
+  },
   "browser_config": {
     "type": "BrowserConfig",
     "params": {
       "headless": true,
       "enable_stealth": true,
       "headers": {
-        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
+        "User-Agent": "Mozilla/5.0 (X11; Linux x86_64; rv:149.0) Gecko/20100101 Firefox/149.0",
         "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8",
-        "Accept-Language": "en-US,en;q=0.9,de;q=0.8",
+        "Accept-Language": "en-US,en;q=0.9",
         "Accept-Encoding": "gzip, deflate, br, zstd",
-        "Sec-Ch-Ua": "\"Not_A Brand\";v=\"8\", \"Chromium\";v=\"120\", \"Google Chrome\";v=\"120\"",
-        "Sec-Ch-Ua-Mobile": "?0",
-        "Sec-Ch-Ua-Platform": "\"Windows\"",
+        "Referer": "https://www.linkedin.com/jobs/",
         "Sec-Fetch-Dest": "document",
         "Sec-Fetch-Mode": "navigate",
-        "Sec-Fetch-Site": "none",
-        "Sec-Fetch-User": "?1",
-        "Upgrade-Insecure-Requests": "1",
-        "Referer": "https://www.linkedin.com/"
+        "Sec-Fetch-Site": "same-origin",
+        "Connection": "keep-alive",
+        "Cache-Control": "no-cache",
+        "Pragma": "no-cache"
       },
       "cookies": [
         {
           "name": "COOKIE_NAME",
           "value": "COOKIE_VALUE",
           "domain": "DOMAIN",
-          "path": "/",
-          "secure": true,
-          "httpOnly": false,
-          "sameSite": "None"
+          "path": "/"
+        },
+        {
+          "name": "JSESSIONID",
+          "value": "JSESSIONID_CURRENT",
+          "domain": "DOMAIN",
+          "path": "/"
         }
       ],
-      "extra_args": [
-        "--headless=new",
-        "--disable-features=IsolateOrigins",
-        "--disable-features=site-per-process",
-        "--disable-dev-shm-usage",
-        "--disable-extensions",
-        "--disable-gpu",
-        "--no-sandbox",
-        "--disable-setuid-sandbox"
-      ],
-      "ignore_https_errors": true,
-      "java_script_enabled": true,
       "viewport": {
         "width": 1920,
-        "height": 1080
+        "height": 900
       }
     }
   },
-"crawler_config": {
-  "type": "CrawlerRunConfig",
-  "params": {
-    "magic": true,
-    "cache_mode": "bypass",
-    "wait_until": "domcontentloaded",
-    "wait_for_timeout": 8000,
-    "page_timeout": 45000,
-    "remove_overlay_elements": true,
-    "verbose": true,
-    "word_count_threshold": 10,
-    "exclude_external_links": true
+  "crawler_config": {
+    "type": "CrawlerRunConfig",
+    "params": {
+      "wait_until": "domcontentloaded",
+      "magic": true,
+      "cache_mode": "bypass",
+      "remove_overlay_elements": true,
+      "word_count_threshold": 200,
+       "actions": [
+        {
+          "type": "click",
+          "selector": "button[aria-label*='See more'], button.jobs-description__footer-button"
+        },
+        {
+          "type": "wait",
+          "ms": 1000
+        }
+      ]
+    }
   }
-}
 }
 ```
 
@@ -78,7 +84,7 @@
 | `headless` | `true` | Runs browser without visible window |
 | `enable_stealth` | `true` | Patches `navigator.webdriver`, `chrome.runtime`, etc. |
 | `magic` | `true` | Auto-scroll, auto-wait, better JS handling |
-| `wait_until` | `networkidle` | Wait for LinkedIn's XHR calls to finish |
+| `wait_until` | `domcontentloaded`
 | `css_selector` | `.job-details-skill-match-status-list...` | Extract only job description block |
 
 ## Anti-Detection Args
