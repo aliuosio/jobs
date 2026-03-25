@@ -98,4 +98,4 @@ n8nac-config.json
 .ruff_cache
 .shared/*.sql
 .shared/*.snapshot
-workflows
+workflows/
