@@ -17,8 +17,6 @@
         "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8",
         "Accept-Language": "en-US,en;q=0.9,de;q=0.8",
         "Accept-Encoding": "gzip, deflate, br, zstd",
-        "Cache-Control": "no-cache",
-        "Pragma": "no-cache",
         "Sec-Ch-Ua": "\"Not_A Brand\";v=\"8\", \"Chromium\";v=\"120\", \"Google Chrome\";v=\"120\"",
         "Sec-Ch-Ua-Mobile": "?0",
         "Sec-Ch-Ua-Platform": "\"Windows\"",
@@ -40,18 +38,15 @@
           "sameSite": "None"
         }
       ],
-      "args": [
-        "--disable-blink-features=AutomationControlled",
-        "--disable-features=IsolateOrigins,site-per-process",
+      "extra_args": [
+        "--headless=new",
+        "--disable-features=IsolateOrigins",
+        "--disable-features=site-per-process",
         "--disable-dev-shm-usage",
-        "--disable-browser-side-navigation",
-        "--disable-infobars",
         "--disable-extensions",
         "--disable-gpu",
         "--no-sandbox",
-        "--disable-setuid-sandbox",
-        "--window-size=1920,1080",
-        "--start-maximized"
+        "--disable-setuid-sandbox"
       ],
       "ignore_https_errors": true,
       "java_script_enabled": true,
@@ -61,22 +56,20 @@
       }
     }
   },
-  "crawler_config": {
-    "type": "CrawlerRunConfig",
-    "params": {
-      "magic": true,
-      "cache_mode": "bypass",
-      "wait_until": "networkidle",
-      "wait_for_timeout": 15000,
-      "page_timeout": 90000,
-      "css_selector": ".job-details-skill-match-status-list, .jobs-description-content, .jobs-box__html-content",
-      "exclude_selector": ".ad-banner-container, .feed-shared-update-v2, .feed-shared-navigation, .global-nav, .msg-overlay",
-      "remove_overlay_elements": true,
-      "verbose": true,
-      "word_count_threshold": 10,
-      "exclude_external_links": true
-    }
+"crawler_config": {
+  "type": "CrawlerRunConfig",
+  "params": {
+    "magic": true,
+    "cache_mode": "bypass",
+    "wait_until": "domcontentloaded",
+    "wait_for_timeout": 8000,
+    "page_timeout": 45000,
+    "remove_overlay_elements": true,
+    "verbose": true,
+    "word_count_threshold": 10,
+    "exclude_external_links": true
   }
+}
 }
 ```
 
