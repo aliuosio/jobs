@@ -41,7 +41,7 @@
               "id": "0a859ddd-9433-43ca-99d5-7a7ca8429156",
               "name": "domain",
               "type": "string",
-              "value": "={{ $json.url.toLowerCase().includes('xing') ? 'www.xing.com' : ($json.url.toLowerCase().includes('linkedin') ? 'www.linkedin.com' : ($json.url.toLowerCase().includes('indeed') ? 'www.indeed.com' : '')) }}"
+              "value": "={{ $json.url.toLowerCase().includes('xing') ? '.xing.com' : ($json.url.toLowerCase().includes('linkedin') ? '.linkedin.com' : ($json.url.toLowerCase().includes('indeed') ? '.indeed.com' : '')) }}"
             },
             {
               "id": "2da2b25a-f151-47a1-aab3-63302b395db9",
@@ -105,13 +105,19 @@
             {
               "id": "57e58456-a110-4e89-8168-c4ac47f11049",
               "name": "cookie_linkedin",
-              "value": "AQEDASub8JgDaykvAAABnSIGqFsAAAGdRhMsW00Az4GcL3nTeVKp4Vu_BuMJX_NfI6Ql3bjOraCtbbS0D1WLB4lTSmUfp5I-bqI2NxMCwlNu_LaaIo5nToZVTZk5D0puaU1Y-6n6aLGGcubmHoV6fegt",
+              "value": "AQEDASub8JgEJh8jAAABnSRvn6IAAAGdSHwjok0AI3-HhaDNidVX7D56fXxU0ok0lE5ja_SdzZHyT2uwdaVV4E4HZdGLvzwZ4rw0xQDCV_XumU1MWpKdxqbN10Sdjhgz5uukRmzkjFPUpTLvY1Iz84ed",
               "type": "string"
             },
             {
               "id": "4dc26a28-35b5-4a3d-b6ba-9e80c02f79b7",
               "name": "cookie_xing",
-              "value": "NDIzNTIwOCM0MjM1MjA4LW1wSnk3SUJnT1Z1SGQzMlhBRVpxTkZpRWpRb21P%0Ad0Vidms3M3Nid3E0Zms%3D--d80845efd8dd04bcb021a20801ad4cde845eca81",
+              "value": "NDIzNTIwOCM0MjM1MjA4LXJoM1NTck1oREJqN0dQQWR2UFdYYjNQa0pBUXFhaFlpQmo1Y3FfMHFjVkE=--d7df6e00314ef28265a05f6b5515367694a30eec",
+              "type": "string"
+            },
+            {
+              "id": "dbeea1b6-23e5-4df1-8b61-140a577cb3af",
+              "name": "jsessionid",
+              "value": "\"ajax:1701208448721745025\"",
               "type": "string"
             },
             {
@@ -296,7 +302,7 @@
     },
     {
       "parameters": {
-        "jsCode": "// 1. Get the raw string and strip everything before the first '{'\nlet rawPrompt = $('Call \\'Prompt\\'').first().json.prompt;\nconst firstBrace = rawPrompt.indexOf('{');\nif (firstBrace !== -1) {\n  rawPrompt = rawPrompt.substring(firstBrace);\n}\n\n// 2. Clean up any trailing markdown backticks\nrawPrompt = rawPrompt.replace(/```/g, \"\").trim();\n\n// 3. Replacement Logic\n// We use a helper to escape double quotes in the variables to prevent breaking the JSON string\nconst escape = (str) => String(str).replace(/\"/g, '\\\\\"');\n\nlet payloadString = rawPrompt\n  .replace('URL', escape($input.first().json.url))\n  .replace('COOKIE_NAME', escape($input.first().json.cookie_name))\n  .replace('COOKIE_VALUE', escape($input.first().json.cookie))\n  .replace('DOMAIN', escape($input.first().json.domain));\n\ntry {\n  // 4. Final Parse\n  return {\n    json: JSON.parse(payloadString)\n  };\n} catch (error) {\n  // 5. Detailed error reporting for debugging\n  return {\n    json: {\n      error: \"Invalid JSON after replacement\",\n      reason: error.message,\n      raw: payloadString\n    }\n  };\n}"
+        "jsCode": "// 1. Get the raw string and strip everything before the first '{'\nlet rawPrompt = $('Call \\'Prompt\\'').first().json.prompt;\nconst firstBrace = rawPrompt.indexOf('{');\nif (firstBrace !== -1) {\n  rawPrompt = rawPrompt.substring(firstBrace);\n}\n\nrawPrompt = rawPrompt.replace(/```/g, \"\").trim();\n\nconst escape = (str) => String(str).replace(/\"/g, '\\\\\"');\n\nconst replacements = {\n  URL: escape($input.first().json.url),\n  COOKIE_NAME: escape($input.first().json.cookie_name),\n  COOKIE_VALUE: escape($input.first().json.cookie),\n  JSESSIONID_CURRENT: escape($('SetAppVars').first().json.jsessionid),\n  DOMAIN: escape($input.first().json.domain),\n};\n\nlet payloadString = rawPrompt.replace(\n  /\\b(URL|COOKIE_NAME|COOKIE_VALUE|JSESSIONID_CURRENT|DOMAIN)\\b/g,\n  (match) => replacements[match] || match\n);\n\ntry {\n  return {\n    json: JSON.parse(payloadString)\n  };\n} catch (error) {\n  return {\n    json: {\n      error: \"Invalid JSON after replacement\",\n      reason: error.message,\n      raw: payloadString\n    }\n  };\n}"
       },
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
@@ -455,7 +461,7 @@
     "timeSavedMode": "fixed",
     "saveDataSuccessExecution": "all"
   },
-  "versionId": "358bab85-e513-4e1e-b149-233c0c3ee8d0",
+  "versionId": "5c0ef6af-4104-4552-b3ba-334e5a056861",
   "meta": {
     "templateCredsSetupCompleted": true,
     "instanceId": "b751e283d167317e522f290d63e0b956085524c7c105edc03e657e7409fe8050"
