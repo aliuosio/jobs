@@ -5,26 +5,26 @@
       "parameters": {
         "options": {}
       },
-      "id": "0545e012-4dfd-4c7b-a213-fc12191f4ab6",
+      "id": "31cbaa4a-5359-4369-aaff-e73f6c86a4f1",
       "name": "Loop",
       "type": "n8n-nodes-base.splitInBatches",
       "typeVersion": 3,
       "position": [
-        0,
-        480
+        864,
+        1680
       ]
     },
     {
       "parameters": {
         "jsCode": "return $input.all().map(item => {\n  item.json.process = \"Research\";\n  return item;\n});"
       },
-      "id": "33e07e7b-30fe-40ae-b181-df6500c219b9",
+      "id": "8f88a01f-2d3b-4cc4-9f40-71a3f1b240ca",
       "name": "Add Process To Output",
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        224,
-        0
+        1088,
+        1408
       ]
     },
     {
@@ -35,7 +35,7 @@
               "id": "092cf582-7844-4e7c-a556-441f14fba081",
               "name": "cookie",
               "type": "string",
-              "value": "={{ $json.url.toLowerCase().includes('xing') ? 'NDIzNTIwOCM0MjM1MjA4LUFFaWF2RUZqMVJsekg5MWFvS1ZiRXhxM0pReGdO%0AZzF2MzR1TGRNRnlYelE%3D--9329fa5647e86184eb3424cd08a9082071cf8f7c' : ($json.url.toLowerCase().includes('linkedin') ? 'AQEDASub8JgF0K4zAAABnQzsBxQAAAGdMPiLFE0AWDnbs9ndt6fKxMT9tQ8W6wf4l8KDTEWqIPeliFJuiFF7lb4wtCM1bo-nXsCuUtoRjT8oSUnBLmHgdAXN0QPd5THhNdJJ8IxIRdpsTxrj1Ldt39Sv' : ($json.url.toLowerCase().includes('indeed') ? 'indeed key' : '')) }}"
+              "value": "={{ $json.url.toLowerCase().includes('xing') ?  $('SetAppVars').item.json.cookie_xing: ($json.url.toLowerCase().includes('linkedin') ? $('SetAppVars').item.json.cookie_linkedin: ($json.url.toLowerCase().includes('indeed') ? 'indeed key' : '')) }}"
             },
             {
               "id": "0a859ddd-9433-43ca-99d5-7a7ca8429156",
@@ -45,27 +45,39 @@
             },
             {
               "id": "2da2b25a-f151-47a1-aab3-63302b395db9",
-              "name": "url",
+              "name": "company",
               "type": "string",
-              "value": "={{ $json.url }}"
+              "value": "={{ $json.company }}"
             },
             {
               "id": "ceb26aa7-9766-449b-a112-2faa4d38c34d",
               "name": "cookie_name",
               "type": "string",
               "value": "={{ $json.url.toLowerCase().includes('xing') ? 'login' : ($json.url.toLowerCase().includes('linkedin') ? 'li_at' : ($json.url.toLowerCase().includes('indeed') ? 'www.indeed.com' : '')) }}"
+            },
+            {
+              "id": "fd61213f-6da1-402a-95a5-cb29f1703d68",
+              "name": "title",
+              "value": "={{ $json.title }}",
+              "type": "string"
+            },
+            {
+              "id": "96be424b-5968-403a-bb3e-fad627ed669e",
+              "name": "url",
+              "value": "={{ $json.url }}",
+              "type": "string"
             }
           ]
         },
         "options": {}
       },
-      "id": "931c91e0-7e68-44fc-941b-754c1c84c479",
+      "id": "9bf04af2-2387-4e6c-abf8-51339d28493e",
       "name": "Edit Fields",
       "type": "n8n-nodes-base.set",
       "typeVersion": 3.4,
       "position": [
-        448,
-        192
+        1312,
+        1600
       ]
     },
     {
@@ -89,226 +101,89 @@
               "name": "zai_api_key",
               "type": "string",
               "value": ""
+            },
+            {
+              "id": "57e58456-a110-4e89-8168-c4ac47f11049",
+              "name": "cookie_linkedin",
+              "value": "AQEDASub8JgDaykvAAABnSIGqFsAAAGdRhMsW00Az4GcL3nTeVKp4Vu_BuMJX_NfI6Ql3bjOraCtbbS0D1WLB4lTSmUfp5I-bqI2NxMCwlNu_LaaIo5nToZVTZk5D0puaU1Y-6n6aLGGcubmHoV6fegt",
+              "type": "string"
+            },
+            {
+              "id": "4dc26a28-35b5-4a3d-b6ba-9e80c02f79b7",
+              "name": "cookie_xing",
+              "value": "NDIzNTIwOCM0MjM1MjA4LW1wSnk3SUJnT1Z1SGQzMlhBRVpxTkZpRWpRb21P%0Ad0Vidms3M3Nid3E0Zms%3D--d80845efd8dd04bcb021a20801ad4cde845eca81",
+              "type": "string"
+            },
+            {
+              "id": "1ea26f04-f140-4cd8-bcc7-1149a7774e53",
+              "name": "path",
+              "value": "/home/node/.n8n-files/Prompts/jobs/crawl4ai.md",
+              "type": "string"
             }
           ]
         },
         "options": {}
       },
-      "id": "99123b33-de66-45df-bae5-224b767291b7",
+      "id": "c758657d-aa7b-4e80-8f98-d2bc53311af1",
       "name": "SetAppVars",
       "type": "n8n-nodes-base.set",
       "typeVersion": 3.4,
       "position": [
-        -448,
-        480
+        192,
+        1680
       ]
     },
     {
       "parameters": {
         "amount": "={{ Math.floor(Math.random() * 30) + 1 }}"
       },
-      "id": "6baf2780-0e99-4908-9cf7-3e7776c8e043",
+      "id": "9df892eb-3a0d-44dd-a445-276edb8769cb",
       "name": "Wait",
       "type": "n8n-nodes-base.wait",
       "typeVersion": 1.1,
       "position": [
-        2016,
-        32
+        1968,
+        1680
       ],
-      "webhookId": "b9343538-cb27-4878-9cf4-8d7904bb8d06"
+      "webhookId": "bf56d2c4-2e99-4bc0-ad4c-4c850e1aa551"
     },
     {
       "parameters": {
         "operation": "executeQuery",
-        "query": "SELECT \n\tjo.id,\n    jo.title,\n    jo.url\nFROM \n\tjob_offers jo\nWHERE \n\tid \nIN(\n\tSELECT \n\t\tjop.job_offers_id \n\tfrom\n\t\tjob_offers_process jop \n\twhere\n\t\tjop.research = false\n)\n;",
+        "query": "SELECT \n\tjo.id,\n    jo.company,\n    jo.title,\n    jo.url\nFROM \n\tjob_offers jo\nWHERE \n\tid \nIN(\n\tSELECT \n\t\tjop.job_offers_id \n\tfrom\n\t\tjob_offers_process jop \n\twhere\n\t\tjop.research = false\n)\n;",
         "options": {}
       },
-      "id": "9d9e81d8-9aef-4c88-80d9-229787f9265e",
+      "id": "14f9a949-4d0b-4530-8d18-157da215e1f3",
       "name": "Offers Research",
       "type": "n8n-nodes-base.postgres",
       "typeVersion": 2.6,
       "position": [
-        -224,
-        480
+        640,
+        1680
       ],
       "credentials": {
         "postgres": {
-          "id": "ceRmvobzfi3fViKu",
-          "name": "Postgres account"
+          "id": "wthjjnZmr2Hf72m0",
+          "name": "Postgres account 2"
         }
       }
     },
     {
       "parameters": {
         "method": "POST",
-        "url": "http://crawl4ai:11235/crawl/job",
+        "url": "http://crawl4ai:11235/crawl",
         "sendBody": true,
         "specifyBody": "json",
-        "jsonBody": "={\n  \"urls\": [\n    \"{{$json.url}}\"\n  ],\n  \"browser_config\": {\n    \"type\": \"BrowserConfig\",\n    \"params\": {\n      \"headless\": true,\n      \"enable_stealth\": true,\n      \"headers\": {\n        \"User-Agent\": \"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 Chrome/122.0.0.0 Safari/537.36\",\n        \"Accept-Language\": \"de-DE,de;q=0.9,en-US;q=0.8,en;q=0.7\",\n        \"Referer\": \"https://www.google.com/\"\n      },\n      \"cookies\": [\n        {\n          \"name\": \"{{$json.cookie_name}}\",\n          \"value\": \"{{$json.cookie}}\",\n          \"domain\": \"{{$json.domain}}\",\n          \"path\": \"/\",\n          \"secure\": true\n        }\n      ]\n    }\n  },\n  \"crawler_config\": {\n    \"type\": \"CrawlerRunConfig\",\n    \"params\": {\n      \"magic\": true,\n      \"cache_mode\": \"bypass\",\n      \"wait_until\": \"networkidle\",\n      \"page_timeout\": 60000,\n      \"remove_overlay_elements\": true,\n      \"verbose\": true,\n      \"js_code\": \"await new Promise(r => setTimeout(r, 3000)); await window.scrollTo(0, document.body.scrollHeight / 3); await new Promise(r => setTimeout(r, 1500)); await window.scrollTo(0, document.body.scrollHeight * 0.66); await new Promise(r => setTimeout(r, 1500)); await window.scrollTo(0, document.body.scrollHeight);\"\n    }\n  }\n}",
+        "jsonBody": "={{ $json }}",
         "options": {}
       },
-      "id": "ff00e9a5-b797-4755-a52b-a526fa7c2da7",
+      "id": "75e05300-eff4-457a-9273-a682e7910ab5",
       "name": "Submit Crawl Job",
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4,
       "position": [
-        672,
-        192
-      ]
-    },
-    {
-      "parameters": {
-        "url": "http://crawl4ai:11235/crawl/job/{{$json[\"task_id\"]}}",
-        "options": {}
-      },
-      "id": "41641488-c5c3-457d-8b34-954a8b258d65",
-      "name": "Check Crawl Status",
-      "type": "n8n-nodes-base.httpRequest",
-      "typeVersion": 4,
-      "position": [
-        1344,
-        192
-      ]
-    },
-    {
-      "parameters": {
-        "conditions": {
-          "string": [
-            {
-              "value1": "={{$json[\"status\"]}}",
-              "value2": "completed"
-            }
-          ]
-        }
-      },
-      "id": "9d06847f-4063-4080-b64b-9621b18c479a",
-      "name": "Is Completed?",
-      "type": "n8n-nodes-base.if",
-      "typeVersion": 1,
-      "position": [
-        1568,
-        128
-      ]
-    },
-    {
-      "parameters": {
-        "jsCode": "const input = $input.first().json;\nconst result = {\n  id: $('Loop').first().json.id,\n  title: $('Loop').first().json.title,\n  description: ''\n};\n\n// Handle crawl4ai LLM extraction response\nif (input && input.results && input.results[0] && input.results[0].extracted_content) {\n  result.description = input.results[0].extracted_content;\n} else if (input && input.results && input.results[0] && input.results[0].markdown && input.results[0].markdown.raw_markdown) {\n  result.description = input.results[0].markdown.raw_markdown;\n} else if (input && input.data && input.data[0] && input.data[0].content) {\n  result.description = input.data[0].content;\n} else if (input && input.message) {\n  result.description = input.message;\n} else {\n  result.description = 'No content available';\n}\n\nreturn [result];"
-      },
-      "id": "f70db9a3-4a1d-4f7f-9fdc-b2464ef630be",
-      "name": "JSON",
-      "type": "n8n-nodes-base.code",
-      "typeVersion": 2,
-      "position": [
-        1792,
-        32
-      ]
-    },
-    {
-      "parameters": {
-        "amount": 30,
-        "unit": "seconds"
-      },
-      "id": "131a81b3-b4bf-432c-be81-4ac8e99d9883",
-      "name": "Wait 30 Seconds",
-      "type": "n8n-nodes-base.wait",
-      "typeVersion": 1,
-      "position": [
-        1120,
-        192
-      ],
-      "webhookId": "9ed9caee-2ed8-4f6e-9989-72a7472a4c00"
-    },
-    {
-      "parameters": {
-        "assignments": {
-          "assignments": [
-            {
-              "id": "retry-count-001",
-              "name": "retry_count",
-              "type": "number",
-              "value": "={{ 0 }}"
-            },
-            {
-              "id": "retry-task-id",
-              "name": "task_id",
-              "type": "string",
-              "value": "={{ $json.task_id }}"
-            }
-          ]
-        },
-        "options": {}
-      },
-      "id": "9f4424b1-7691-4210-b438-43a2aeaf1a46",
-      "name": "Init Retry Count",
-      "type": "n8n-nodes-base.set",
-      "typeVersion": 3.4,
-      "position": [
-        896,
-        192
-      ]
-    },
-    {
-      "parameters": {
-        "amount": 30,
-        "unit": "seconds"
-      },
-      "id": "f34f20a2-b443-4c89-b5b7-30e63d8e7b30",
-      "name": "Wait Retry",
-      "type": "n8n-nodes-base.wait",
-      "typeVersion": 1,
-      "position": [
-        2240,
-        288
-      ],
-      "webhookId": "c844b9cb-a7b9-404c-a65d-3c7a9534f88f"
-    },
-    {
-      "parameters": {
-        "conditions": {
-          "number": [
-            {
-              "value1": "={{ $json.retry_count ?? 0 }}",
-              "value2": 5
-            }
-          ]
-        }
-      },
-      "id": "ade6dbfe-3a61-4170-8617-f8d13460357c",
-      "name": "Max Retries Exceeded?",
-      "type": "n8n-nodes-base.if",
-      "typeVersion": 1,
-      "position": [
-        1792,
-        224
-      ]
-    },
-    {
-      "parameters": {
-        "assignments": {
-          "assignments": [
-            {
-              "id": "incr-retry-001",
-              "name": "retry_count",
-              "type": "number",
-              "value": "={{ ($json.retry_count ?? 0) + 1 }}"
-            },
-            {
-              "id": "keep-task-id",
-              "name": "task_id",
-              "type": "string",
-              "value": "={{ $json.task_id }}"
-            }
-          ]
-        },
-        "options": {}
-      },
-      "id": "02f94aed-87df-4dd0-aec5-9b48e7b57844",
-      "name": "Increment Retry",
-      "type": "n8n-nodes-base.set",
-      "typeVersion": 3.4,
-      "position": [
-        2016,
-        224
+        1744,
+        1600
       ]
     },
     {
@@ -335,13 +210,32 @@
         },
         "options": {}
       },
-      "id": "3b118d3d-62ce-4b35-a12a-af2462804abb",
+      "id": "e7ccba32-2bb1-44a2-afa4-7028e95aea28",
       "name": "If",
       "type": "n8n-nodes-base.if",
       "typeVersion": 2.3,
       "position": [
-        224,
-        192
+        1088,
+        1600
+      ]
+    },
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "triggerAtHour": 11
+            }
+          ]
+        }
+      },
+      "id": "2aebc1bf-94f2-434b-81e3-227f7c083a27",
+      "name": "11am",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.3,
+      "position": [
+        -32,
+        1680
       ]
     },
     {
@@ -363,33 +257,55 @@
         },
         "options": {}
       },
-      "id": "f94c7541-5fd0-4f69-9de8-caf7efc14e62",
+      "id": "8e087a81-2d53-4cb4-9063-e04042e892f5",
       "name": "Call 'Job Offers - store'",
       "type": "n8n-nodes-base.executeWorkflow",
       "typeVersion": 1.3,
       "position": [
-        448,
-        0
+        1312,
+        1408
       ]
     },
     {
       "parameters": {
-        "rule": {
-          "interval": [
-            {
-              "triggerAtHour": 11
-            }
-          ]
-        }
+        "workflowId": {
+          "__rl": true,
+          "value": "rGIluizJ8qfWnidf",
+          "mode": "list",
+          "cachedResultUrl": "/workflow/rGIluizJ8qfWnidf",
+          "cachedResultName": "Prompt"
+        },
+        "workflowInputs": {
+          "mappingMode": "defineBelow",
+          "value": {},
+          "matchingColumns": [],
+          "schema": [],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": true
+        },
+        "options": {}
       },
-      "id": "833e051d-34b5-4b94-a721-ea56f4b3b0cc",
-      "name": "11am",
-      "type": "n8n-nodes-base.scheduleTrigger",
+      "type": "n8n-nodes-base.executeWorkflow",
       "typeVersion": 1.3,
       "position": [
-        -672,
-        480
-      ]
+        416,
+        1680
+      ],
+      "id": "63b50c55-c318-4372-aa99-8555b32a84c7",
+      "name": "Call 'Prompt'"
+    },
+    {
+      "parameters": {
+        "jsCode": "// 1. Get the raw string and strip everything before the first '{'\nlet rawPrompt = $('Call \\'Prompt\\'').first().json.prompt;\nconst firstBrace = rawPrompt.indexOf('{');\nif (firstBrace !== -1) {\n  rawPrompt = rawPrompt.substring(firstBrace);\n}\n\n// 2. Clean up any trailing markdown backticks\nrawPrompt = rawPrompt.replace(/```/g, \"\").trim();\n\n// 3. Replacement Logic\n// We use a helper to escape double quotes in the variables to prevent breaking the JSON string\nconst escape = (str) => String(str).replace(/\"/g, '\\\\\"');\n\nlet payloadString = rawPrompt\n  .replace('URL', escape($input.first().json.url))\n  .replace('COOKIE_NAME', escape($input.first().json.cookie_name))\n  .replace('COOKIE_VALUE', escape($input.first().json.cookie))\n  .replace('DOMAIN', escape($input.first().json.domain));\n\ntry {\n  // 4. Final Parse\n  return {\n    json: JSON.parse(payloadString)\n  };\n} catch (error) {\n  // 5. Detailed error reporting for debugging\n  return {\n    json: {\n      error: \"Invalid JSON after replacement\",\n      reason: error.message,\n      raw: payloadString\n    }\n  };\n}"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1520,
+        1600
+      ],
+      "id": "9bfe3bc6-89a2-451e-8aa3-edd02320bf79",
+      "name": "Prompt Vars"
     }
   ],
   "pinData": {},
@@ -398,7 +314,7 @@
       "main": [
         [
           {
-            "node": "Offers Research",
+            "node": "Call 'Prompt'",
             "type": "main",
             "index": 0
           }
@@ -449,7 +365,7 @@
       "main": [
         [
           {
-            "node": "Submit Crawl Job",
+            "node": "Prompt Vars",
             "type": "main",
             "index": 0
           }
@@ -457,68 +373,6 @@
       ]
     },
     "Submit Crawl Job": {
-      "main": [
-        [
-          {
-            "node": "Init Retry Count",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
-    "Init Retry Count": {
-      "main": [
-        [
-          {
-            "node": "Wait 30 Seconds",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
-    "Wait 30 Seconds": {
-      "main": [
-        [
-          {
-            "node": "Check Crawl Status",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
-    "Check Crawl Status": {
-      "main": [
-        [
-          {
-            "node": "Is Completed?",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
-    "Is Completed?": {
-      "main": [
-        [
-          {
-            "node": "JSON",
-            "type": "main",
-            "index": 0
-          }
-        ],
-        [
-          {
-            "node": "Max Retries Exceeded?",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
-    "JSON": {
       "main": [
         [
           {
@@ -534,46 +388,6 @@
         [
           {
             "node": "Loop",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
-    "Max Retries Exceeded?": {
-      "main": [
-        [
-          {
-            "node": "Increment Retry",
-            "type": "main",
-            "index": 0
-          }
-        ],
-        [
-          {
-            "node": "Loop",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
-    "Increment Retry": {
-      "main": [
-        [
-          {
-            "node": "Wait Retry",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
-    "Wait Retry": {
-      "main": [
-        [
-          {
-            "node": "Check Crawl Status",
             "type": "main",
             "index": 0
           }
@@ -608,16 +422,40 @@
           }
         ]
       ]
+    },
+    "Call 'Prompt'": {
+      "main": [
+        [
+          {
+            "node": "Offers Research",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Prompt Vars": {
+      "main": [
+        [
+          {
+            "node": "Submit Crawl Job",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
     }
   },
-  "active": false,
+  "active": true,
   "settings": {
     "executionOrder": "v1",
     "binaryMode": "separate",
     "callerPolicy": "workflowsFromSameOwner",
-    "availableInMCP": false
+    "availableInMCP": false,
+    "timeSavedMode": "fixed",
+    "saveDataSuccessExecution": "all"
   },
-  "versionId": "4ebc1524-6353-4602-96f3-20f55241feab",
+  "versionId": "358bab85-e513-4e1e-b149-233c0c3ee8d0",
   "meta": {
     "templateCredsSetupCompleted": true,
     "instanceId": "b751e283d167317e522f290d63e0b956085524c7c105edc03e657e7409fe8050"
