@@ -90,7 +90,6 @@ out/
 .cache/
 
 .opencode/skill
-workflows/*
 AGENTS.md
 n8nac-config.json
 .opencode/
