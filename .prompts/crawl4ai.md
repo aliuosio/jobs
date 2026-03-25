@@ -4,7 +4,7 @@
 
 ```json
 {
-  "urls": [url],
+  "urls": ["URL"],
   "browser_config": {
     "type": "BrowserConfig",
     "params": {
@@ -27,9 +27,9 @@
       },
       "cookies": [
         {
-          "name": cookie_name,
-          "value": cookie_value,
-          "domain": domain,
+          "name": "COOKIE_NAME",
+          "value": "COOKIE_VALUE",
+          "domain": "DOMAIN",
           "path": "/",
           "secure": true,
           "httpOnly": false,
