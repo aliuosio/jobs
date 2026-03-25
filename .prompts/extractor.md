@@ -18,7 +18,7 @@ FIELD EXTRACTION (STEP-BY-STEP):
 2. company – Extract if explicitly linked using “bei” or “at”; else null.
 3. url – Must be complete and valid; discard job if missing/invalid.
 4. via – Root domain of url (e.g., indeed.com).
-5. location – "City > Country" format; else null.
+5. location – "City" format; else null.
 6. description – Include if original text >200 chars; rewrite 1–2 sentences in same language, remove URLs, titles, boilerplate; else null.
 7. email – Include only if job-specific; else null.
 8. salary – Exact text if explicitly stated; else null.
