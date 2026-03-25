@@ -135,6 +135,38 @@ async def fill_form(request: Request, answer_request: AnswerRequest) -> AnswerRe
             f"[fill-form] retrieval_latency_ms={retrieval_latency_ms:.1f} chunks={chunk_count}"
         )
 
+        search_chunks = chunk_count
+
+        # CRITICAL: Include profile chunk for direct field extraction (FR-001, FR-002)
+        try:
+            profile_chunk = await retriever.get_profile_chunk()
+            if profile_chunk:
+                chunks.insert(0, profile_chunk)
+                logger.info(f"[fill-form] profile_chunk_included")
+        except Exception as e:
+            logger.error(f"[fill-form] profile_chunk_fetch_failed: {e}")
+            raise HTTPException(status_code=503, detail="Service temporarily unavailable")
+
+        # FR-003: Try direct extraction for known field types before LLM classification
+        if signals:
+            field_type = classify_field_type(signals)
+            if field_type:
+                field_value = _extract_direct_field_value(chunks, field_type)
+                if field_value:
+                    # Direct extraction succeeded - return early with HIGH confidence (FR-004)
+                    logger.info(
+                        f"[fill-form] direct_extraction_success field_type={field_type.value} "
+                        f"field_value={field_value[:20]}..."
+                    )
+                    return AnswerResponse(
+                        answer=field_value,
+                        has_data=True,
+                        confidence=ConfidenceLevel.HIGH,
+                        context_chunks=search_chunks,
+                        field_value=field_value,
+                        field_type=field_type.value,
+                    )
+
         if chunk_count == 0:
             logger.info("[fill-form] no_chunks_found")
             return AnswerResponse(
@@ -189,7 +221,7 @@ async def fill_form(request: Request, answer_request: AnswerRequest) -> AnswerRe
             answer=classification.answer,
             has_data=has_data,
             confidence=confidence,
-            context_chunks=chunk_count,
+            context_chunks=search_chunks,
             field_value=classification.field_value,
             field_type=classification.field_type,
         )
