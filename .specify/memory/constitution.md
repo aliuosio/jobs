@@ -33,6 +33,7 @@
 * **Memory MCP**:
     * Pre-Flight: Before implementation, MUST memory_read_graph to identify existing dependencies and prevent logic duplication.
     * Post-Flight: After implementation, MUST update with memory_create_entities and memory_create_relations.
+    * Folder Mapping: Every spec file MUST be linked to its parent folder entity via a contained_in or part_of relation. This allows scoped retrieval when targeting a folder.
     * Graph Hygiene (The "Prune" Rule): If an implementation replaces or moves a spec/function, you MUST use memory_delete_entities or memory_delete_observations for the old references. Do not allow "Ghost Nodes" to persist in the graph.
     * Naming Consistency: Entity names in the graph MUST match the @filename or @foldername exactly to ensure the /speckit commands and the Knowledge Graph stay synchronized.
 * **Sequential Thinking**: **MUST** use the `sequential-thinking` tool (`sequential-thinking_sequentialthinking`) to gather thoughts before making decisions, especially when analyzing complex requests or when the user's intent is unclear.
