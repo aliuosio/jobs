@@ -30,7 +30,11 @@
 
 ### 3. Workflow & Quality
 * **Git**: Git-Flow (main, develop, feature/, bugfix/, hotfix/). Atomic commits only. No direct merges to protected branches. **MUST** use the opencode git-flow skill (`/git-flow` or `git-flow` skill) for all git-flow operations.
-* **Memory MCP**: Before starting any implementation, **MUST** check the project structure in the memory MCP (via `memory_read_graph`). After completing each implementation, **MUST** update the memory MCP with new entities, relations, or observations via `memory_create_entities`, `memory_create_relations`, or `memory_add_observations`.
+* **Memory MCP**:
+    * Pre-Flight: Before implementation, MUST memory_read_graph to identify existing dependencies and prevent logic duplication.
+    * Post-Flight: After implementation, MUST update with memory_create_entities and memory_create_relations.
+    * Graph Hygiene (The "Prune" Rule): If an implementation replaces or moves a spec/function, you MUST use memory_delete_entities or memory_delete_observations for the old references. Do not allow "Ghost Nodes" to persist in the graph.
+    * Naming Consistency: Entity names in the graph MUST match the @filename or @foldername exactly to ensure the /speckit commands and the Knowledge Graph stay synchronized.
 * **Sequential Thinking**: **MUST** use the `sequential-thinking` tool (`sequential-thinking_sequentialthinking`) to gather thoughts before making decisions, especially when analyzing complex requests or when the user's intent is unclear.
 * **Knowledge Gathering**: When missing knowledge, **MUST** use tools in this priority order: (1) `context7` (context7_query-docs) for library/framework documentation — **FIRST**, (2) `websearch` (websearch_web_search_exa) for general web search — **SECOND** if context7 lacks the info, (3) `firecrawl-MCP` (firecrawl-mcp_firecrawl_search/scrape) for specific page content — **THIRD** if websearch lacks the info.
 * **Docker**: All execution/testing occurs via `docker-compose exec api-backend`.
