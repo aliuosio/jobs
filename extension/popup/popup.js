@@ -263,10 +263,37 @@ function showJobError(message) {
 }
 
 /**
- * Handle retry button click
+ * Handle Refresh Jobs button click - force fresh fetch
  */
-async function handleRetryClick() {
-  await loadJobLinks();
+async function forceRefreshJobLinks() {
+  const btn = elements.refreshLinksBtn;
+  const originalText = btn.textContent;
+  
+  btn.disabled = true;
+  btn.textContent = 'Refreshing...';
+  showSkeleton();
+  
+  try {
+    const links = await fetchJobOffers();
+    jobLinks = links;
+    hideLoading();
+    const filteredLinks = filterJobLinks(jobLinks, showAppliedFilter);
+    renderJobLinksList(filteredLinks);
+    await cacheJobOffers();
+    updateStaleIndicator(false);
+  } catch (err) {
+    console.error('[Popup] forceRefreshJobLinks error:', err);
+    // If we have cached data, show it with error
+    if (jobLinks.length > 0) {
+      hideLoading();
+      showToggleError('Failed to refresh: ' + err.message);
+    } else {
+      showJobError('Failed to load jobs: ' + err.message);
+    }
+  } finally {
+    btn.disabled = false;
+    btn.textContent = originalText;
+  }
 }
 
 /**
@@ -782,10 +809,44 @@ async function persistTabPreference(tabName) {
 }
 
 /**
- * Handle Refresh Jobs button click
+ * Handle Refresh Jobs button click - force fresh fetch
  */
 async function handleRefreshLinksClick() {
-  await loadJobLinks();
+  await forceRefreshJobLinks();
+}
+
+/**
+ * Force refresh job links - bypass cache and fetch fresh data
+ */
+async function forceRefreshJobLinks() {
+  const btn = elements.refreshLinksBtn;
+  const originalText = btn.textContent;
+  
+  btn.disabled = true;
+  btn.textContent = 'Refreshing...';
+  showSkeleton();
+  
+  try {
+    const links = await fetchJobOffers();
+    jobLinks = links;
+    hideLoading();
+    const filteredLinks = filterJobLinks(jobLinks, showAppliedFilter);
+    renderJobLinksList(filteredLinks);
+    await cacheJobOffers();
+    updateStaleIndicator(false);
+  } catch (err) {
+    console.error('[Popup] forceRefreshJobLinks error:', err);
+    // If we have cached data, show it with error
+    if (jobLinks.length > 0) {
+      hideLoading();
+      showToggleError('Failed to refresh: ' + err.message);
+    } else {
+      showJobError('Failed to load jobs: ' + err.message);
+    }
+  } finally {
+    btn.disabled = false;
+    btn.textContent = originalText;
+  }
 }
 
 /**
