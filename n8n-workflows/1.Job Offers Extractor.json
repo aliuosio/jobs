@@ -111,7 +111,7 @@
     {
       "parameters": {
         "schemaType": "manual",
-        "inputSchema": "{\n  \"type\": \"array\",\n  \"items\": {\n    \"type\": \"object\",\n    \"properties\": {\n      \"company\": { \"type\": [\"string\", \"null\"] },\n      \"title\": { \"type\": [\"string\", \"null\"] },\n      \"email\": { \"type\": [\"string\", \"null\"] },\n      \"url\": { \"type\": [\"string\", \"null\"], \"format\": \"uri\" },\n      \"description\": { \"type\": [\"string\", \"null\"] },\n      \"location\": { \"type\": [\"string\", \"null\"] },\n      \"salary\": { \"type\": [\"string\", \"null\"] },\n      \"schedule_type\": { \"type\": [\"string\", \"null\"] },\n      \"posted\": { \"type\": [\"string\", \"null\"], \"pattern\": \"^\\\\d{4}-\\\\d{2}-\\\\d{2} \\\\d{2}:\\\\d{2}:\\\\d{2}$\" },\n      \"via\": { \"type\": [\"string\", \"null\"] }\n    },\n    \"required\": [\"company\",\"title\",\"email\",\"url\",\"description\",\"location\",\"salary\",\"schedule_type\",\"posted\",\"via\"]\n  }\n}\n",
+        "inputSchema": "{\n  \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n  \"type\": \"array\",\n  \"items\": {\n    \"type\": \"object\",\n    \"properties\": {\n      \"company\": { \"type\": [\"string\", \"null\"] },\n      \"email\": { \"type\": [\"string\", \"null\"] },\n      \"title\": { \"type\": [\"string\", \"null\"] },\n      \"url\": { \"type\": [\"string\", \"null\"], \"format\": \"uri\" },\n      \"description\": { \"type\": [\"string\", \"null\"] },\n      \"location\": { \"type\": [\"string\", \"null\"] },\n      \"salary\": { \"type\": [\"string\", \"null\"] },\n      \"schedule_type\": { \"type\": [\"string\", \"null\"] },\n      \"via\": { \"type\": [\"string\", \"null\"] }\n    },\n    \"required\": [\n      \"company\", \"email\", \"title\", \"url\", \"description\", \n      \"location\", \"salary\", \"schedule_type\", \"posted\", \"via\"\n    ]\n  }\n}",
         "autoFix": true
       },
       "type": "@n8n/n8n-nodes-langchain.outputParserStructured",
@@ -235,7 +235,8 @@
           "id": "TFG2gg5FUgDD4Oyd",
           "name": "IMAP Credentials account"
         }
-      }
+      },
+      "disabled": true
     },
     {
       "parameters": {
@@ -255,7 +256,7 @@
         "includeParts": [
           "textContent"
         ],
-        "limit": {}
+        "limit": null
       },
       "type": "n8n-nodes-imap-enhanced.imapEnhanced",
       "typeVersion": 1,
@@ -398,7 +399,50 @@
       "name": "Remove Tracking URLs"
     }
   ],
-  "pinData": {},
+  "pinData": {
+    "DEVHH - Xing & LinkedIn": [
+      {
+        "json": {
+          "seq": 6,
+          "uid": 5113,
+          "mailboxPath": "Notification",
+          "envelope": {
+            "date": "2026-04-02T14:46:33.000Z",
+            "subject": "10+ neue Stellenangebote für \"Magento\"",
+            "from": [
+              {
+                "name": "XING Jobs",
+                "address": "jobs@mail.xing.com"
+              }
+            ],
+            "sender": [
+              {
+                "name": "XING Jobs",
+                "address": "jobs@mail.xing.com"
+              }
+            ],
+            "replyTo": [
+              {
+                "name": "",
+                "address": "no-reply@mail.xing.com"
+              }
+            ],
+            "to": [
+              {
+                "name": "Osiozekhai Aliu",
+                "address": "aliu@dev-hh.de"
+              }
+            ],
+            "messageId": "<0102019d4ea905f8-de3acd5d-0fad-4a89-907c-b2d137a99c8f-000000@eu-west-1.amazonses.com>"
+          },
+          "textContent": "Nachricht im Browser ansehen: https://www.xing.com/m/XCxNp_6UM8oiFqS_oWtygA\n\n\nXING\n\n~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\n\nHallo Osiozekhai,\nschau, was unsere KI-gestützte Suche für Dich gefunden hat.\n\n~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\n\n----------------------------------------\n\nDringend gesucht\nMitarbeiter E-Commerce - Onlineshop / Content (m/w/d)\n=> https://www.xing.com/m/XCxNp_6UM8oiFqS_oWtygK\n\nWorkwise GmbH\nLeipzig\n\nKarriere-Stufe\nVollzeit27.000 € - 33.000 €\n\n----------------------------------------\n\n----------------------------------------\n\nZu den Ersten gehören\nSenior Magento-Developer / Full Stack (m/w/d)\n=> https://www.xing.com/m/XCxNp_6UM8oiFqS_oWtygL\n\nTMS PRO SHOP GmbH\nBraunschweig\n\nbevorzugtes TätigkeitsfeldKarriere-Stufe\nVollzeit53.500 € - 71.500 €\n\n----------------------------------------\n\n----------------------------------------\n\nDringend gesucht\nSenior Fullstack Entwickler - Shopware 6 / Symfony / Vue (m/w/d)\n=> https://www.xing.com/m/XCxNp_6UM8oiFqS_oWtygM\n\nWorkwise GmbH\nZetel\n\nbevorzugtes Tätigkeitsfeldbevorzugte IndustrieKarriere-Stufe\nVollzeit47.000 € - 68.000 €\n\n----------------------------------------\n\n----------------------------------------\n\nZu den Ersten gehören\nPHP-Developer / Full Stack (m/w/d)\n=> https://www.xing.com/m/XCxNp_6UM8oiFqS_oWtygN\n\nTMS PRO SHOP GmbH\nBraunschweig\n\nbevorzugtes TätigkeitsfeldKarriere-Stufe\nVollzeit46.000 € - 61.500 €\n\n----------------------------------------\n\n----------------------------------------\n\nZu den Ersten gehören\nE-Commerce Shopware Developer (m/w/d)\n=> https://www.xing.com/m/XCxNp_6UM8oiFqS_oWtygO\n\nMemodo\nMünchen\n\nKarriere-Stufe\nVollzeit46.000 € - 59.500 €\n\n----------------------------------------\n\n----------------------------------------\n\nZu den Ersten gehören\nFullstack-Webentwickler (m/w/d) – Data, AI &amp; Automation (E-Commerce)\n=> https://www.xing.com/m/XCxNp_6UM8oiFqS_oWtygP\n\nInstaffo GmbH\nHamburg\n\nbevorzugtes Tätigkeitsfeldbevorzugte IndustrieKarriere-Stufe\nVollzeit55.000 € - 75.000 €\n\n----------------------------------------\n\n----------------------------------------\n\nZu den Ersten gehören\nShopware Developer (m/w/d)\n=> https://www.xing.com/m/XCxNp_6UM8oiFqS_oWtygQ\n\nInstaffo GmbH\nBerlin\n\nbevorzugtes Tätigkeitsfeldbevorzugte IndustrieKarriere-Stufe\nVollzeit45.000 € - 65.000 €\n\n----------------------------------------\n\n----------------------------------------\n\nBis 28% mehr Gehalt\nSoftwareentwickler Java für Webanwendungen (m/w/d)\n=> https://www.xing.com/m/XCxNp_6UM8oiFqS_oWtygR\n\nROCKEN\nSt. Gallen\n\n95.000 CHF - 115.000 CHFbevorzugtes Tätigkeitsfeldbevorzugte IndustrieKarriere-Stufe\nVollzeit\n\n----------------------------------------\n\n----------------------------------------\n\nDringend gesucht\nDigital Projektmanager - Content Management / TYPO3 (m/w/d)\n=> https://www.xing.com/m/XCxNp_6UM8oiFqS_oWtygS\n\nWorkwise GmbH\nLeipzig\n\nKarriere-Stufe\nVollzeit39.600 € - 49.800 €\n\n----------------------------------------\n\n----------------------------------------\n\nZu den Ersten gehören\nOnline-Marketingspezialist/Online-Marketingspezialistin (m/w/d)\n=> https://www.xing.com/m/XCxNp_6UM8oiFqS_oWtygT\n\nDavidson Rise GmbH\nOldenburg\n\nKarriere-Stufe\nVollzeit\n\n----------------------------------------\n\n\n----------------------------------------\n\nAlle Suchergebnisse anzeigen:\n=> https://www.xing.com/m/XCxNp_6UM8oiFqS_oWtygB\n\n----------------------------------------\n\n\n  ========================================\nSag uns, was Du denkst.\n========================================\n\n\nHat Dir diese Mail geholfen?\n\n\nNein\nhttps://www.xing.com/m/XCxNp_6UM8oiFqS_oWtyge\n\nEtwas\nhttps://www.xing.com/m/XCxNp_6UM8oiFqS_oWtygf\n\nJa\nhttps://www.xing.com/m/XCxNp_6UM8oiFqS_oWtygg\n\n\n\n\n\n\n--\nFolg uns für Tipps zu Deiner Job-Suche:\n\nXING:\nhttps://www.xing.com/m/XCxNp_6UM8oiFqS_oWtyz\n\nYouTube:\nhttps://www.xing.com/m/XCxNp_6UM8oiFqS_oWty0\n\nTikTok:\nhttps://www.xing.com/m/XCxNp_6UM8oiFqS_oWty1\n\nInstagram:\nhttps://www.xing.com/m/XCxNp_6UM8oiFqS_oWty2\n\nFacebook:\nhttps://www.xing.com/m/XCxNp_6UM8oiFqS_oWty3\n\nTwitter:\nhttps://www.xing.com/m/XCxNp_6UM8oiFqS_oWtyk\n\n\nNew Work SE\nBaumwall 7,\n20459 Hamburg\nDeutschland\n\nTel.: +49 40 419 131-0\nE-Mail: info@xing.com\n\nAmtsgericht HRB 148078\nVorstand: Henning Rönneberg (Vorsitzender),\nAufsichtsratsvorsitzender: Dr. Maximilian Preisser\n\nRecruiter·innen bekommen ein Signal, wenn Du auf eine der hier empfohlenen Job-Anzeigen klickst.\n\nBitte antworte nicht auf diese E-Mail. Nutz stattdessen gern das Kontaktformular.\nhttps://www.xing.com/m/XCxNp_6UM8oiFqS_oWtyt\nKontakt\nDatenschutz:\nhttps://www.xing.com/m/XCxNp_6UM8oiFqS_oWtyp\n\nImpressum:\nhttps://www.xing.com/m/XCxNp_6UM8oiFqS_oWtyq\n\nKontakt:\nhttps://www.xing.com/m/XCxNp_6UM8oiFqS_oWtyr\n\nAbbestellen:\nhttps://www.xing.com/m/XCxNp_6UM8oiFqS_oWtys\n"
+        },
+        "pairedItem": {
+          "item": 0
+        }
+      }
+    ]
+  },
   "connections": {
     "Wait": {
       "main": [
@@ -444,12 +488,12 @@
       "main": [
         [
           {
-            "node": "DEVHH - Xing & LinkedIn",
+            "node": "DEVHH - Indeed",
             "type": "main",
             "index": 0
           },
           {
-            "node": "DEVHH - Indeed",
+            "node": "DEVHH - Xing & LinkedIn",
             "type": "main",
             "index": 0
           }
@@ -604,7 +648,7 @@
     "executionOrder": "v1",
     "binaryMode": "separate"
   },
-  "versionId": "f74e31bf-2bd5-48f0-a342-58422ffaa5fc",
+  "versionId": "afa38fb2-89b9-4ba0-be1f-2a417fd8b065",
   "meta": {
     "templateCredsSetupCompleted": true,
     "instanceId": "b751e283d167317e522f290d63e0b956085524c7c105edc03e657e7409fe8050"
