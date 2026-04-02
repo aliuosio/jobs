@@ -99,3 +99,4 @@ n8nac-config.json
 .shared/*.sql
 .shared/*.snapshot
 workflows/
+package.json
