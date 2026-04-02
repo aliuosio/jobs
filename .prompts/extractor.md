@@ -23,7 +23,6 @@ FIELD EXTRACTION (STEP-BY-STEP):
 7. email – Include only if job-specific; else null.
 8. salary – Exact text if explicitly stated; else null.
 9. schedule_type – Exact text (e.g., Full-time, Teilzeit); else null.
-10. posted – Always "2026-03-07 11:54:30".
 
 VALIDATION:
 - No excluded titles remain (partial matches included).
