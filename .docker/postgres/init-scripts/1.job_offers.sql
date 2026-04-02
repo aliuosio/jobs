@@ -11,7 +11,7 @@ CREATE TABLE IF NOT EXISTS public.job_offers (
     location text,
     salary text,
     schedule_type text,
-    posted timestamp,
+    posted timestamptz DEFAULT CURRENT_TIMESTAMP,
     via text,
     created_at timestamptz DEFAULT CURRENT_TIMESTAMP
 );
