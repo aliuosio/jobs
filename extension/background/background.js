@@ -6,7 +6,7 @@
  */
 
 const API_ENDPOINT = 'http://localhost:8000';
-const SSE_ENDPOINT = `${API_ENDPOINT}/job-offers/stream`;
+const SSE_ENDPOINT = `${API_ENDPOINT}/api/v1/stream`;
 
 // =============================================================================
 // SSE CLIENT (T019, T020, T022)

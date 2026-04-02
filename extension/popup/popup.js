@@ -297,46 +297,39 @@ async function forceRefreshJobLinks() {
 }
 
 /**
- * Load job links with cache-first strategy
- * 1. Try to restore from storage first
- * 2. Fetch from API in background
- * 3. Cache new data to storage
+ * Load job links - always fetch fresh data from API on initial load
  */
 async function loadJobLinks() {
   showSkeleton();
   
   try {
-    const state = await loadStateFromStorage();
-    const cachedOffers = state[STORAGE_KEYS.JOB_OFFERS] || [];
-    const cachedTimestamp = state[STORAGE_KEYS.JOB_OFFERS_TIMESTAMP] || 0;
-    const isStale = isCacheStale(cachedTimestamp);
-    
-    console.log('[Popup] loadJobLinks - cachedOffers:', cachedOffers.length, 'isStale:', isStale);
-    
-    if (cachedOffers.length > 0) {
-      jobLinks = cachedOffers;
-      hideLoading();
-      const filteredLinks = filterJobLinks(jobLinks, showAppliedFilter);
-      renderJobLinksList(filteredLinks);
-      
-      if (isStale) {
-        updateStaleIndicator(true);
-        fetchAndCacheJobOffers();
-      }
-    } else {
-      console.log('[Popup] No cache, fetching from API...');
-      const links = await fetchJobOffers();
-      console.log('[Popup] fetchJobOffers returned:', links.length, 'items');
-      jobLinks = links;
-      hideLoading();
-      const filteredLinks = filterJobLinks(jobLinks, showAppliedFilter);
-      renderJobLinksList(filteredLinks);
-      
-      await cacheJobOffers();
-    }
+    console.log('[Popup] Loading job links from API...');
+    const links = await fetchJobOffers();
+    console.log('[Popup] fetchJobOffers returned:', links.length, 'items');
+    jobLinks = links;
+    hideLoading();
+    const filteredLinks = filterJobLinks(jobLinks, showAppliedFilter);
+    renderJobLinksList(filteredLinks);
+    await cacheJobOffers();
   } catch (err) {
     console.error('[Popup] loadJobLinks error:', err);
-    showJobError('Failed to load jobs: ' + err.message);
+    // If API fails, try to show cached data as fallback
+    try {
+      const state = await loadStateFromStorage();
+      const cachedOffers = state[STORAGE_KEYS.JOB_OFFERS] || [];
+      if (cachedOffers.length > 0) {
+        console.log('[Popup] API failed, showing cached data:', cachedOffers.length, 'items');
+        jobLinks = cachedOffers;
+        hideLoading();
+        const filteredLinks = filterJobLinks(jobLinks, showAppliedFilter);
+        renderJobLinksList(filteredLinks);
+        updateStaleIndicator(true);
+      } else {
+        showJobError('Failed to load jobs: ' + err.message);
+      }
+    } catch (cacheErr) {
+      showJobError('Failed to load jobs: ' + err.message);
+    }
   }
 }
 

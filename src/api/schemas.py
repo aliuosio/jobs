@@ -115,7 +115,7 @@ class JobOfferProcess(BaseModel):
 class JobOfferWithProcess(BaseModel):
     id: int = Field(description="Job offer primary key")
     title: str = Field(description="Job posting title")
-    url: str = Field(description="URL to job posting")
+    url: str | None = Field(default=None, description="URL to job posting")
     process: JobOfferProcess | None = Field(
         default=None, description="Processing metadata, null if no process record"
     )
