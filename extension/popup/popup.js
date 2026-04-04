@@ -20,9 +20,6 @@ const STORAGE_KEYS = {
   SSE_STATUS: 'sseStatus'
 };
 
-/** @type {number} Stale threshold in milliseconds (1 hour) */
-const STALE_THRESHOLD_MS = 60 * 60 * 1000;
-
 /** @type {number} Current storage schema version */
 const CURRENT_STORAGE_VERSION = 1;
 
@@ -99,7 +96,7 @@ async function init() {
   await restoreLastClickedJobId();
   await restoreFormFieldsState();
   await restoreShowAppliedFilter();
-  await loadJobLinks();
+  await forceRefreshJobLinks();
 }
 
 /**
@@ -296,64 +293,8 @@ async function forceRefreshJobLinks() {
   }
 }
 
-/**
- * Load job links with cache-first strategy
- * 1. Try to restore from storage first
- * 2. Fetch from API in background
- * 3. Cache new data to storage
- */
 async function loadJobLinks() {
-  try {
-    const state = await loadStateFromStorage();
-    const cachedOffers = state[STORAGE_KEYS.JOB_OFFERS] || [];
-    const cachedTimestamp = state[STORAGE_KEYS.JOB_OFFERS_TIMESTAMP] || 0;
-    const isStale = isCacheStale(cachedTimestamp);
-    
-    console.log('[Popup] loadJobLinks - cachedOffers:', cachedOffers.length, 'isStale:', isStale);
-    
-    if (cachedOffers.length > 0) {
-      jobLinks = cachedOffers;
-      hideLoading();
-      const filteredLinks = filterJobLinks(jobLinks, showAppliedFilter);
-      renderJobLinksList(filteredLinks);
-      
-      if (isStale) {
-        updateStaleIndicator(true);
-        fetchAndCacheJobOffers();
-      }
-    } else {
-      console.log('[Popup] No cache, fetching from API...');
-      const links = await fetchJobOffers();
-      console.log('[Popup] fetchJobOffers returned:', links.length, 'items');
-      jobLinks = links;
-      hideLoading();
-      const filteredLinks = filterJobLinks(jobLinks, showAppliedFilter);
-      renderJobLinksList(filteredLinks);
-      
-      await cacheJobOffers();
-    }
-  } catch (err) {
-    console.error('[Popup] loadJobLinks error:', err);
-    showJobError('Failed to load jobs: ' + err.message);
-  }
-}
-
-/**
- * Fetch job offers from API and cache them
- */
-async function fetchAndCacheJobOffers() {
-  try {
-    const links = await fetchJobOffers();
-    jobLinks = links;
-    
-    const filteredLinks = filterJobLinks(jobLinks, showAppliedFilter);
-    renderJobLinksList(filteredLinks);
-    
-    await cacheJobOffers();
-    updateStaleIndicator(false);
-  } catch (err) {
-    console.error('[Popup] fetchAndCacheJobOffers error:', err);
-  }
+  await forceRefreshJobLinks();
 }
 
 /**
@@ -650,17 +591,6 @@ async function saveStateToStorage(state) {
     }
     throw error;
   }
-}
-
-/**
- * Check if cached data is stale based on timestamp
- * @param {number} timestamp - Unix timestamp in milliseconds
- * @returns {boolean} True if cache is stale (> 1 hour old)
- */
-function isCacheStale(timestamp) {
-  if (!timestamp) return true;
-  const now = Date.now();
-  return (now - timestamp) > STALE_THRESHOLD_MS;
 }
 
 /**
