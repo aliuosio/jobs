@@ -1,6 +1,5 @@
 CREATE TABLE IF NOT EXISTS public.job_applications (
     id int4 GENERATED ALWAYS AS IDENTITY( INCREMENT BY 1 MINVALUE 1 MAXVALUE 2147483647 START 1 CACHE 1 NO CYCLE) NOT NULL,
-    "date" timestamp,
     job_offers_id int4 UNIQUE NULL,
     sender_name text NULL,
     sender_email text NULL,
