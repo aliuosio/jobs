@@ -132,10 +132,9 @@ class RetrieverService:
 
             logger.info(f"Hybrid search returned {len(final_results)} results")
             return final_results
-
         except Exception as e:
-            logger.warning(f"Hybrid search failed, falling back to vector: {e}")
-            return await self.search(dense_vector, k)
+            logger.error(f"Hybrid search failed: {e}")
+            raise
 
     async def get_profile_chunk(self) -> dict[str, Any] | None:
         if not self.client:
