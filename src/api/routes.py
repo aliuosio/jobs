@@ -4,7 +4,6 @@ import asyncio
 import json
 import logging
 import time
-from typing import Any
 
 from fastapi import APIRouter, HTTPException, Query, Request
 from starlette.responses import Response, StreamingResponse
@@ -23,63 +22,17 @@ from src.api.schemas import (
 from src.services.field_classifier import (
     SemanticFieldType,
     classify_field_type,
-    extract_field_value_from_payload,
+)
+from src.services.fill_form import (
+    calculate_confidence,
+    combine_confidence,
+    assemble_context,
+    extract_direct_field_value,
 )
 
 logger = logging.getLogger(__name__)
 
 router = APIRouter()
-
-
-def _calculate_confidence(avg_score: float, chunk_count: int) -> ConfidenceLevel:
-    if chunk_count == 0:
-        return ConfidenceLevel.NONE
-    if avg_score >= 0.8:
-        return ConfidenceLevel.HIGH
-    if avg_score >= 0.5:
-        return ConfidenceLevel.MEDIUM
-    return ConfidenceLevel.LOW
-
-
-def _combine_confidence(
-    retrieval_confidence: ConfidenceLevel,
-    llm_confidence: ConfidenceLevel,
-    field_value: str | None,
-) -> ConfidenceLevel:
-    confidence_order = [
-        ConfidenceLevel.NONE,
-        ConfidenceLevel.LOW,
-        ConfidenceLevel.MEDIUM,
-        ConfidenceLevel.HIGH,
-    ]
-    retrieval_idx = confidence_order.index(retrieval_confidence)
-    llm_idx = confidence_order.index(llm_confidence)
-    base_idx = max(retrieval_idx, llm_idx)
-    if field_value:
-        base_idx = min(base_idx + 1, 3)
-    return confidence_order[base_idx]
-
-
-def _assemble_context(chunks: list[dict]) -> str:
-    context_parts = []
-    for i, chunk in enumerate(chunks, 1):
-        payload = chunk.get("payload", {})
-        text = payload.get("text", "")
-        if text:
-            context_parts.append(f"[{i}] {text}")
-    return "\n".join(context_parts)
-
-
-def _extract_direct_field_value(chunks: list[dict], field_type: SemanticFieldType) -> str | None:
-    for chunk in chunks:
-        payload = chunk.get("payload", {})
-        if payload.get("profile") or any(
-            k in payload for k in ["firstname", "lastname", "email", "city", "postcode", "street"]
-        ):
-            value = extract_field_value_from_payload(payload, field_type)
-            if value:
-                return value
-    return None
 
 
 @router.get("/health", response_model=HealthResponse, tags=["health"])
@@ -151,7 +104,7 @@ async def fill_form(request: Request, answer_request: AnswerRequest) -> AnswerRe
         if signals:
             field_type = classify_field_type(signals)
             if field_type:
-                field_value = _extract_direct_field_value(chunks, field_type)
+                field_value = extract_direct_field_value(chunks, field_type)
                 if field_value:
                     # Direct extraction succeeded - return early with HIGH confidence (FR-004)
                     logger.info(
@@ -177,8 +130,8 @@ async def fill_form(request: Request, answer_request: AnswerRequest) -> AnswerRe
             )
 
         avg_score = sum(c.get("score", 0) for c in chunks) / chunk_count
-        retrieval_confidence = _calculate_confidence(avg_score, chunk_count)
-        context = _assemble_context(chunks)
+        retrieval_confidence = calculate_confidence(avg_score, chunk_count)
+        context = assemble_context(chunks)
 
         gen_start = time.time()
         classification = await generator.classify_and_extract(
@@ -199,7 +152,7 @@ async def fill_form(request: Request, answer_request: AnswerRequest) -> AnswerRe
         else:
             llm_confidence = ConfidenceLevel.NONE
 
-        confidence = _combine_confidence(
+        confidence = combine_confidence(
             retrieval_confidence, llm_confidence, classification.field_value
         )
 

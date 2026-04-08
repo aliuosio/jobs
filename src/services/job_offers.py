@@ -1,8 +1,6 @@
 """Database service for job offers data retrieval from PostgreSQL."""
 
 import asyncio
-import csv
-import io
 import logging
 from datetime import datetime, timezone
 from typing import Any
@@ -10,12 +8,13 @@ from typing import Any
 import asyncpg
 
 from src.config import settings
+from src.services.csv_export import (
+    CSV_COLUMNS,
+    generate_csv_bytes,
+    generate_csv_filename,
+)
 
 logger = logging.getLogger(__name__)
-
-# CSV column headers for export (no 'applied' column since all exported jobs are applied)
-# Note: 'posted' maps to created_at since job_offers table has no separate posted column
-CSV_COLUMNS = ["company", "email", "company_url", "title", "url", "posted"]
 
 
 class JobOffersService:
@@ -335,45 +334,3 @@ class JobOffersService:
 
 
 job_offers_service = JobOffersService()
-
-
-def generate_csv_filename() -> str:
-    """Generate a timestamped filename for CSV export.
-
-    Returns:
-        Filename in format: applied-jobs-{YYYY-MM-DD}T{HHMMSS}.csv
-    """
-    now = datetime.now(timezone.utc)
-    return f"applied-jobs-{now.strftime('%Y-%m-%dT%H%M%S')}.csv"
-
-
-def generate_csv_bytes(job_offers: list[dict[str, Any]]) -> bytes:
-    """Generate CSV content from job offers list.
-
-    Args:
-        job_offers: List of job offer dictionaries.
-
-    Returns:
-        UTF-8 encoded CSV bytes with BOM for Excel compatibility.
-    """
-    output = io.StringIO()
-    writer = csv.writer(output, quoting=csv.QUOTE_MINIMAL)
-
-    # Write header row
-    writer.writerow(CSV_COLUMNS)
-
-    # Write data rows
-    for offer in job_offers:
-        row = [
-            offer.get("company", ""),
-            offer.get("email", ""),
-            offer.get("company_url", ""),
-            offer.get("title", ""),
-            offer.get("url", ""),
-            str(offer.get("posted", "")) if offer.get("posted") else "",
-        ]
-        writer.writerow(row)
-
-    # Get CSV content and encode with UTF-8 BOM for Excel compatibility
-    csv_content = output.getvalue()
-    return "\ufeff".encode("utf-8") + csv_content.encode("utf-8")
