@@ -1,7 +1,7 @@
 <!--
 ## Sync Impact Report
 
-**Version change**: 1.5.2 → 1.5.3
+**Version change**: 1.5.3 → 1.5.4
 **Modified principles**:
   - Section 3: Enhanced Git Flow integration with opencode skill
   - Section 4: Updated Governance with version management
@@ -80,5 +80,11 @@
 - **Form-fill latency**: p95 < 5s · p99 < 10s
 - **Memory**: 512MB per container; alert at 80%.
 - **LLM tokens**: Max 4096/request; alert on overshoot.
+
+### 9. Additions
+- **Prioritize Code Reuse:** Before implementing new logic, developers must exhaustively search the existing codebase for reusable components, utilities, or functions. Avoid duplication at all costs.
+- **Architectural Intent:** Solutions must be implemented using the most appropriate design pattern for the specific problem. Prioritize scalability, maintainability, and clarity over quick, ad-hoc fixes.
+- **Resource Hygiene:** Every process must include a terminal cleanup phase. Ensure all temporary resources, files, and variables are disposed of correctly to maintain a clean environment.
+- **Mandatory Testing:** TESTING IS NOT OPTIONAL. Every change or addition must be validated by automated tests. Code without corresponding test coverage will be rejected.
 
 ---
