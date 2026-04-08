@@ -5,6 +5,8 @@ from qdrant_client import AsyncQdrantClient
 
 from src.config import settings
 from src.services.sparse_tokenizer import tokenize, compute_tf, detect_phrase
+from src.services.hyde import hyde
+from src.services.reranker import reranker
 
 logger = logging.getLogger(__name__)
 
@@ -135,6 +137,45 @@ class RetrieverService:
         except Exception as e:
             logger.error(f"Hybrid search failed: {e}")
             raise
+
+    async def hyde_search(
+        self, query_text: str, dense_vector: list[float], k: int | None = None
+    ) -> list[dict[str, Any]]:
+        if not self.client:
+            raise RuntimeError("RetrieverService not connected. Call connect() first.")
+
+        if not settings.HYDE_ENABLED:
+            return await self.hybrid_search(query_text, dense_vector, k)
+
+        hyde_draft = await hyde.generate_with_fallback(query_text)
+
+        if hyde_draft and hyde_draft != query_text:
+            logger.info(f"Using HyDE draft: {hyde_draft[:100]}...")
+            results = await self.hybrid_search(hyde_draft, dense_vector, k)
+            if results:
+                results[0]["hyde_draft"] = hyde_draft
+                return results
+
+        logger.info("HyDE failed or not applicable, falling back to baseline")
+        return await self.hybrid_search(query_text, dense_vector, k)
+
+    async def search_with_reranking(
+        self, query_text: str, dense_vector: list[float], k: int | None = None
+    ) -> list[dict[str, Any]]:
+        results = await self.hyde_search(query_text, dense_vector, k)
+
+        if not results:
+            return results
+
+        await reranker.initialize()
+
+        if settings.EMBEDDING_RERANK_ENABLED and len(results) <= settings.EMBEDDING_RERANK_TOP_K:
+            results = await reranker.embedding_rerank(query_text, results)
+
+        if settings.LLM_RERANK_ENABLED or settings.MMR_ENABLED:
+            results = await reranker.combined_rerank(query_text, results)
+
+        return results[: k or settings.RETRIEVAL_K]
 
     async def get_profile_chunk(self) -> dict[str, Any] | None:
         if not self.client:

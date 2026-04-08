@@ -3,9 +3,6 @@
  * Handles UI interactions and communication with background/content scripts
  */
 
-// Debug immediately
-document.body.insertAdjacentHTML('afterbegin', '<div id="debug-msg" style="background:yellow;padding:5px;font-size:12px">Popup loading...</div>');
-
 // =============================================================================
 // STORAGE CONSTANTS (T004)
 // =============================================================================
@@ -88,8 +85,6 @@ function updateStaleIndicator(isStale) {
  */
 async function init() {
   try {
-    document.body.insertAdjacentHTML('afterbegin', '<div id="debug-msg" style="background:yellow;padding:5px;font-size:12px">JS running...</div>');
-    
     const [tab] = await browser.tabs.query({ active: true, currentWindow: true });
     currentTabId = tab.id;
     currentUrl = tab.url;
@@ -106,12 +101,8 @@ async function init() {
     if (!hasCachedData) {
       await forceRefreshJobLinks();
     }
-    
-    const dbg = document.getElementById('debug-msg');
-    if (dbg) dbg.textContent = 'Done!';
   } catch (e) {
-    const dbg = document.getElementById('debug-msg');
-    if (dbg) dbg.textContent = 'Error: ' + e.message;
+    console.error('Popup init failed:', e);
   }
 }
 

@@ -32,8 +32,10 @@ PROFILE_DATA = {
     "city": "Hamburg",
     "postcode": "22399",
     "street": "Schleusentwiete 1",
+    "salary": "75000",
+    "availability": "01.05.2026",
     "t": "p",
-    "text": "Osiozekha Aliu | Full-Stack & AI Automation\nContact: Hamburg | aliu@dev-hh.de | github.com/aliuosio | 20 yrs Exp.\n\nSenior E-Commerce & Backend Developer with 20 years of professional experience, including 13 years as freelance web developer focused on Magento 1 & 2. Backend specialist with expertise in Linux, Docker, and workflow automation (n8n). Currently working with AI technologies including RAG systems, LLM fine-tuning, and context engineering.",
+    "text": "Osiozekha Aliu | Full-Stack & AI Automation\nContact: Hamburg | aliu@dev-hh.de | github.com/aliuosio | 20 yrs Exp.\nGehaltsvorstellung / Salary Expectation: 75.000 EUR jährlich / per year\nVerfügbar ab / Available from: 01.05.2026\n\nSenior E-Commerce & Backend Developer with 20 years of professional experience, including 13 years as freelance web developer focused on Magento 1 & 2. Backend specialist with expertise in Linux, Docker, and workflow automation (n8n). Currently working with AI technologies including RAG systems, LLM fine-tuning, and context engineering.",
     "d": "back",
     "tech": [
         "PHP",

@@ -81,7 +81,22 @@ async def fill_form(request: Request, answer_request: AnswerRequest) -> AnswerRe
         logger.info(f"[fill-form] embedding_latency_ms={embed_latency_ms:.1f}")
 
         retrieval_start = time.time()
-        chunks = await retriever.hybrid_search(label, query_vector)
+
+        # Use enhanced search if any retrieval enhancements are enabled
+        from src.config import settings
+
+        use_enhanced_search = (
+            settings.HYDE_ENABLED
+            or settings.EMBEDDING_RERANK_ENABLED
+            or settings.LLM_RERANK_ENABLED
+            or settings.MMR_ENABLED
+        )
+
+        if use_enhanced_search:
+            chunks = await retriever.search_with_reranking(label, query_vector)
+        else:
+            chunks = await retriever.hybrid_search(label, query_vector)
+
         retrieval_latency_ms = (time.time() - retrieval_start) * 1000
         chunk_count = len(chunks)
         logger.info(

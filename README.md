@@ -227,6 +227,26 @@ The **Job Links** tab displays tracked job postings with their application statu
 | `POSTGRES_URL` | No | `postgresql://postgres:postgres@postgres:5432/jobs` | PostgreSQL connection URL |
 | `REDIS_URL` | No | `redis://redis:6379` | Redis connection URL |
 
+### Retrieval Enhancements (Optional)
+
+| Variable | Default | Description |
+|----------|---------|-------------|
+| `HYDE_ENABLED` | false | Enable HyDE (Hypothetical Document Embeddings) |
+| `HYDE_MODEL` | mistral-small-latest | LLM model for HyDE generation |
+| `HYDE_MAX_TOKENS` | 200 | Max tokens in HyDE draft |
+| `HYDE_TEMPERATURE` | 0.7 | Temperature for HyDE generation |
+| `EMBEDDING_RERANK_ENABLED` | false | Enable cross-encoder reranking |
+| `EMBEDDING_RERANK_TOP_K` | 50 | Number of candidates to rerank |
+| `CROSS_ENCODER_MODEL` | ms-marco-MiniLM-L-6-v2 | Cross-encoder model |
+| `LLM_RERANK_ENABLED` | false | Enable LLM rubric reranking |
+| `LLM_RERANK_TOP_K` | 10 | Number of candidates for LLM rerank |
+| `MMR_ENABLED` | false | Enable MMR diversification |
+| `MMR_K` | 10 | Number of results for MMR |
+| `MMR_LAMBDA` | 0.5 | MMR balance (0=relevance, 1=diversity) |
+| `RETRIEVAL_VECTOR_WEIGHT` | 0.5 | Weight for vector similarity |
+| `RETRIEVAL_BM25_WEIGHT` | 0.3 | Weight for BM25 scores |
+| `RETRIEVAL_RERANK_WEIGHT` | 0.2 | Weight for reranking scores |
+
 ### Docker Ports
 
 | Service | Port | Purpose |
