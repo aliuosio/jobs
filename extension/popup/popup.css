@@ -370,6 +370,17 @@ body {
   color: #6366f1;
 }
 
+.job-link-highlight {
+  background-color: #fef9c3 !important;
+  border: 2px solid #fbbf24 !important;
+  border-radius: 6px;
+}
+
+.job-link-highlight .job-link-title {
+  color: #92400e;
+  font-weight: 600;
+}
+
 .job-link-item:hover .job-link-title,
 .job-link-item:focus .job-link-title {
   color: #1d4ed8;

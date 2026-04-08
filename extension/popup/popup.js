@@ -3,6 +3,9 @@
  * Handles UI interactions and communication with background/content scripts
  */
 
+// Debug immediately
+document.body.insertAdjacentHTML('afterbegin', '<div id="debug-msg" style="background:yellow;padding:5px;font-size:12px">Popup loading...</div>');
+
 // =============================================================================
 // STORAGE CONSTANTS (T004)
 // =============================================================================
@@ -17,7 +20,8 @@ const STORAGE_KEYS = {
   STORAGE_VERSION: 'storageVersion',
   SHOW_APPLIED_FILTER: 'showAppliedFilter',
   SSE_STATUS: 'sseStatus',
-  VISITED_LINKS: 'visitedLinks'
+  VISITED_LINKS: 'visitedLinks',
+  LAST_CLICKED_JOB_LINK: 'lastClickedJobLink'
 };
 
 /** @type {number} Current storage schema version */
@@ -83,29 +87,63 @@ function updateStaleIndicator(isStale) {
  * Initialize popup
  */
 async function init() {
-  const [tab] = await browser.tabs.query({ active: true, currentWindow: true });
-  currentTabId = tab.id;
-  currentUrl = tab.url;
-  
-  setupEventListeners();
-  setupSSEMessageListener();
-  
-  await restoreTabPreference();
-  await restoreFormFieldsState();
-  await restoreShowAppliedFilter();
-
-  // Always fetch fresh job data on popup open
   try {
-    await loadJobLinks();
-  } catch (error) {
-    console.error('[Popup] Failed to load jobs:', error);
-    // Fall back to cached data if fetch fails
-    const state = await loadStateFromStorage();
-    if (state[STORAGE_KEYS.JOB_OFFERS]) {
-      jobLinks = state[STORAGE_KEYS.JOB_OFFERS];
-      const filteredLinks = filterJobLinks(jobLinks, showAppliedFilter);
-      renderJobLinksList(filteredLinks);
+    document.body.insertAdjacentHTML('afterbegin', '<div id="debug-msg" style="background:yellow;padding:5px;font-size:12px">JS running...</div>');
+    
+    const [tab] = await browser.tabs.query({ active: true, currentWindow: true });
+    currentTabId = tab.id;
+    currentUrl = tab.url;
+    
+    setupEventListeners();
+    setupSSEMessageListener();
+    
+    await restoreTabPreference();
+    await restoreFormFieldsState();
+    await restoreShowAppliedFilter();
+
+    const hasCachedData = await loadCachedJobLinks();
+    
+    if (!hasCachedData) {
+      await forceRefreshJobLinks();
     }
+    
+    const dbg = document.getElementById('debug-msg');
+    if (dbg) dbg.textContent = 'Done!';
+  } catch (e) {
+    const dbg = document.getElementById('debug-msg');
+    if (dbg) dbg.textContent = 'Error: ' + e.message;
+  }
+}
+
+/**
+ * Load cached job links from storage for instant display
+ * @returns {Promise<boolean>} true if cached data exists
+ */
+async function loadCachedJobLinks() {
+  try {
+    const allKeys = await browser.storage.local.get(null);
+    console.log('All storage keys:', Object.keys(allKeys));
+    console.log('jobOffers in storage?', 'jobOffers' in allKeys, allKeys.jobOffers ? allKeys.jobOffers.length : 0);
+    
+    const result = await browser.storage.local.get('jobOffers');
+    if (!result.jobOffers || result.jobOffers.length === 0) {
+      console.log('No cached jobs found');
+      return false;
+    }
+    console.log('Found', result.jobOffers.length, 'cached jobs');
+    jobLinks = result.jobOffers;
+    const timestampResult = await browser.storage.local.get('jobOffersTimestamp');
+    const filteredLinks = filterJobLinks(jobLinks, showAppliedFilter);
+    console.log('Filtered to', filteredLinks.length, 'jobs (showAppliedFilter:', showAppliedFilter, ')');
+    await renderJobLinksList(filteredLinks);
+    const cacheAge = Date.now() - (timestampResult.jobOffersTimestamp || 0);
+    if (cacheAge > 5 * 60 * 1000) {
+      updateStaleIndicator(true);
+    }
+    return true;
+  } catch (error) {
+    console.log('Error loading cached jobs:', error);
+    return false;
   }
 }
 
@@ -296,6 +334,10 @@ async function loadJobLinks() {
 }
 
 async function handleRefreshLinksClick() {
+  await forceRefreshJobLinks();
+}
+
+async function handleRetryClick() {
   await forceRefreshJobLinks();
 }
 
@@ -610,6 +652,19 @@ async function getVisitedJobLinks() {
 }
 
 /**
+ * Get last clicked job link from storage
+ * @returns {Promise<number|null>}
+ */
+async function loadLastClickedJobLink() {
+  try {
+    const state = await loadStateFromStorage();
+    return state[STORAGE_KEYS.LAST_CLICKED_JOB_LINK] || null;
+  } catch {
+    return null;
+  }
+}
+
+/**
  * Mark a job link as visited in storage
  * @param {number} jobId
  */
@@ -626,6 +681,20 @@ async function markJobLinkVisited(jobId) {
 }
 
 /**
+ * Save last clicked job link to storage
+ * @param {number} jobId
+ */
+async function saveLastClickedJobLink(jobId) {
+  try {
+    await saveStateToStorage({
+      [STORAGE_KEYS.LAST_CLICKED_JOB_LINK]: jobId
+    });
+  } catch (err) {
+    console.error('[Popup] Failed to save last clicked job link:', err);
+  }
+}
+
+/**
  * Render job links list in popup
  * @param {Array} links
  */
@@ -636,11 +705,13 @@ async function renderJobLinksList(links) {
   }
   
   const visitedLinks = await getVisitedJobLinks();
+  const lastClickedJobLink = await loadLastClickedJobLink();
   
   const html = links.map(link => {
     const isVisited = visitedLinks.has(link.id);
+    const isLastClicked = link.id === lastClickedJobLink;
     return `
-    <div class="job-link-item${isVisited ? ' job-link-visited' : ''}" data-job-id="${link.id}">
+    <div class="job-link-item${isVisited ? ' job-link-visited' : ''}${isLastClicked ? ' job-link-highlight' : ''}" data-job-id="${link.id}">
       <span class="job-status-indicator ${link.applied ? 'job-status-applied' : 'job-status-new'}${link.pending ? ' job-status-pending' : ''}" 
             data-action="toggle" 
             data-job-id="${link.id}"
@@ -678,7 +749,8 @@ async function renderJobLinksList(links) {
       
       // Mark as visited
       await markJobLinkVisited(jobId);
-      // Add visited class immediately for visual feedback
+      await saveLastClickedJobLink(jobId);
+      link.closest('.job-link-item').classList.add('job-link-highlight');
       link.closest('.job-link-item').classList.add('job-link-visited');
       
       // Navigate to the URL in the current tab
