@@ -476,7 +476,7 @@ async function handleFillAllClick() {
     // Prepare field data for batch fill
     const fields = detectedFields.map(field => ({
       field_id: field.id,
-      label: field.label,
+      label: field.labelText || field.label,
       field_type: field.type,
       signals: field.signals || null
     }));
