@@ -8,36 +8,25 @@
       "type": "@n8n/n8n-nodes-langchain.toolThink",
       "typeVersion": 1,
       "position": [
-        -144,
-        624
+        -48,
+        736
       ],
       "id": "78a02e53-86a3-45b3-8e5f-45790aa92739",
       "name": "Think"
     },
     {
-      "parameters": {},
-      "type": "@n8n/n8n-nodes-langchain.toolCalculator",
-      "typeVersion": 1,
-      "position": [
-        -16,
-        624
-      ],
-      "id": "cc33dd78-69a3-4537-97cb-fb0812f58ea0",
-      "name": "Calculator"
-    },
-    {
       "parameters": {
         "promptType": "define",
-        "text": "=my_name: Osio Aliu\nid: {{ $json.id }}\ncompany: {{ $json.company }}\nemail: {{ $json.email }}\ncompany_urL: {{ $json.company_url }}\ntitle: {{ $json.title }}\n\ndescription:\n{{ $json.description }}\n\n",
+        "text": "=# METADATA\nJOB_COMPANY:{{ $json.company }}\nNOW:{{ $now }}\nJOB_TITLE: {{ $json.subject }}\nJOB_DESCRIPTION:{{ $json.description }}",
         "options": {
-          "systemMessage": "=---\n### Job Application Helper\n\nYou are an assistant that supports writing job applications by using provided information and following a clear process.\n\nMain goal:\nCreate a job application letter of 300–500 words, output in strict JSON format.  \nOnly use information that actually exists in the data you can access. Do not make up skills, experiences or facts.\n\nTools you can use:\n- Think step: for initial analysis of the job posting\n- vector_db_skills: query this to retrieve relevant skill and project evidence (call it when needed)\n- Calculator / current date functions: to compute years of experience or anchor to today's date\n\nMandatory process — follow these steps in order:\n\nStep 1 — Analyse the job (use internal thinking)\nRead the input and identify:\n- Job title\n- Company name\n- Main technologies mentioned (examples: Kubernetes, Terraform, AWS, …)\n- General tone of the advertisement\n\nStep 2 — Retrieve evidence (must use vector_db_skills)\nQuery vector_db_skills with the key technologies from step 1.  \nYou must receive at least 3 concrete, matching skill or project entries before continuing.  \nIf the query returns fewer than 3 relevant items, stop here and return only:\n{\"error\": \"Insufficient data in Vector Store to match requirements.\"}\n\nStep 3 — Write the letter\nCreate a letter with exactly four paragraphs:\n1. Introduction\n2. Motivation for applying\n3. Technical fit / evidence (refer to specific items from the vector_db_skills results)\n4. Closing\n\nThe writer persona to follow:  \n≈ 20 years of professional experience, mostly freelance, strong focus on web technologies and Magento projects.\n\nStep 4 — Output format\nReturn the result **only** as valid JSON — no extra text, no explanations, no markdown outside the JSON.\n\nForbidden expressions (do not use these words/phrases at all):\ngame-changer, transform, delve, unleash, revolutionize, meticulous, navigating, complexities, realm, bespoke, tailored, towards, not only, it's not merely, magic, grab a coffee.\n\nImportant notes:\n- Do not use placeholder text.\n- If evidence is missing after the mandatory query, use the error message shown above.\n- Otherwise continue and produce the letter.\n\nOutput format (exactly this structure):\n\n```json\n{\n  \"subject\": \"Bewerbung: [Job Title]\",\n  \"from\": \"aliu@dev-hh.de\",\n  \"to\": \"[Company Email or 'null']\",\n  \"text\": \"[Final Letter Content]\"\n}"
+          "systemMessage": "=SKILLS: from Qdrant vector DB\n\n# ROLE\nHarvard-educated Psychologist & Elite Negotiator (IQ/EQ 170). \nExpertise: 20y Magento/Web development.\nTask: Write the application letter.\n\n# EVALUATION CRITICS (INTERNAL ONLY)\nBefore writing, mentally satisfy:\n1. THE RECRUITER (Keywords/Competence)\n2. THE HIRING MANAGER (Technical Depth/Team Fit)\n3. THE HR SPECIALIST (Risk Mitigation/Compliance)\n4. THE EXECUTIVE (Strategic Empathy/Long-term Value)\n\n# WRITING RULES\n- OUTPUT: RAW TEXT ONLY. \n- NO JSON. NO MARKDOWN HEADERS. NO PREAMBLE. NO \"HERE IS THE LETTER\".\n- STYLE: Calibrated persuasion. Calm authority. Human, not AI.\n- FORBIDDEN: game-changer, transform, delve, unleash, revolutionize, meticulous, navigating, complexities, realm, bespoke, tailored, towards, not only, it's not merely, magic, grab a coffee.\n- STRUCTURE: 4 paragraphs exactly.\n\n# EXECUTION\nUse the ID, COMPANY, and TITLE from METADATA to anchor the letter. Address the \"Trust Gap\" and validate the employer's position. "
         }
       },
       "type": "@n8n/n8n-nodes-langchain.agent",
       "typeVersion": 3.1,
       "position": [
-        -144,
-        400
+        -128,
+        512
       ],
       "id": "d3de9c59-d7bf-4b55-9659-db3b446f9bd6",
       "name": "AI Agent"
@@ -48,7 +37,7 @@
       "typeVersion": 1,
       "position": [
         -1072,
-        576
+        688
       ],
       "id": "b174299f-021b-46d6-a877-ba54e3d546cf",
       "name": "When clicking ‘Execute workflow’"
@@ -63,39 +52,25 @@
           "mode": "list",
           "cachedResultName": "Entwürfe"
         },
-        "subject": "={{ $json.subject }}",
-        "from": "={{ $json.from }}",
-        "to": "={{ $json.to }}",
-        "text": "={{ $json.text }}"
+        "subject": "={{ $('Edit Fields').item.json.subject }}",
+        "from": "=",
+        "to": "={{ $('Edit Fields').item.json.email }}",
+        "text": "={{ $json.content }}"
       },
       "type": "n8n-nodes-imap-enhanced.imapEnhanced",
       "typeVersion": 1,
       "position": [
-        1072,
-        656
+        672,
+        768
       ],
       "id": "fd5e2f01-e5c5-4d76-b521-1bfca932e670",
       "name": "CreateDraft email",
       "credentials": {
         "imapApi": {
-          "id": "6xf5db8A9PS90YYN",
+          "id": "TFG2gg5FUgDD4Oyd",
           "name": "IMAP Credentials account"
         }
       }
-    },
-    {
-      "parameters": {
-        "mode": "runOnceForEachItem",
-        "jsCode": "// Access the 'output' string from the current item\nconst rawString = $input.item.json.output;\n\nif (!rawString) {\n  return { json: { error: \"No output field found\" } };\n}\n\ntry {\n  // 1. Remove potential Markdown code blocks\n  const cleanString = rawString.replace(/```json|```/g, \"\").trim();\n  \n  // 2. Parse the string into a real object\n  const parsed = JSON.parse(cleanString);\n\n  // 3. Return the parsed data\n  return {\n    json: parsed\n  };\n} catch (error) {\n  return {\n    json: {\n      error: \"Invalid JSON format\",\n      original_output: rawString\n    }\n  };\n}"
-      },
-      "id": "6eda640c-19d4-4bc2-bfb5-a2ec3e578c46",
-      "name": "Parse Application JSON",
-      "type": "n8n-nodes-base.code",
-      "typeVersion": 1,
-      "position": [
-        624,
-        400
-      ]
     },
     {
       "parameters": {
@@ -111,32 +86,35 @@
           "mode": "list",
           "cachedResultName": "job_offers"
         },
-        "returnAll": true,
+        "limit": 1,
         "where": {
           "values": [
             {
-              "column": "expired",
-              "value": "false"
+              "column": "email",
+              "condition": "!=",
+              "value": "null"
             },
             {
-              "column": "email",
-              "condition": "IS NOT NULL"
+              "column": "description",
+              "condition": "!=",
+              "value": "null"
             }
           ]
         },
+        "combineConditions": "OR",
         "options": {}
       },
       "type": "n8n-nodes-base.postgres",
       "typeVersion": 2.6,
       "position": [
         -848,
-        576
+        688
       ],
       "id": "b5ec441b-494a-4b32-8275-7e149a1295af",
       "name": "Job Offers",
       "credentials": {
         "postgres": {
-          "id": "ceRmvobzfi3fViKu",
+          "id": "g5e3W2e5yHEjzZoI",
           "name": "Postgres account"
         }
       }
@@ -157,51 +135,17 @@
       "type": "@n8n/n8n-nodes-langchain.vectorStoreQdrant",
       "typeVersion": 1.3,
       "position": [
-        128,
-        624
+        80,
+        736
       ],
       "id": "6fec6890-9688-4d5c-8d25-783598129d58",
       "name": "Qdrant Vector Store",
       "credentials": {
         "qdrantApi": {
-          "id": "5zLckKlW4WMSmDEm",
-          "name": "QdrantApi account"
+          "id": "ZBxpJm0RU3lTDLvz",
+          "name": "Qdrant account"
         }
       }
-    },
-    {
-      "parameters": {
-        "sessionIdType": "customKey",
-        "sessionKey": "job_applications",
-        "contextWindowLength": 50
-      },
-      "type": "@n8n/n8n-nodes-langchain.memoryPostgresChat",
-      "typeVersion": 1.3,
-      "position": [
-        -272,
-        624
-      ],
-      "id": "4f2754da-3cde-46b4-9306-497dc3f4ea99",
-      "name": "Memory",
-      "credentials": {
-        "postgres": {
-          "id": "ceRmvobzfi3fViKu",
-          "name": "Postgres account"
-        }
-      }
-    },
-    {
-      "parameters": {
-        "options": {}
-      },
-      "type": "n8n-nodes-base.dateTimeTool",
-      "typeVersion": 2,
-      "position": [
-        416,
-        624
-      ],
-      "id": "35118f54-75d7-43ee-a756-8e32415345a4",
-      "name": "Datetime"
     },
     {
       "parameters": {
@@ -211,7 +155,7 @@
       "typeVersion": 3,
       "position": [
         -624,
-        576
+        688
       ],
       "id": "552f5efa-da27-4591-90d4-0bffc264d574",
       "name": "Loop Over Items"
@@ -232,8 +176,13 @@
         "columns": {
           "mappingMode": "defineBelow",
           "value": {
-            "id": 0,
-            "job_offers_id": 0
+            "job_offers_id": "={{ $('Edit Fields').item.json.id }}",
+            "company": "={{ $('Edit Fields').item.json.company }}",
+            "recp_email": "={{ $('Edit Fields').item.json.email }}",
+            "title": "={{ $('Edit Fields').item.json.subject }}",
+            "content": "={{ $('AI Agent').item.json.output }}",
+            "sender_name": "={{ $('Edit Fields').item.json.sender_name }}",
+            "sender_email": "={{ $('Edit Fields').item.json.sender_email }}"
           },
           "matchingColumns": [
             "id"
@@ -247,7 +196,7 @@
               "display": true,
               "type": "number",
               "canBeUsedToMatch": true,
-              "removed": false
+              "removed": true
             },
             {
               "id": "date",
@@ -256,7 +205,8 @@
               "defaultMatch": false,
               "display": true,
               "type": "dateTime",
-              "canBeUsedToMatch": true
+              "canBeUsedToMatch": true,
+              "removed": true
             },
             {
               "id": "job_offers_id",
@@ -337,7 +287,8 @@
               "defaultMatch": false,
               "display": true,
               "type": "dateTime",
-              "canBeUsedToMatch": true
+              "canBeUsedToMatch": true,
+              "removed": true
             }
           ],
           "attemptToConvertTypes": false,
@@ -348,15 +299,55 @@
       "type": "n8n-nodes-base.postgres",
       "typeVersion": 2.6,
       "position": [
-        0,
-        0
+        -400,
+        320
       ],
       "id": "528bc346-f090-4642-a15f-c67430681511",
       "name": "Save",
       "credentials": {
         "postgres": {
-          "id": "ceRmvobzfi3fViKu",
+          "id": "g5e3W2e5yHEjzZoI",
           "name": "Postgres account"
+        }
+      },
+      "onError": "continueRegularOutput"
+    },
+    {
+      "parameters": {
+        "model": "codestral-latest",
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatMistralCloud",
+      "typeVersion": 1,
+      "position": [
+        -176,
+        736
+      ],
+      "id": "740866be-a8b2-4aba-8239-64b09a3adf07",
+      "name": "Mistral",
+      "credentials": {
+        "mistralCloudApi": {
+          "id": "mNGknH3RPQM36hPs",
+          "name": "Mistral Cloud account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.embeddingsMistralCloud",
+      "typeVersion": 1,
+      "position": [
+        160,
+        944
+      ],
+      "id": "2e81a72c-d38a-4534-af73-2b9a943691c5",
+      "name": "Embeddings Mistral Cloud",
+      "credentials": {
+        "mistralCloudApi": {
+          "id": "mNGknH3RPQM36hPs",
+          "name": "Mistral Cloud account"
         }
       }
     },
@@ -371,23 +362,12 @@
           },
           "conditions": [
             {
-              "id": "ea4ef6fd-f06e-44e1-92c8-c15461b865ad",
-              "leftValue": "={{ $json.error }}",
-              "rightValue": "",
+              "id": "200f1c16-a4b3-4cb6-840b-e5d5ab746495",
+              "leftValue": "={{ $json.output.to }}",
+              "rightValue": "null",
               "operator": {
                 "type": "string",
-                "operation": "empty",
-                "singleValue": true
-              }
-            },
-            {
-              "id": "5f7bba64-bdd5-49f0-b49a-9460d00deacd",
-              "leftValue": "={{ $('Loop Over Items').item.json.email }}",
-              "rightValue": "",
-              "operator": {
-                "type": "string",
-                "operation": "notEmpty",
-                "singleValue": true
+                "operation": "notEquals"
               }
             }
           ],
@@ -398,66 +378,81 @@
       "type": "n8n-nodes-base.if",
       "typeVersion": 2.3,
       "position": [
-        848,
-        576
+        448,
+        688
       ],
-      "id": "07ce054c-efad-4a79-bb91-4ccf9a6d7c84",
+      "id": "020e4d97-df59-4646-a834-023ee7221e0a",
       "name": "If"
     },
     {
       "parameters": {
-        "model": "codestral-latest",
+        "assignments": {
+          "assignments": [
+            {
+              "id": "433715e5-6ff7-4a01-8bd0-220ac93892ec",
+              "name": "id",
+              "value": "={{ $json.id }}",
+              "type": "number"
+            },
+            {
+              "id": "c36d91c2-cc1f-4286-93f3-e578ce14b347",
+              "name": "company",
+              "value": "={{ $json.company }}",
+              "type": "string"
+            },
+            {
+              "id": "e70eb84d-2d35-4986-b245-1965b7a83191",
+              "name": "email",
+              "value": "={{ $json.email }}",
+              "type": "string"
+            },
+            {
+              "id": "a5729bbe-f05b-407b-8728-cad3d8f79f8a",
+              "name": "company_url",
+              "value": "={{ $json.company_url }}",
+              "type": "string"
+            },
+            {
+              "id": "5f2aa5c3-ee6c-42da-93a2-75ad3d3fc6c3",
+              "name": "subject",
+              "value": "=Bewerbung: {{ $json.title }}",
+              "type": "string"
+            },
+            {
+              "id": "50829369-6af5-478e-92b3-b8d99a4d4fbc",
+              "name": "sender_name",
+              "value": "Osiozekhai Aliu",
+              "type": "string"
+            },
+            {
+              "id": "53c46b2f-b3e6-4274-8e7e-8829c1ee05fb",
+              "name": "sender_email",
+              "value": "aliu@dev-hh.de",
+              "type": "string"
+            },
+            {
+              "id": "980cdc07-5764-469b-9343-9896096db69c",
+              "name": "description",
+              "value": "={{ $json.description }}",
+              "type": "string"
+            }
+          ]
+        },
         "options": {}
       },
-      "type": "@n8n/n8n-nodes-langchain.lmChatMistralCloud",
-      "typeVersion": 1,
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
       "position": [
         -400,
-        624
+        512
       ],
-      "id": "740866be-a8b2-4aba-8239-64b09a3adf07",
-      "name": "Mistral",
-      "credentials": {
-        "mistralCloudApi": {
-          "id": "yy2J74r8rO6wyA97",
-          "name": "Mistral Cloud account"
-        }
-      }
-    },
-    {
-      "parameters": {
-        "options": {}
-      },
-      "type": "@n8n/n8n-nodes-langchain.embeddingsMistralCloud",
-      "typeVersion": 1,
-      "position": [
-        208,
-        832
-      ],
-      "id": "2e81a72c-d38a-4534-af73-2b9a943691c5",
-      "name": "Embeddings Mistral Cloud",
-      "credentials": {
-        "mistralCloudApi": {
-          "id": "yy2J74r8rO6wyA97",
-          "name": "Mistral Cloud account"
-        }
-      }
+      "id": "304e02ee-a8a7-493a-b356-19bedde3bbc6",
+      "name": "Edit Fields"
     }
   ],
   "pinData": {},
   "connections": {
     "Think": {
-      "ai_tool": [
-        [
-          {
-            "node": "AI Agent",
-            "type": "ai_tool",
-            "index": 0
-          }
-        ]
-      ]
-    },
-    "Calculator": {
       "ai_tool": [
         [
           {
@@ -480,17 +475,6 @@
       ]
     },
     "AI Agent": {
-      "main": [
-        [
-          {
-            "node": "Parse Application JSON",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
-    "Parse Application JSON": {
       "main": [
         [
           {
@@ -523,28 +507,6 @@
         ]
       ]
     },
-    "Memory": {
-      "ai_memory": [
-        [
-          {
-            "node": "AI Agent",
-            "type": "ai_memory",
-            "index": 0
-          }
-        ]
-      ]
-    },
-    "Datetime": {
-      "ai_tool": [
-        [
-          {
-            "node": "AI Agent",
-            "type": "ai_tool",
-            "index": 0
-          }
-        ]
-      ]
-    },
     "Loop Over Items": {
       "main": [
         [
@@ -556,7 +518,7 @@
         ],
         [
           {
-            "node": "AI Agent",
+            "node": "Edit Fields",
             "type": "main",
             "index": 0
           }
@@ -565,24 +527,6 @@
     },
     "CreateDraft email": {
       "main": [
-        [
-          {
-            "node": "Loop Over Items",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
-    "If": {
-      "main": [
-        [
-          {
-            "node": "CreateDraft email",
-            "type": "main",
-            "index": 0
-          }
-        ],
         [
           {
             "node": "Loop Over Items",
@@ -613,6 +557,35 @@
           }
         ]
       ]
+    },
+    "If": {
+      "main": [
+        [
+          {
+            "node": "CreateDraft email",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Loop Over Items",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Edit Fields": {
+      "main": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
     }
   },
   "active": false,
@@ -620,7 +593,7 @@
     "executionOrder": "v1",
     "binaryMode": "separate"
   },
-  "versionId": "08644584-74e4-49b8-9d61-e033c3507dd9",
+  "versionId": "f408090d-434f-47f9-a305-6235485e1dd2",
   "meta": {
     "templateCredsSetupCompleted": true,
     "instanceId": "b751e283d167317e522f290d63e0b956085524c7c105edc03e657e7409fe8050"
