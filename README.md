@@ -1,6 +1,8 @@
 # Jobs
 
-An AI-powered system for job application management: automatically fills job application forms using resume data (RAG pipeline) and tracks job postings with application status. The extension provides a Job Links Manager to monitor applied, in-progress, and pending job applications.
+**Version 0.5.3**
+
+An AI-powered system for job application management: automatically fills job application forms using resume data (RAG pipeline) and tracks job postings with application status. The extension provides a Job Links Manager to monitor applied, in-progress, and pending job applications with local caching, real-time sync, and instant UI rendering.
 
 ## Overview
 
@@ -386,6 +388,16 @@ docker-compose up -d
 
 ## Key Features
 
+### Recent Updates (v0.5.3)
+
+✅ **Cache-first job loading** - instant popup rendering with local persistence
+✅ **Highlight styling** for new/updated job postings
+✅ **Loading states & error handling** for refresh operations
+✅ **Persisted job state** across browser restarts
+✅ **Fixed CSV export** with correct timestamp handling
+✅ **Fresh job listings fetch** on popup open
+✅ **Extension debug mode** for development
+
 ### Backend Services
 
 - **Embedder Service**: Generates 1024-dimensional embeddings using Mistral's `mistral-embed` model
@@ -403,7 +415,7 @@ docker-compose up -d
 - **Form Observer**: MutationObserver for dynamic form detection
 - **Signal Extractor**: Extracts autocomplete, label, name attributes for field classification
 - **API Client**: 10-second timeout HTTP client with structured error handling
-- **Job Links Manager**: Displays tracked job links with applied status filtering and visited link tracking
+- **Job Links Manager**: Displays tracked job links with applied status filtering, visited link tracking, cache-first loading, and real-time SSE synchronization
 
 ### Job Offers API
 
@@ -469,12 +481,33 @@ Run `/validate` endpoint and check each check result:
 - `url_format`: Check `MISTRAL_BASE_URL` format
 - `embedding_dimensions`: Verify API key is valid
 
-## Todos
+## Changelog
 
-* verify resume input/output 
-* get job descriptions (optimise Crawler)
-* generate cover letter 
-* add cover letter generation to Extension
+### 0.5.3 (Current)
+- ✅ Added cache-first job loading with instant popup startup
+- ✅ Added highlight styling for new job postings
+- ✅ Fixed refresh job button loading state
+- ✅ Implemented persisted job state across browser sessions
+- ✅ Corrected timestamp formatting in CSV export
+- ✅ Added popup debug panel for development
+- ✅ Fixed dynamic field population regression
+- ✅ Improved job offer caching performance
+
+### 0.5.1
+- ✅ Added SSE real-time status sync
+- ✅ Implemented job status filtering
+- ✅ Added CSV export for applied jobs
+- ✅ Fixed form observer dynamic field detection
+
+## Roadmap
+
+* [ ] Verify resume input/output pipeline
+* [ ] Optimise Crawler for job description extraction
+* [ ] Automated cover letter generation
+* [ ] Integrate cover letter generation into Extension
+* [ ] LinkedIn application automation
+* [ ] Multi-profile support
+* [ ] Analytics dashboard for application success rate
 
 ## License
 
