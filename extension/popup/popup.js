@@ -3,6 +3,9 @@
  * Handles UI interactions and communication with background/content scripts
  */
 
+// Debug immediately
+document.body.insertAdjacentHTML('afterbegin', '<div id="debug-msg" style="background:yellow;padding:5px;font-size:12px">Popup loading...</div>');
+
 // =============================================================================
 // STORAGE CONSTANTS (T004)
 // =============================================================================
@@ -15,9 +18,10 @@ const STORAGE_KEYS = {
   LAST_URL: 'lastUrl',
   LAST_TAB: 'lastTab',
   STORAGE_VERSION: 'storageVersion',
-  LAST_CLICKED_JOB_ID: 'lastClickedJobId',
   SHOW_APPLIED_FILTER: 'showAppliedFilter',
-  SSE_STATUS: 'sseStatus'
+  SSE_STATUS: 'sseStatus',
+  VISITED_LINKS: 'visitedLinks',
+  LAST_CLICKED_JOB_LINK: 'lastClickedJobLink'
 };
 
 /** @type {number} Current storage schema version */
@@ -37,8 +41,6 @@ let isScanning = false;
 let isFilling = false;
 /** @type {Array} Job links from API */
 let jobLinks = [];
-/** @type {?number} Last clicked job ID */
-let lastClickedJobId = null;
 /** @type {?string} Current page URL for field cache validation */
 let currentUrl = null;
 /** @type {boolean} Filter state for showing applied jobs */
@@ -85,18 +87,64 @@ function updateStaleIndicator(isStale) {
  * Initialize popup
  */
 async function init() {
-  const [tab] = await browser.tabs.query({ active: true, currentWindow: true });
-  currentTabId = tab.id;
-  currentUrl = tab.url;
-  
-  setupEventListeners();
-  setupSSEMessageListener();
-  
-  await restoreTabPreference();
-  await restoreLastClickedJobId();
-  await restoreFormFieldsState();
-  await restoreShowAppliedFilter();
-  await forceRefreshJobLinks();
+  try {
+    document.body.insertAdjacentHTML('afterbegin', '<div id="debug-msg" style="background:yellow;padding:5px;font-size:12px">JS running...</div>');
+    
+    const [tab] = await browser.tabs.query({ active: true, currentWindow: true });
+    currentTabId = tab.id;
+    currentUrl = tab.url;
+    
+    setupEventListeners();
+    setupSSEMessageListener();
+    
+    await restoreTabPreference();
+    await restoreFormFieldsState();
+    await restoreShowAppliedFilter();
+
+    const hasCachedData = await loadCachedJobLinks();
+    
+    if (!hasCachedData) {
+      await forceRefreshJobLinks();
+    }
+    
+    const dbg = document.getElementById('debug-msg');
+    if (dbg) dbg.textContent = 'Done!';
+  } catch (e) {
+    const dbg = document.getElementById('debug-msg');
+    if (dbg) dbg.textContent = 'Error: ' + e.message;
+  }
+}
+
+/**
+ * Load cached job links from storage for instant display
+ * @returns {Promise<boolean>} true if cached data exists
+ */
+async function loadCachedJobLinks() {
+  try {
+    const allKeys = await browser.storage.local.get(null);
+    console.log('All storage keys:', Object.keys(allKeys));
+    console.log('jobOffers in storage?', 'jobOffers' in allKeys, allKeys.jobOffers ? allKeys.jobOffers.length : 0);
+    
+    const result = await browser.storage.local.get('jobOffers');
+    if (!result.jobOffers || result.jobOffers.length === 0) {
+      console.log('No cached jobs found');
+      return false;
+    }
+    console.log('Found', result.jobOffers.length, 'cached jobs');
+    jobLinks = result.jobOffers;
+    const timestampResult = await browser.storage.local.get('jobOffersTimestamp');
+    const filteredLinks = filterJobLinks(jobLinks, showAppliedFilter);
+    console.log('Filtered to', filteredLinks.length, 'jobs (showAppliedFilter:', showAppliedFilter, ')');
+    await renderJobLinksList(filteredLinks);
+    const cacheAge = Date.now() - (timestampResult.jobOffersTimestamp || 0);
+    if (cacheAge > 5 * 60 * 1000) {
+      updateStaleIndicator(true);
+    }
+    return true;
+  } catch (error) {
+    console.log('Error loading cached jobs:', error);
+    return false;
+  }
 }
 
 /**
@@ -147,18 +195,6 @@ function handleSSEStatusChange(data) {
   
   if (data.status === 'disconnected') {
     updateStaleIndicator(true);
-  }
-}
-
-/**
- * Restore last clicked job ID from storage
- */
-async function restoreLastClickedJobId() {
-  try {
-    const state = await loadStateFromStorage();
-    lastClickedJobId = state[STORAGE_KEYS.LAST_CLICKED_JOB_ID] || null;
-  } catch (error) {
-    console.error('[Popup] Failed to restore lastClickedJobId:', error);
   }
 }
 
@@ -294,6 +330,14 @@ async function forceRefreshJobLinks() {
 }
 
 async function loadJobLinks() {
+  await forceRefreshJobLinks();
+}
+
+async function handleRefreshLinksClick() {
+  await forceRefreshJobLinks();
+}
+
+async function handleRetryClick() {
   await forceRefreshJobLinks();
 }
 
@@ -594,29 +638,59 @@ async function saveStateToStorage(state) {
 }
 
 /**
- * Get visited job links from localStorage
- * @returns {Set<number>}
+ * Get visited job links from storage
+ * @returns {Promise<Set<number>>}
  */
-function getVisitedJobLinks() {
+async function getVisitedJobLinks() {
   try {
-    const visited = localStorage.getItem('jfh-visited-links');
-    return visited ? new Set(JSON.parse(visited)) : new Set();
+    const state = await loadStateFromStorage();
+    const visited = state[STORAGE_KEYS.VISITED_LINKS] || [];
+    return new Set(visited);
   } catch {
     return new Set();
   }
 }
 
 /**
- * Mark a job link as visited in localStorage
+ * Get last clicked job link from storage
+ * @returns {Promise<number|null>}
+ */
+async function loadLastClickedJobLink() {
+  try {
+    const state = await loadStateFromStorage();
+    return state[STORAGE_KEYS.LAST_CLICKED_JOB_LINK] || null;
+  } catch {
+    return null;
+  }
+}
+
+/**
+ * Mark a job link as visited in storage
  * @param {number} jobId
  */
-function markJobLinkVisited(jobId) {
+async function markJobLinkVisited(jobId) {
   try {
-    const visited = getVisitedJobLinks();
+    const visited = await getVisitedJobLinks();
     visited.add(jobId);
-    localStorage.setItem('jfh-visited-links', JSON.stringify([...visited]));
+    await saveStateToStorage({
+      [STORAGE_KEYS.VISITED_LINKS]: [...visited]
+    });
   } catch (err) {
     console.error('[Popup] Failed to save visited state:', err);
+  }
+}
+
+/**
+ * Save last clicked job link to storage
+ * @param {number} jobId
+ */
+async function saveLastClickedJobLink(jobId) {
+  try {
+    await saveStateToStorage({
+      [STORAGE_KEYS.LAST_CLICKED_JOB_LINK]: jobId
+    });
+  } catch (err) {
+    console.error('[Popup] Failed to save last clicked job link:', err);
   }
 }
 
@@ -624,19 +698,20 @@ function markJobLinkVisited(jobId) {
  * Render job links list in popup
  * @param {Array} links
  */
-function renderJobLinksList(links) {
+async function renderJobLinksList(links) {
   if (!links || links.length === 0) {
     elements.jobLinksList.innerHTML = '<p class="no-links">No job links available.</p>';
     return;
   }
   
-  const visitedLinks = getVisitedJobLinks();
+  const visitedLinks = await getVisitedJobLinks();
+  const lastClickedJobLink = await loadLastClickedJobLink();
   
   const html = links.map(link => {
     const isVisited = visitedLinks.has(link.id);
-    const isLastClicked = link.id === lastClickedJobId;
+    const isLastClicked = link.id === lastClickedJobLink;
     return `
-    <div class="job-link-item${isVisited ? ' job-link-visited' : ''}${isLastClicked ? ' job-link-last-clicked' : ''}" data-job-id="${link.id}">
+    <div class="job-link-item${isVisited ? ' job-link-visited' : ''}${isLastClicked ? ' job-link-highlight' : ''}" data-job-id="${link.id}">
       <span class="job-status-indicator ${link.applied ? 'job-status-applied' : 'job-status-new'}${link.pending ? ' job-status-pending' : ''}" 
             data-action="toggle" 
             data-job-id="${link.id}"
@@ -673,26 +748,10 @@ function renderJobLinksList(links) {
       const jobId = parseInt(link.dataset.jobId, 10);
       
       // Mark as visited
-      markJobLinkVisited(jobId);
-      // Add visited class immediately for visual feedback
+      await markJobLinkVisited(jobId);
+      await saveLastClickedJobLink(jobId);
+      link.closest('.job-link-item').classList.add('job-link-highlight');
       link.closest('.job-link-item').classList.add('job-link-visited');
-      
-      // Remove last clicked indicator from previous link
-      if (lastClickedJobId) {
-        const prevLink = elements.jobLinksList.querySelector(`.job-link-item[data-job-id="${lastClickedJobId}"]`);
-        if (prevLink) {
-          prevLink.classList.remove('job-link-last-clicked');
-        }
-      }
-      
-      // Add last clicked indicator to current link
-      lastClickedJobId = jobId;
-      link.closest('.job-link-item').classList.add('job-link-last-clicked');
-      
-      // Persist last clicked job ID
-      saveStateToStorage({ [STORAGE_KEYS.LAST_CLICKED_JOB_ID]: jobId }).catch(err => {
-        console.error('[Popup] Failed to persist lastClickedJobId:', err);
-      });
       
       // Navigate to the URL in the current tab
       try {
@@ -733,47 +792,6 @@ async function persistTabPreference(tabName) {
     await saveStateToStorage({ [STORAGE_KEYS.LAST_TAB]: tabName });
   } catch (err) {
     console.error('[Popup] Failed to persist tab preference:', err);
-  }
-}
-
-/**
- * Handle Refresh Jobs button click - force fresh fetch
- */
-async function handleRefreshLinksClick() {
-  await forceRefreshJobLinks();
-}
-
-/**
- * Force refresh job links - bypass cache and fetch fresh data
- */
-async function forceRefreshJobLinks() {
-  const btn = elements.refreshLinksBtn;
-  const originalText = btn.textContent;
-  
-  btn.disabled = true;
-  btn.textContent = 'Refreshing...';
-  showSkeleton();
-  
-  try {
-    const links = await fetchJobOffers();
-    jobLinks = links;
-    hideLoading();
-    const filteredLinks = filterJobLinks(jobLinks, showAppliedFilter);
-    renderJobLinksList(filteredLinks);
-    await cacheJobOffers();
-    updateStaleIndicator(false);
-  } catch (err) {
-    console.error('[Popup] forceRefreshJobLinks error:', err);
-    // If we have cached data, show it with error
-    if (jobLinks.length > 0) {
-      hideLoading();
-      showToggleError('Failed to refresh: ' + err.message);
-    } else {
-      showJobError('Failed to load jobs: ' + err.message);
-    }
-  } finally {
-    btn.disabled = false;
-    btn.textContent = originalText;
   }
 }
 
