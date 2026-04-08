@@ -37,8 +37,8 @@ description: "Task list for Fix Job Listing Bug - 1005-fix-job-listing"
 
 **Purpose**: Verify the fix works in browser
 
-- [ ] T004 Verify the refresh button now works by testing in Firefox extension
-- [ ] T005 Verify auto-load on popup open still works correctly
+- [X] T004 Verify the refresh button now works by testing in Firefox extension
+- [X] T005 Verify auto-load on popup open still works correctly
 
 ---
 
