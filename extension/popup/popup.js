@@ -8,6 +8,10 @@
 // =============================================================================
 
 /** @type {Object} Storage keys for browser.storage.local */
+const API_ENDPOINT = 'http://localhost:8000';
+const API_TIMEOUT_MS = 10000;
+const N8N_WEBHOOK_URL = 'http://localhost:5678/webhook/writer';
+
 const STORAGE_KEYS = {
   JOB_OFFERS: 'jobOffers',
   JOB_OFFERS_TIMESTAMP: 'jobOffersTimestamp',
@@ -91,6 +95,8 @@ async function init() {
     
     setupEventListeners();
     setupSSEMessageListener();
+    setupDescModal();
+    setupClEventListeners();
     
     await restoreTabPreference();
     await restoreFormFieldsState();
@@ -701,6 +707,12 @@ async function renderJobLinksList(links) {
   const html = links.map(link => {
     const isVisited = visitedLinks.has(link.id);
     const isLastClicked = link.id === lastClickedJobLink;
+    const clStatus = link.cl_status || 'none';
+    const clStartTime = link.cl_start_time || null;
+    const badgeClass = getClBadgeClass(clStatus);
+    const badgeText = getClBadgeText(clStatus, clStartTime);
+    const canGenerate = clStatus === 'saved' || clStatus === 'ready';
+    const isGenerating = clStatus === 'generating';
     return `
     <div class="job-link-item${isVisited ? ' job-link-visited' : ''}${isLastClicked ? ' job-link-highlight' : ''}" data-job-id="${link.id}">
       <span class="job-status-indicator ${link.applied ? 'job-status-applied' : 'job-status-new'}${link.pending ? ' job-status-pending' : ''}" 
@@ -709,6 +721,11 @@ async function renderJobLinksList(links) {
             title="${link.pending ? 'Updating...' : (link.applied ? 'Applied - click to mark as not applied' : 'Not applied - click to mark as applied')}"
             role="button" aria-label="${link.pending ? 'Updating...' : (link.applied ? 'Applied' : 'Not applied')}" ></span>
       <a class="job-link-title" href="${link.url}" title="${link.title}" data-job-id="${link.id}">${link.title}</a>
+      <span class="cl-badge ${badgeClass}">${badgeText}</span>
+      <div class="cl-actions">
+        <button class="btn btn-xs btn-secondary cl-save-btn" data-job-id="${link.id}" ${clStatus !== 'none' ? 'disabled' : ''}>Save Desc</button>
+        <button class="btn btn-xs btn-primary cl-generate-btn" data-job-id="${link.id}" ${!canGenerate ? 'disabled' : ''}>${isGenerating ? 'Generating...' : 'Generate'}</button>
+      </div>
     </div>`;
   }).join('');
   
@@ -731,6 +748,8 @@ async function renderJobLinksList(links) {
       }
     });
   });
+  
+  setupClEventListeners();
   
   // Attach click listeners for job links to track visited state and handle navigation
   elements.jobLinksList.querySelectorAll('.job-link-title').forEach(link => {
@@ -920,4 +939,179 @@ function showToggleError(message) {
   msgEl.textContent = message;
   elements.jobLinksList.parentElement.insertBefore(msgEl, elements.jobLinksList);
   setTimeout(() => msgEl.remove(), 3000);
+}
+
+function getClBadgeClass(status) {
+  switch (status) {
+    case 'saved': return 'cl-badge-ready';
+    case 'generating': return 'cl-badge-generating';
+    case 'ready': return 'cl-badge-ready';
+    case 'error': return 'cl-badge-error';
+    default: return 'cl-badge-no-desc';
+  }
+}
+
+function getClBadgeText(status, startTime) {
+  if (status === 'generating' && startTime) {
+    const elapsed = Math.floor((Date.now() - startTime) / 1000);
+    const mins = Math.floor(elapsed / 60);
+    const secs = elapsed % 60;
+    return `${mins}:${secs.toString().padStart(2, '0')}`;
+  }
+  switch (status) {
+    case 'saved': return 'Saved';
+    case 'generating': return 'Generating';
+    case 'ready': return 'Ready';
+    case 'error': return 'Error';
+    default: return 'No Desc';
+  }
+}
+
+function updateClState(jobId, status) {
+  const link = jobLinks.find(l => l.id === jobId);
+  if (link) {
+    link.cl_status = status;
+    if (status === 'generating') {
+      link.cl_start_time = Date.now();
+    } else {
+      link.cl_start_time = null;
+    }
+    const filtered = filterJobLinks(jobLinks, showAppliedFilter);
+    renderJobLinksList(filtered);
+  }
+}
+
+let currentClJobId = null;
+
+async function handleClSave(jobId) {
+  const link = jobLinks.find(l => l.id === jobId);
+  if (!link) return;
+  
+  let description = link.description || '';
+  
+  if (!description) {
+    currentClJobId = jobId;
+    document.getElementById('desc-modal').style.display = 'flex';
+    document.getElementById('desc-textarea').value = '';
+    document.getElementById('desc-textarea').focus();
+    return;
+  }
+  
+  updateClState(jobId, 'saving');
+  
+  try {
+    await fetch(`${API_ENDPOINT}/job-offers/${jobId}`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ description }),
+      signal: AbortSignal.timeout(API_TIMEOUT_MS)
+    });
+    updateClState(jobId, 'saved');
+  } catch (err) {
+    console.error('Save description failed:', err);
+    updateClState(jobId, 'error');
+  }
+}
+
+function setupDescModal() {
+  document.getElementById('desc-cancel-btn').addEventListener('click', () => {
+    document.getElementById('desc-modal').style.display = 'none';
+    currentClJobId = null;
+  });
+  
+  document.getElementById('desc-save-btn').addEventListener('click', async () => {
+    if (!currentClJobId) return;
+    
+    const description = document.getElementById('desc-textarea').value.trim();
+    if (!description) return;
+    
+    const link = jobLinks.find(l => l.id === currentClJobId);
+    if (link) link.description = description;
+    
+    document.getElementById('desc-modal').style.display = 'none';
+    updateClState(currentClJobId, 'saving');
+    
+    try {
+      await fetch(`${API_ENDPOINT}/job-offers/${currentClJobId}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ description }),
+        signal: AbortSignal.timeout(API_TIMEOUT_MS)
+      });
+      updateClState(currentClJobId, 'saved');
+    } catch (err) {
+      console.error('Save description failed:', err);
+      updateClState(currentClJobId, 'error');
+    }
+    
+    currentClJobId = null;
+  });
+}
+
+async function handleClGenerate(jobId) {
+  updateClState(jobId, 'generating');
+  
+  try {
+    await fetch(N8N_WEBHOOK_URL, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ job_offers_id: jobId }),
+      signal: AbortSignal.timeout(API_TIMEOUT_MS)
+    });
+    
+    const result = await pollForCompletion(jobId, 180000);
+    if (result.completed) {
+      updateClState(jobId, 'ready');
+    } else {
+      updateClState(jobId, 'error');
+    }
+  } catch (err) {
+    console.error('Generate failed:', err);
+    updateClState(jobId, 'error');
+  }
+}
+
+async function pollForCompletion(jobId, timeoutMs) {
+  const startTime = Date.now();
+  
+  while (Date.now() - startTime < timeoutMs) {
+    await new Promise(r => setTimeout(r, 5000));
+    
+    try {
+      const resp = await fetch(`${API_ENDPOINT}/job-applications?job_offer_id=${jobId}`, {
+        signal: AbortSignal.timeout(API_TIMEOUT_MS)
+      });
+      const data = await resp.json();
+      const app = data.job_applications?.[0];
+      if (app?.content) return { completed: true };
+    } catch (e) {
+      console.error('Polling error:', e);
+    }
+    
+    const link = jobLinks.find(l => l.id === jobId);
+    if (link?.cl_status !== 'generating') break;
+    
+    const filtered = filterJobLinks(jobLinks, showAppliedFilter);
+    renderJobLinksList(filtered);
+  }
+  
+  return { completed: false };
+}
+
+function setupClEventListeners() {
+  document.querySelectorAll('.cl-save-btn').forEach(btn => {
+    btn.onclick = (e) => {
+      e.preventDefault();
+      const jobId = parseInt(btn.dataset.jobId, 10);
+      handleClSave(jobId);
+    };
+  });
+  
+  document.querySelectorAll('.cl-generate-btn').forEach(btn => {
+    btn.onclick = (e) => {
+      e.preventDefault();
+      const jobId = parseInt(btn.dataset.jobId, 10);
+      handleClGenerate(jobId);
+    };
+  });
 }
