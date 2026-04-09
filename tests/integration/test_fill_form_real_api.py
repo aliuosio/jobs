@@ -1,6 +1,6 @@
-"""Real API integration tests for /fill-form endpoint.
+"""Real API integration tests for /api/v1/search endpoint.
 
-These tests call the live FastAPI backend at http://localhost:8000/fill-form
+These tests call the live FastAPI backend at http://localhost:8000/api/v1/search
 using actual Qdrant and Mistral services. No mocks.
 
 Prerequisites:
@@ -98,7 +98,7 @@ async def real_client():
 
 
 class TestFillFormRealAPI:
-    """Real API tests for /fill-form endpoint - no mocks."""
+    """Real API tests for /api/v1/search endpoint - no mocks."""
 
     @pytest.mark.asyncio
     async def test_health_check(self, real_client):
@@ -121,23 +121,21 @@ class TestFillFormRealAPI:
         expected_type = test_case["expected_field_type"]
 
         response = await real_client.post(
-            "/fill-form",
-            json={"label": label, "signals": signals},
+            "/api/v1/search",
+            json={"query": label, "signals": signals, "generate": True},
         )
 
-        assert response.status_code == 200, (
-            f"API returned {response.status_code}: {response.text}"
-        )
+        assert response.status_code == 200, f"API returned {response.status_code}: {response.text}"
 
         data = response.json()
 
         # Verify response structure
-        assert "answer" in data, "Response missing 'answer' field"
-        assert "has_data" in data, "Response missing 'has_data' field"
+        assert "generated_answer" in data, "Response missing 'generated_answer' field"
+        assert "results" in data, "Response missing 'results' field"
         assert "confidence" in data, "Response missing 'confidence' field"
 
         # Verify we got data
-        assert data["has_data"] is True, f"API returned has_data=False for {field}"
+        assert len(data["results"]) > 0, f"API returned no results for {field}"
 
         # Verify field extraction
         assert data.get("field_type") == expected_type, (
@@ -154,20 +152,34 @@ class TestFillFormRealAPI:
 
         for label in labels:
             response = await real_client.post(
-                "/fill-form",
-                json={"label": label, "signals": {"autocomplete": "given-name"}},
+                "/api/v1/search",
+                json={"query": label, "signals": {"autocomplete": "given-name"}, "generate": True},
             )
             assert response.status_code == 200
             data = response.json()
-            # At minimum, should have an answer
-            assert "answer" in data
+            assert "generated_answer" in data
 
     @pytest.mark.asyncio
     async def test_email_validation(self, real_client):
         """Test that extracted email is valid format."""
         response = await real_client.post(
-            "/fill-form",
-            json={"label": "Email", "signals": {"autocomplete": "email"}},
+            "/api/v1/search",
+            json={"query": "Email", "signals": {"autocomplete": "email"}, "generate": True},
+        )
+        assert response.status_code == 200
+        data = response.json()
+
+        if data.get("field_value"):
+            email = data["field_value"]
+            assert "@" in email, f"Invalid email format: {email}"
+            assert "." in email.split("@")[1], f"Invalid email domain: {email}"
+
+    @pytest.mark.asyncio
+    async def test_email_validation(self, real_client):
+        """Test that extracted email is valid format."""
+        response = await real_client.post(
+            "/api/v1/search",
+            json={"query": "Email", "signals": {"autocomplete": "email"}, "generate": True},
         )
         assert response.status_code == 200
         data = response.json()
@@ -181,15 +193,18 @@ class TestFillFormRealAPI:
     async def test_postcode_format(self, real_client):
         """Test that extracted postcode matches expected format."""
         response = await real_client.post(
-            "/fill-form",
-            json={"label": "Postcode", "signals": {"autocomplete": "postal-code"}},
+            "/api/v1/search",
+            json={
+                "query": "Postcode",
+                "signals": {"autocomplete": "postal-code"},
+                "generate": True,
+            },
         )
         assert response.status_code == 200
         data = response.json()
 
         if data.get("field_value"):
             postcode = data["field_value"]
-            # German postcode: 5 digits
             assert len(postcode) == 5, f"Expected 5-digit postcode, got: {postcode}"
             assert postcode.isdigit(), f"Postcode should be digits only: {postcode}"
 
@@ -197,33 +212,29 @@ class TestFillFormRealAPI:
     async def test_phone_format(self, real_client):
         """Test that extracted phone matches expected format."""
         response = await real_client.post(
-            "/fill-form",
-            json={"label": "Phone", "signals": {"autocomplete": "tel"}},
+            "/api/v1/search",
+            json={"query": "Phone", "signals": {"autocomplete": "tel"}, "generate": True},
         )
         assert response.status_code == 200
         data = response.json()
 
         if data.get("field_value"):
             phone = data["field_value"]
-            assert "+" in phone or phone.startswith("0"), (
-                f"Invalid phone format: {phone}"
-            )
+            assert "+" in phone or phone.startswith("0"), f"Invalid phone format: {phone}"
 
     @pytest.mark.asyncio
     async def test_birthdate_format(self, real_client):
         """Test that extracted birthdate matches expected format."""
         response = await real_client.post(
-            "/fill-form",
-            json={"label": "Birthdate", "signals": {"autocomplete": "bday"}},
+            "/api/v1/search",
+            json={"query": "Birthdate", "signals": {"autocomplete": "bday"}, "generate": True},
         )
         assert response.status_code == 200
         data = response.json()
 
         if data.get("field_value"):
             birthdate = data["field_value"]
-            assert "." in birthdate or "-" in birthdate, (
-                f"Invalid birthdate format: {birthdate}"
-            )
+            assert "." in birthdate or "-" in birthdate, f"Invalid birthdate format: {birthdate}"
 
     @pytest.mark.asyncio
     async def test_response_latency(self, real_client):
@@ -232,13 +243,16 @@ class TestFillFormRealAPI:
 
         start = time.time()
         response = await real_client.post(
-            "/fill-form",
-            json={"label": "First Name", "signals": {"autocomplete": "given-name"}},
+            "/api/v1/search",
+            json={
+                "query": "First Name",
+                "signals": {"autocomplete": "given-name"},
+                "generate": True,
+            },
         )
         elapsed = time.time() - start
 
         assert response.status_code == 200
-        # Should respond within 10 seconds for a simple field extraction
         assert elapsed < 10.0, f"API too slow: {elapsed:.2f}s"
 
 
@@ -249,31 +263,29 @@ class TestFillFormRealAPIEdgeCases:
     async def test_unknown_field_label(self, real_client):
         """Test handling of unknown field labels."""
         response = await real_client.post(
-            "/fill-form",
-            json={"label": "Favorite Color"},
+            "/api/v1/search",
+            json={"query": "Favorite Color", "generate": True},
         )
         assert response.status_code == 200
         data = response.json()
-        # Should return a response, even if no data
-        assert "answer" in data
+        assert "generated_answer" in data
 
     @pytest.mark.asyncio
     async def test_empty_signals(self, real_client):
         """Test handling of empty signals."""
         response = await real_client.post(
-            "/fill-form",
-            json={"label": "First Name", "signals": {}},
+            "/api/v1/search",
+            json={"query": "First Name", "signals": {}, "generate": True},
         )
         assert response.status_code == 200
         data = response.json()
-        assert "answer" in data
+        assert "generated_answer" in data
 
     @pytest.mark.asyncio
-    async def test_missing_label(self, real_client):
-        """Test handling of missing label."""
+    async def test_missing_query(self, real_client):
+        """Test handling of missing query."""
         response = await real_client.post(
-            "/fill-form",
-            json={"signals": {"autocomplete": "given-name"}},
+            "/api/v1/search",
+            json={"signals": {"autocomplete": "given-name"}, "generate": True},
         )
-        # Should either work with signals or return error
         assert response.status_code in [200, 422]

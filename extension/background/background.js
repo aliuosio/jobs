@@ -360,26 +360,22 @@ async function handleUpdateApplied(data) {
  * Handle single field fill request
  */
 async function handleFillForm(data) {
-  console.log('[Background] fill-form request:', JSON.stringify({
-    label: data.label,
-    context_hints: data.context_hints || null,
-    field_type: data.field_type || null,
-    form_url: data.form_url || null,
-    signals: data.signals || null
+  console.log('[Background] search request:', JSON.stringify({
+    query: data.label,
+    signals: data.signals || null,
+    generate: true
   }));
   
   try {
-    const response = await fetch(`${API_ENDPOINT}/fill-form`, {
+    const response = await fetch(`${API_ENDPOINT}/api/v1/search`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json'
       },
       body: JSON.stringify({
-        label: data.label,
-        context_hints: data.context_hints || null,
-        field_type: data.field_type || null,
-        form_url: data.form_url || null,
-        signals: data.signals || null
+        query: data.label,
+        signals: data.signals || null,
+        generate: true
       }),
       signal: AbortSignal.timeout(10000)
     });
@@ -396,16 +392,16 @@ async function handleFillForm(data) {
     }
 
     const fillResponse = await response.json();
-    console.log('[Background] fill-form response:', JSON.stringify(fillResponse));
+    console.log('[Background] search response:', JSON.stringify(fillResponse));
     
-    // Use clean field_value for forms; fall back to conversational answer if unavailable
-    const value = fillResponse.field_value || fillResponse.answer;
+    const value = fillResponse.generated_answer;
+    const hasData = fillResponse.results && fillResponse.results.length > 0;
     
     return {
       success: true,
       field_id: data.field_id,
       value: value,
-      has_data: fillResponse.has_data,
+      has_data: hasData,
       confidence: fillResponse.confidence,
       field_type: fillResponse.field_type || null
     };

@@ -6,7 +6,7 @@ This document describes how to run tests for the Job Forms Helper project.
 
 **Note**: The test directory structure is set up, but actual test implementations are minimal. The project currently relies on:
 
-1. **Manual testing** via API endpoints (`/health`, `/validate`, `/fill-form`)
+1. **Manual testing** via API endpoints (`/health`, `/validate`, `/api/v1/search`)
 2. **Integration testing** through the Docker stack
 3. **Validation endpoint** for configuration verification
 
@@ -97,12 +97,12 @@ curl http://localhost:8000/validate | jq
 # Expected: ValidationReport with 4 checks
 ```
 
-### Form Fill
+### Search and Generate
 
 ```bash
-curl -X POST http://localhost:8000/fill-form \
+curl -X POST http://localhost:8000/api/v1/search \
   -H "Content-Type: application/json" \
-  -d '{"label": "What is your name?"}' | jq
+  -d '{"query": "What is your name?", "generate": true}' | jq
 # Expected: AnswerResponse with answer and confidence
 ```
 
@@ -172,15 +172,15 @@ async def test_validate_endpoint(client):
     assert len(data["checks"]) == 4
 
 @pytest.mark.asyncio
-async def test_fill_form_endpoint(client):
-    """Test form fill endpoint."""
+async def test_search_endpoint(client):
+    """Test search endpoint."""
     response = await client.post(
-        "/fill-form",
-        json={"label": "Test field"}
+        "/api/v1/search",
+        json={"query": "Test query", "generate": true}
     )
     assert response.status_code == 200
     data = response.json()
-    assert "answer" in data
+    assert "generated_answer" in data
     assert "confidence" in data
 ```
 

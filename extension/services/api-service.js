@@ -20,10 +20,14 @@ async function fetchJobOffers(limit, offset) {
 }
 
 async function fillForm(label, signals) {
-  const response = await fetch(`${API_ENDPOINT}/fill-form`, {
+  const response = await fetch(`${API_ENDPOINT}/api/v1/search`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ label, signals }),
+    body: JSON.stringify({ 
+      query: label, 
+      signals,
+      generate: true 
+    }),
     signal: AbortSignal.timeout(API_TIMEOUT_MS)
   });
 
@@ -31,7 +35,15 @@ async function fillForm(label, signals) {
     throw new Error(`API returned ${response.status}`);
   }
 
-  return response.json();
+  const json = await response.json();
+  return {
+    answer: json.generated_answer,
+    has_data: json.chunks.length > 0,
+    confidence: json.confidence,
+    context_chunks: json.chunks.length,
+    field_value: json.generated_answer,
+    field_type: json.field_type
+  };
 }
 
 async function updateJobOfferProcess(jobOfferId, applied) {

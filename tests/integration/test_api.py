@@ -18,9 +18,7 @@ from src.services.field_classifier import (
 
 @pytest_asyncio.fixture
 async def client():
-    async with AsyncClient(
-        transport=ASGITransport(app=app), base_url="http://test"
-    ) as ac:
+    async with AsyncClient(transport=ASGITransport(app=app), base_url="http://test") as ac:
         yield ac
 
 
@@ -92,42 +90,41 @@ class TestValidateEndpoint:
 class TestFillFormContract:
     @pytest.mark.asyncio
     async def test_fill_form_returns_answer_structure(self, client):
-        payload = {"label": "Email Address"}
-        response = await client.post("/fill-form", json=payload)
+        payload = {"query": "Email Address", "generate": True}
+        response = await client.post("/api/v1/search", json=payload)
         assert response.status_code == 200
         data = response.json()
-        assert "answer" in data
-        assert "has_data" in data
+        assert "generated_answer" in data
+        assert "results" in data
         assert "confidence" in data
-        assert "context_chunks" in data
         assert data["confidence"] in ["high", "medium", "low", "none"]
 
     @pytest.mark.asyncio
     async def test_fill_form_context_chunks_bounds(self, client):
-        payload = {"label": "Email"}
-        response = await client.post("/fill-form", json=payload)
+        payload = {"query": "Email", "generate": True}
+        response = await client.post("/api/v1/search", json=payload)
         assert response.status_code == 200
         data = response.json()
-        assert 0 <= data["context_chunks"] <= 5
+        assert len(data.get("results", [])) <= 5
 
 
 class TestFillFormValidation:
     @pytest.mark.asyncio
     async def test_fill_form_label_required(self, client):
         payload = {}
-        response = await client.post("/fill-form", json=payload)
+        response = await client.post("/api/v1/search", json=payload)
         assert response.status_code == 422
 
     @pytest.mark.asyncio
     async def test_fill_form_label_min_length(self, client):
-        payload = {"label": ""}
-        response = await client.post("/fill-form", json=payload)
+        payload = {"query": ""}
+        response = await client.post("/api/v1/search", json=payload)
         assert response.status_code == 422
 
     @pytest.mark.asyncio
     async def test_fill_form_label_max_length(self, client):
-        payload = {"label": "x" * 1001}
-        response = await client.post("/fill-form", json=payload)
+        payload = {"query": "x" * 1001}
+        response = await client.post("/api/v1/search", json=payload)
         assert response.status_code == 422
 
 
@@ -135,37 +132,39 @@ class TestFillFormWithSignals:
     @pytest.mark.asyncio
     async def test_fill_form_with_email_signals(self, client):
         payload = {
-            "label": "Contact",
+            "query": "Contact",
             "signals": {"autocomplete": "email", "html_type": "email"},
+            "generate": True,
         }
-        response = await client.post("/fill-form", json=payload)
+        response = await client.post("/api/v1/search", json=payload)
         assert response.status_code == 200
 
     @pytest.mark.asyncio
     async def test_fill_form_with_phone_signals(self, client):
         payload = {
-            "label": "Contact",
+            "query": "Contact",
             "signals": {"autocomplete": "tel", "html_type": "tel"},
+            "generate": True,
         }
-        response = await client.post("/fill-form", json=payload)
+        response = await client.post("/api/v1/search", json=payload)
         assert response.status_code == 200
 
     @pytest.mark.asyncio
     async def test_fill_form_with_name_signals(self, client):
-        payload = {"label": "Applicant", "signals": {"autocomplete": "name"}}
-        response = await client.post("/fill-form", json=payload)
+        payload = {"query": "Applicant", "signals": {"autocomplete": "name"}, "generate": True}
+        response = await client.post("/api/v1/search", json=payload)
         assert response.status_code == 200
 
     @pytest.mark.asyncio
     async def test_fill_form_with_city_signals(self, client):
-        payload = {"label": "Location", "signals": {"autocomplete": "city"}}
-        response = await client.post("/fill-form", json=payload)
+        payload = {"query": "Location", "signals": {"autocomplete": "city"}, "generate": True}
+        response = await client.post("/api/v1/search", json=payload)
         assert response.status_code == 200
 
     @pytest.mark.asyncio
     async def test_fill_form_with_empty_signals(self, client):
-        payload = {"label": "Email", "signals": {}}
-        response = await client.post("/fill-form", json=payload)
+        payload = {"query": "Email", "signals": {}, "generate": True}
+        response = await client.post("/api/v1/search", json=payload)
         assert response.status_code == 200
 
 
