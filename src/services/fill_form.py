@@ -4,6 +4,7 @@ from typing import Any
 from src.api.schemas import ConfidenceLevel
 from src.services.field_classifier import (
     SemanticFieldType,
+    classify_field_type,
     extract_field_value_from_payload,
 )
 
@@ -67,4 +68,5 @@ __all__ = [
     "combine_confidence",
     "assemble_context",
     "extract_direct_field_value",
+    "classify_field_type",
 ]

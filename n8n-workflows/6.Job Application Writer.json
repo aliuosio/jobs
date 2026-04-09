@@ -8,8 +8,8 @@
       "type": "@n8n/n8n-nodes-langchain.toolThink",
       "typeVersion": 1,
       "position": [
-        176,
-        656
+        528,
+        1088
       ],
       "id": "78a02e53-86a3-45b3-8e5f-45790aa92739",
       "name": "Think"
@@ -19,14 +19,14 @@
         "promptType": "define",
         "text": "=# METADATA\nJOB_COMPANY:{{ $json.company }}\nNOW:{{ $now }}\nJOB_TITLE: {{ $json.subject }}\nJOB_DESCRIPTION:{{ $json.description }}",
         "options": {
-          "systemMessage": "=SKILLS: from Qdrant vector DB\n\n# ROLE\nHarvard-educated Psychologist & Elite Negotiator (IQ/EQ 170). \nExpertise: 20y Magento/Web development.\nTask: Write the application letter.\n\n# EVALUATION CRITICS (INTERNAL ONLY)\nBefore writing, mentally satisfy:\n1. THE RECRUITER (Keywords/Competence)\n2. THE HIRING MANAGER (Technical Depth/Team Fit)\n3. THE HR SPECIALIST (Risk Mitigation/Compliance)\n4. THE EXECUTIVE (Strategic Empathy/Long-term Value)\n\n# WRITING RULES\n- OUTPUT: RAW TEXT ONLY. \n- NO JSON. NO MARKDOWN HEADERS. NO PREAMBLE. NO \"HERE IS THE LETTER\".\n- STYLE: Calibrated persuasion. Calm authority. Human, not AI.\n- FORBIDDEN: game-changer, transform, delve, unleash, revolutionize, meticulous, navigating, complexities, realm, bespoke, tailored, towards, not only, it's not merely, magic, grab a coffee.\n- STRUCTURE: 4 paragraphs exactly.\n\n# EXECUTION\nJOB_TITLE from METADATA to anchor the letter. Address the \"Trust Gap\" and validate the employer's position. \n\n\nStructure:\n\n1. Human opening\n2. Emotional validation\n3. Strategic reassurance\n4. Value framing\n5. Soft but confident close\n6. Clear next step\n\n---\n\n### Rules\n\n- Take your time before writing.\n- Avoid clichés and AI-style phrasing.\n- Write like a real, intelligent human.\n- No emojis.\n- No exaggerated enthusiasm.\n- No sales tone.\n- No over-explaining."
+          "systemMessage": "={{ $('Call \\'Prompt\\'').item.json.prompt }}"
         }
       },
       "type": "@n8n/n8n-nodes-langchain.agent",
       "typeVersion": 3.1,
       "position": [
-        112,
-        432
+        464,
+        864
       ],
       "id": "d3de9c59-d7bf-4b55-9659-db3b446f9bd6",
       "name": "AI Agent"
@@ -36,8 +36,8 @@
       "type": "n8n-nodes-base.manualTrigger",
       "typeVersion": 1,
       "position": [
-        -1040,
-        448
+        -1216,
+        864
       ],
       "id": "b174299f-021b-46d6-a877-ba54e3d546cf",
       "name": "When clicking ‘Execute workflow’"
@@ -60,8 +60,8 @@
       "type": "n8n-nodes-imap-enhanced.imapEnhanced",
       "typeVersion": 1,
       "position": [
-        1120,
-        688
+        1472,
+        1120
       ],
       "id": "fd5e2f01-e5c5-4d76-b521-1bfca932e670",
       "name": "CreateDraft email",
@@ -107,8 +107,8 @@
       "type": "n8n-nodes-base.postgres",
       "typeVersion": 2.6,
       "position": [
-        -816,
-        448
+        -992,
+        864
       ],
       "id": "b5ec441b-494a-4b32-8275-7e149a1295af",
       "name": "Job Offers",
@@ -135,8 +135,8 @@
       "type": "@n8n/n8n-nodes-langchain.vectorStoreQdrant",
       "typeVersion": 1.3,
       "position": [
-        304,
-        656
+        656,
+        1088
       ],
       "id": "6fec6890-9688-4d5c-8d25-783598129d58",
       "name": "Qdrant Vector Store",
@@ -154,8 +154,8 @@
       "type": "n8n-nodes-base.splitInBatches",
       "typeVersion": 3,
       "position": [
-        -592,
-        448
+        -320,
+        864
       ],
       "id": "552f5efa-da27-4591-90d4-0bffc264d574",
       "name": "Loop Over Items"
@@ -168,8 +168,8 @@
       "type": "@n8n/n8n-nodes-langchain.lmChatMistralCloud",
       "typeVersion": 1,
       "position": [
-        48,
-        656
+        400,
+        1088
       ],
       "id": "740866be-a8b2-4aba-8239-64b09a3adf07",
       "name": "Mistral",
@@ -187,8 +187,8 @@
       "type": "@n8n/n8n-nodes-langchain.embeddingsMistralCloud",
       "typeVersion": 1,
       "position": [
-        384,
-        864
+        736,
+        1296
       ],
       "id": "2e81a72c-d38a-4534-af73-2b9a943691c5",
       "name": "Embeddings Mistral Cloud",
@@ -227,8 +227,8 @@
       "type": "n8n-nodes-base.if",
       "typeVersion": 2.3,
       "position": [
-        896,
-        608
+        1248,
+        1040
       ],
       "id": "020e4d97-df59-4646-a834-023ee7221e0a",
       "name": "If"
@@ -268,18 +268,6 @@
               "type": "string"
             },
             {
-              "id": "50829369-6af5-478e-92b3-b8d99a4d4fbc",
-              "name": "sender_name",
-              "value": "Osiozekhai Aliu",
-              "type": "string"
-            },
-            {
-              "id": "53c46b2f-b3e6-4274-8e7e-8829c1ee05fb",
-              "name": "sender_email",
-              "value": "aliu@dev-hh.de",
-              "type": "string"
-            },
-            {
               "id": "980cdc07-5764-469b-9343-9896096db69c",
               "name": "description",
               "value": "={{ $json.description }}",
@@ -292,8 +280,8 @@
       "type": "n8n-nodes-base.set",
       "typeVersion": 3.4,
       "position": [
-        -176,
-        432
+        176,
+        864
       ],
       "id": "304e02ee-a8a7-493a-b356-19bedde3bbc6",
       "name": "Edit Fields"
@@ -326,8 +314,8 @@
       "type": "n8n-nodes-base.if",
       "typeVersion": 2.3,
       "position": [
-        -400,
-        448
+        -48,
+        864
       ],
       "id": "1c6528c8-07c7-4072-9fb9-0922a9e9e656",
       "name": "If1"
@@ -462,8 +450,8 @@
       "type": "n8n-nodes-base.postgres",
       "typeVersion": 2.6,
       "position": [
-        672,
-        432
+        1024,
+        864
       ],
       "id": "c2598071-838b-47e6-8f35-a95317053523",
       "name": "Save",
@@ -474,6 +462,84 @@
         }
       },
       "onError": "continueRegularOutput"
+    },
+    {
+      "parameters": {
+        "workflowId": {
+          "__rl": true,
+          "value": "rGIluizJ8qfWnidf",
+          "mode": "list",
+          "cachedResultUrl": "/workflow/rGIluizJ8qfWnidf",
+          "cachedResultName": "Prompt"
+        },
+        "workflowInputs": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "path": "={{ $json.path }}"
+          },
+          "matchingColumns": [
+            "path"
+          ],
+          "schema": [
+            {
+              "id": "path",
+              "displayName": "path",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "canBeUsedToMatch": true,
+              "type": "string",
+              "removed": false
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": true
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.executeWorkflow",
+      "typeVersion": 1.3,
+      "position": [
+        -544,
+        864
+      ],
+      "id": "c84d755d-d9c6-4f13-b878-61e26a3f2d4a",
+      "name": "Call 'Prompt'"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "e07022ab-97eb-4bca-b856-666d8b89770f",
+              "name": "path",
+              "value": "/home/node/.n8n-files/Prompts/jobs/writer.md",
+              "type": "string"
+            },
+            {
+              "id": "f70e25c3-5601-488d-b752-0be8bd2270ea",
+              "name": "sender_name",
+              "value": "Osiozekhai Aliu",
+              "type": "string"
+            },
+            {
+              "id": "033d6ae4-becb-4798-bbaf-a5afd4fb7b4a",
+              "name": "sender_email",
+              "value": "aliu@dev-hh.de",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        -768,
+        864
+      ],
+      "id": "b16009ee-f99b-4211-851b-191392a3bff9",
+      "name": "Edit Fields1"
     }
   ],
   "pinData": {},
@@ -515,7 +581,7 @@
       "main": [
         [
           {
-            "node": "Loop Over Items",
+            "node": "Edit Fields1",
             "type": "main",
             "index": 0
           }
@@ -635,6 +701,28 @@
           }
         ]
       ]
+    },
+    "Edit Fields1": {
+      "main": [
+        [
+          {
+            "node": "Call 'Prompt'",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Call 'Prompt'": {
+      "main": [
+        [
+          {
+            "node": "Loop Over Items",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
     }
   },
   "active": false,
@@ -642,7 +730,7 @@
     "executionOrder": "v1",
     "binaryMode": "separate"
   },
-  "versionId": "df69409c-3025-4b03-99a8-744ae660c552",
+  "versionId": "cb31ac45-ac16-4d6d-87e1-0280b6233850",
   "meta": {
     "templateCredsSetupCompleted": true,
     "instanceId": "b751e283d167317e522f290d63e0b956085524c7c105edc03e657e7409fe8050"
