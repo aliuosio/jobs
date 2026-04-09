@@ -9,25 +9,21 @@ from fastapi import APIRouter, HTTPException, Query, Request
 from starlette.responses import Response, StreamingResponse
 
 from src.api.schemas import (
-    AnswerRequest,
-    AnswerResponse,
     ConfidenceLevel,
     ErrorResponse,
     HealthResponse,
     JobOfferWithProcess,
     JobOffersListResponse,
     ProcessUpdateRequest,
+    SearchRequest,
+    SearchResponse,
+    SearchResult,
+    SearchScores,
     ValidationReport,
 )
 from src.services.field_classifier import (
     SemanticFieldType,
     classify_field_type,
-)
-from src.services.fill_form import (
-    calculate_confidence,
-    combine_confidence,
-    assemble_context,
-    extract_direct_field_value,
 )
 
 logger = logging.getLogger(__name__)
@@ -48,158 +44,151 @@ async def validate_configuration() -> ValidationReport:
 
 
 @router.post(
-    "/fill-form",
-    response_model=AnswerResponse,
+    "/api/v1/search",
+    response_model=SearchResponse,
     responses={
-        400: {"model": ErrorResponse, "description": "Invalid request"},
-        413: {"model": ErrorResponse, "description": "Payload too large"},
-        500: {"model": ErrorResponse, "description": "Internal server error"},
+        422: {"model": ErrorResponse, "description": "Validation error"},
         503: {"model": ErrorResponse, "description": "Service unavailable"},
     },
-    tags=["form-filling"],
+    tags=["search"],
 )
-async def fill_form(request: Request, answer_request: AnswerRequest) -> AnswerResponse:
+async def search_resume(search_req: SearchRequest) -> SearchResponse:
+    """Search resume data with configurable retrieval enhancements.
+
+    Provides access to the full RAG retrieval pipeline including:
+    - Hybrid search (vector + BM25)
+    - HyDE (Hypothetical Document Embeddings)
+    - Cross-encoder and LLM rubric reranking
+    """
     from src.services.embedder import embedder
-    from src.services.generator import generator
     from src.services.retriever import retriever
 
-    request_start = time.time()
-
-    content_length = request.headers.get("content-length")
-    if content_length and int(content_length) > 10240:
-        logger.warning(f"Request payload too large: {content_length} bytes")
-        raise HTTPException(status_code=413, detail="Request payload exceeds 10KB limit")
-
-    label = answer_request.label
-    signals = answer_request.signals
-    logger.info(f"[fill-form] label={label!r} signals={signals}")
+    logger.info(
+        f"[search] query={search_req.query!r} use_hyde={search_req.use_hyde} use_reranking={search_req.use_reranking}"
+    )
 
     try:
-        embed_start = time.time()
-        query_vector = await embedder.embed(label)
-        embed_latency_ms = (time.time() - embed_start) * 1000
-        logger.info(f"[fill-form] embedding_latency_ms={embed_latency_ms:.1f}")
+        query_vector = await embedder.embed(search_req.query)
 
-        retrieval_start = time.time()
-
-        # Use enhanced search if any retrieval enhancements are enabled
-        from src.config import settings
-
-        use_enhanced_search = (
-            settings.HYDE_ENABLED
-            or settings.EMBEDDING_RERANK_ENABLED
-            or settings.LLM_RERANK_ENABLED
-            or settings.MMR_ENABLED
-        )
-
-        if use_enhanced_search:
-            chunks = await retriever.search_with_reranking(label, query_vector)
+        if search_req.use_reranking:
+            chunks = await retriever.search_with_reranking(
+                search_req.query, query_vector, k=search_req.top_k
+            )
         else:
-            chunks = await retriever.hybrid_search(label, query_vector)
-
-        retrieval_latency_ms = (time.time() - retrieval_start) * 1000
-        chunk_count = len(chunks)
-        logger.info(
-            f"[fill-form] retrieval_latency_ms={retrieval_latency_ms:.1f} chunks={chunk_count}"
-        )
-
-        search_chunks = chunk_count
-
-        # CRITICAL: Include profile chunk for direct field extraction (FR-001, FR-002)
-        try:
-            profile_chunk = await retriever.get_profile_chunk()
-            if profile_chunk:
-                chunks.insert(0, profile_chunk)
-                logger.info(f"[fill-form] profile_chunk_included")
-        except Exception as e:
-            logger.error(f"[fill-form] profile_chunk_fetch_failed: {e}")
-            raise HTTPException(status_code=503, detail="Service temporarily unavailable")
-
-        # FR-003: Try direct extraction for known field types before LLM classification
-        if signals:
-            field_type = classify_field_type(signals)
-            if field_type:
-                field_value = extract_direct_field_value(chunks, field_type)
-                if field_value:
-                    # Direct extraction succeeded - return early with HIGH confidence (FR-004)
-                    logger.info(
-                        f"[fill-form] direct_extraction_success field_type={field_type.value} "
-                        f"field_value={field_value[:20]}..."
-                    )
-                    return AnswerResponse(
-                        answer=field_value,
-                        has_data=True,
-                        confidence=ConfidenceLevel.HIGH,
-                        context_chunks=search_chunks,
-                        field_value=field_value,
-                        field_type=field_type.value,
-                    )
-
-        if chunk_count == 0:
-            logger.info("[fill-form] no_chunks_found")
-            return AnswerResponse(
-                answer="I don't have information about that in the resume.",
-                has_data=False,
-                confidence=ConfidenceLevel.NONE,
-                context_chunks=0,
+            chunks = await retriever.hybrid_search(
+                search_req.query, query_vector, k=search_req.top_k
             )
 
-        avg_score = sum(c.get("score", 0) for c in chunks) / chunk_count
-        retrieval_confidence = calculate_confidence(avg_score, chunk_count)
-        context = assemble_context(chunks)
+        results = []
+        for chunk in chunks:
+            payload = chunk.get("payload", {})
+            content = payload.get("text", "") or payload.get("content", "")
 
-        gen_start = time.time()
-        classification = await generator.classify_and_extract(
-            context=context,
-            label=label,
-            signals=signals,
-        )
-        gen_latency_ms = (time.time() - gen_start) * 1000
-        logger.info(f"[fill-form] generation_latency_ms={gen_latency_ms:.1f}")
+            scores = None
+            if search_req.include_scores:
+                scores = SearchScores(
+                    vector_score=chunk.get("vector_score") or chunk.get("score"),
+                    bm25_score=chunk.get("bm25_score"),
+                    rerank_score=chunk.get("rerank_score") or chunk.get("llm_score"),
+                )
 
-        llm_confidence_str = classification.confidence.lower()
-        if llm_confidence_str == "high":
-            llm_confidence = ConfidenceLevel.HIGH
-        elif llm_confidence_str == "medium":
-            llm_confidence = ConfidenceLevel.MEDIUM
-        elif llm_confidence_str == "low":
-            llm_confidence = ConfidenceLevel.LOW
-        else:
-            llm_confidence = ConfidenceLevel.NONE
+            result = SearchResult(
+                content=content,
+                score=chunk.get("score", 0),
+                source=payload.get("t", "resume"),
+                scores=scores,
+            )
+            results.append(result)
 
-        confidence = combine_confidence(
-            retrieval_confidence, llm_confidence, classification.field_value
-        )
+        logger.info(f"[search] returned {len(results)} results")
 
-        has_data = (
-            classification.field_value is not None
-            or classification.answer != "I don't have information about that in the resume."
-        )
+        generated_answer = None
+        confidence = None
+        field_type = None
 
-        total_latency_ms = (time.time() - request_start) * 1000
-        logger.info(
-            f"[fill-form] request_complete total_latency_ms={total_latency_ms:.1f} "
-            f"embed_ms={embed_latency_ms:.1f} retrieval_ms={retrieval_latency_ms:.1f} "
-            f"gen_ms={gen_latency_ms:.1f} chunks={chunk_count} "
-            f"retrieval_conf={retrieval_confidence.value} llm_conf={llm_confidence.value} "
-            f"combined_conf={confidence.value} field_type={classification.field_type}"
-        )
+        if search_req.generate:
+            from src.services.fill_form import (
+                assemble_context,
+                calculate_confidence,
+                combine_confidence,
+                classify_field_type,
+                extract_direct_field_value,
+            )
+            from src.services.generator import generator
 
-        return AnswerResponse(
-            answer=classification.answer,
-            has_data=has_data,
+            try:
+                profile_chunk = await retriever.get_profile_chunk()
+                if profile_chunk:
+                    chunks.insert(0, profile_chunk)
+            except Exception as e:
+                logger.warning(f"[search] profile_chunk_fetch_failed: {e}")
+
+            if search_req.signals:
+                field_type_detected = classify_field_type(search_req.signals)
+                if field_type_detected:
+                    field_value = extract_direct_field_value(chunks, field_type_detected)
+                    if field_value:
+                        logger.info(
+                            f"[search] direct_extraction field_type={field_type_detected.value} "
+                            f"field_value={field_value[:20]}..."
+                        )
+                        return SearchResponse(
+                            results=results,
+                            query=search_req.query,
+                            total_retrieved=len(results),
+                            generated_answer=field_value,
+                            confidence=ConfidenceLevel.HIGH,
+                            field_type=field_type_detected.value,
+                        )
+
+            if chunks:
+                avg_score = sum(c.get("score", 0) for c in chunks) / len(chunks)
+                retrieval_confidence = calculate_confidence(avg_score, len(chunks))
+                context = assemble_context(chunks)
+
+                classification = await generator.classify_and_extract(
+                    context=context,
+                    label=search_req.query,
+                    signals=search_req.signals,
+                )
+
+                llm_conf_str = classification.confidence.lower()
+                if llm_conf_str == "high":
+                    llm_conf = ConfidenceLevel.HIGH
+                elif llm_conf_str == "medium":
+                    llm_conf = ConfidenceLevel.MEDIUM
+                elif llm_conf_str == "low":
+                    llm_conf = ConfidenceLevel.LOW
+                else:
+                    llm_conf = ConfidenceLevel.NONE
+
+                confidence = combine_confidence(
+                    retrieval_confidence, llm_conf, classification.field_value
+                )
+                generated_answer = classification.answer
+                field_type = classification.field_type
+
+                logger.info(
+                    f"[search] generated answer: {generated_answer[:50]}... conf={confidence.value}"
+                )
+
+        return SearchResponse(
+            results=results,
+            query=search_req.query,
+            total_retrieved=len(results),
+            generated_answer=generated_answer,
             confidence=confidence,
-            context_chunks=search_chunks,
-            field_value=classification.field_value,
-            field_type=classification.field_type,
+            field_type=field_type,
         )
 
-    except ConnectionError as e:
-        logger.error(f"[fill-form] connection_error: {e}")
-        raise HTTPException(status_code=503, detail="Service temporarily unavailable")
+    except (ConnectionError, RuntimeError) as e:
+        if "not connected" in str(e).lower():
+            logger.error("[search] connection_error: Qdrant not connected")
+            raise HTTPException(status_code=503, detail="Service temporarily unavailable")
+        raise
 
     except Exception as e:
-        logger.error(f"[fill-form] unexpected_error: {e}", exc_info=True)
+        logger.error(f"[search] unexpected_error: {e}", exc_info=True)
         raise HTTPException(status_code=500, detail="Internal server error")
 
 

@@ -35,7 +35,7 @@ The backend is a Python FastAPI application that implements a RAG (Retrieval-Aug
 |-------|--------|---------|---------|
 | `/health` | GET | `health_check()` | Returns service health status |
 | `/validate` | GET | `validate_configuration()` | Runs configuration validation checks |
-| `/fill-form` | POST | `fill_form()` | Generates answer for form field label |
+| `/api/v1/search` | POST | `search()` | Unified search + generation endpoint |
 
 #### Data Schemas (`src/api/schemas.py`)
 
@@ -167,7 +167,7 @@ A Manifest V3 WebExtension for Firefox.
 - Error handling with custom `ApiError` class
 
 **Key Functions**:
-- `fetchToBackend(label, options)` - POST to `/fill-form`
+- `search(query, options)` - POST to `/api/v1/search`
 - `checkApiHealth()` - GET `/health`
 
 #### Popup UI (`extension/popup/`)
@@ -186,8 +186,8 @@ Handles extension lifecycle events and message passing.
 
 ```
 1. Extension detects form field with label
-2. Extension calls POST /fill-form with label
-3. Backend generates embedding for label
+2. Extension calls POST /api/v1/search with generate=true
+3. Backend generates embedding for query
 4. Backend searches Qdrant for similar vectors
 5. Backend assembles context from retrieved chunks
 6. Backend generates answer using LLM

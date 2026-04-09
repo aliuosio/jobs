@@ -1,4 +1,4 @@
-"""Integration tests for /fill-form endpoint with seeded data."""
+"""Integration tests for /api/v1/search endpoint with seeded data."""
 
 import pytest
 import pytest_asyncio
@@ -11,9 +11,7 @@ from src.api.schemas import AnswerRequest, AnswerResponse, ConfidenceLevel
 @pytest_asyncio.fixture
 async def mock_client():
     """Mock HTTP client for integration tests."""
-    async with AsyncClient(
-        transport=ASGITransport(app=app), base_url="http://test"
-    ) as ac:
+    async with AsyncClient(transport=ASGITransport(app=app), base_url="http://test") as ac:
         yield ac
 
 
@@ -33,7 +31,7 @@ def seeded_payload():
 
 
 class TestFillFormWithSeededData:
-    """Integration tests for /fill-form endpoint with seeded flat-field data."""
+    """Integration tests for /api/v1/search endpoint with seeded flat-field data."""
 
     @pytest.mark.asyncio
     async def test_firstname_field(self, mock_client, seeded_payload):
@@ -41,9 +39,7 @@ class TestFillFormWithSeededData:
         mock_embed = MagicMock()
         mock_embed.embed = AsyncMock(return_value=[1.0] * 1024)
         mock_retriever = MagicMock()
-        mock_retriever.search = AsyncMock(
-            return_value=[{"score": 0.9, "payload": seeded_payload}]
-        )
+        mock_retriever.search = AsyncMock(return_value=[{"score": 0.9, "payload": seeded_payload}])
         mock_retriever.get_profile_chunk = AsyncMock(return_value=None)
         mock_gen = MagicMock()
         mock_gen.generate_answer = AsyncMock(return_value="Test answer")
@@ -52,10 +48,11 @@ class TestFillFormWithSeededData:
             with patch("src.services.retriever.retriever", mock_retriever):
                 with patch("src.services.generator.generator", mock_gen):
                     response = await mock_client.post(
-                        "/fill-form",
+                        "/api/v1/search",
                         json={
-                            "label": "First Name",
+                            "query": "First Name",
                             "signals": {"autocomplete": "given-name"},
+                            "generate": True,
                         },
                     )
                     assert response.status_code == 200
@@ -69,9 +66,7 @@ class TestFillFormWithSeededData:
         mock_embed = MagicMock()
         mock_embed.embed = AsyncMock(return_value=[1.0] * 1024)
         mock_retriever = MagicMock()
-        mock_retriever.search = AsyncMock(
-            return_value=[{"score": 0.9, "payload": seeded_payload}]
-        )
+        mock_retriever.search = AsyncMock(return_value=[{"score": 0.9, "payload": seeded_payload}])
         mock_retriever.get_profile_chunk = AsyncMock(return_value=None)
         mock_gen = MagicMock()
         mock_gen.generate_answer = AsyncMock(return_value="Test answer")
@@ -80,10 +75,11 @@ class TestFillFormWithSeededData:
             with patch("src.services.retriever.retriever", mock_retriever):
                 with patch("src.services.generator.generator", mock_gen):
                     response = await mock_client.post(
-                        "/fill-form",
+                        "/api/v1/search",
                         json={
-                            "label": "Last Name",
+                            "query": "Last Name",
                             "signals": {"autocomplete": "family-name"},
+                            "generate": True,
                         },
                     )
                     assert response.status_code == 200
@@ -97,9 +93,7 @@ class TestFillFormWithSeededData:
         mock_embed = MagicMock()
         mock_embed.embed = AsyncMock(return_value=[1.0] * 1024)
         mock_retriever = MagicMock()
-        mock_retriever.search = AsyncMock(
-            return_value=[{"score": 0.9, "payload": seeded_payload}]
-        )
+        mock_retriever.search = AsyncMock(return_value=[{"score": 0.9, "payload": seeded_payload}])
         mock_retriever.get_profile_chunk = AsyncMock(return_value=None)
         mock_gen = MagicMock()
         mock_gen.generate_answer = AsyncMock(return_value="Test answer")
@@ -108,8 +102,12 @@ class TestFillFormWithSeededData:
             with patch("src.services.retriever.retriever", mock_retriever):
                 with patch("src.services.generator.generator", mock_gen):
                     response = await mock_client.post(
-                        "/fill-form",
-                        json={"label": "Email", "signals": {"autocomplete": "email"}},
+                        "/api/v1/search",
+                        json={
+                            "query": "Email",
+                            "signals": {"autocomplete": "email"},
+                            "generate": True,
+                        },
                     )
                     assert response.status_code == 200
                     data = response.json()
@@ -122,9 +120,7 @@ class TestFillFormWithSeededData:
         mock_embed = MagicMock()
         mock_embed.embed = AsyncMock(return_value=[1.0] * 1024)
         mock_retriever = MagicMock()
-        mock_retriever.search = AsyncMock(
-            return_value=[{"score": 0.9, "payload": seeded_payload}]
-        )
+        mock_retriever.search = AsyncMock(return_value=[{"score": 0.9, "payload": seeded_payload}])
         mock_retriever.get_profile_chunk = AsyncMock(return_value=None)
         mock_gen = MagicMock()
         mock_gen.generate_answer = AsyncMock(return_value="Test answer")
@@ -133,10 +129,11 @@ class TestFillFormWithSeededData:
             with patch("src.services.retriever.retriever", mock_retriever):
                 with patch("src.services.generator.generator", mock_gen):
                     response = await mock_client.post(
-                        "/fill-form",
+                        "/api/v1/search",
                         json={
-                            "label": "City",
+                            "query": "City",
                             "signals": {"autocomplete": "address-level2"},
+                            "generate": True,
                         },
                     )
                     assert response.status_code == 200
@@ -150,9 +147,7 @@ class TestFillFormWithSeededData:
         mock_embed = MagicMock()
         mock_embed.embed = AsyncMock(return_value=[1.0] * 1024)
         mock_retriever = MagicMock()
-        mock_retriever.search = AsyncMock(
-            return_value=[{"score": 0.9, "payload": seeded_payload}]
-        )
+        mock_retriever.search = AsyncMock(return_value=[{"score": 0.9, "payload": seeded_payload}])
         mock_retriever.get_profile_chunk = AsyncMock(return_value=None)
         mock_gen = MagicMock()
         mock_gen.generate_answer = AsyncMock(return_value="Test answer")
@@ -161,10 +156,11 @@ class TestFillFormWithSeededData:
             with patch("src.services.retriever.retriever", mock_retriever):
                 with patch("src.services.generator.generator", mock_gen):
                     response = await mock_client.post(
-                        "/fill-form",
+                        "/api/v1/search",
                         json={
-                            "label": "Postcode",
-                            "signals": {"autocomplete": "postal-code"},
+                            "query": "City",
+                            "signals": {"autocomplete": "address-level2"},
+                            "generate": True,
                         },
                     )
                     assert response.status_code == 200
@@ -178,9 +174,7 @@ class TestFillFormWithSeededData:
         mock_embed = MagicMock()
         mock_embed.embed = AsyncMock(return_value=[1.0] * 1024)
         mock_retriever = MagicMock()
-        mock_retriever.search = AsyncMock(
-            return_value=[{"score": 0.9, "payload": seeded_payload}]
-        )
+        mock_retriever.search = AsyncMock(return_value=[{"score": 0.9, "payload": seeded_payload}])
         mock_retriever.get_profile_chunk = AsyncMock(return_value=None)
         mock_gen = MagicMock()
         mock_gen.generate_answer = AsyncMock(return_value="Test answer")
@@ -189,10 +183,38 @@ class TestFillFormWithSeededData:
             with patch("src.services.retriever.retriever", mock_retriever):
                 with patch("src.services.generator.generator", mock_gen):
                     response = await mock_client.post(
-                        "/fill-form",
+                        "/api/v1/search",
                         json={
-                            "label": "Street",
+                            "query": "Postcode",
+                            "signals": {"autocomplete": "postal-code"},
+                            "generate": True,
+                        },
+                    )
+                    assert response.status_code == 200
+                    data = response.json()
+                    assert data["field_type"] in ("postcode", "zip")
+                    assert data["field_value"] == "12345"
+
+    @pytest.mark.asyncio
+    async def test_street_field(self, mock_client, seeded_payload):
+        """Test street extraction from flat field."""
+        mock_embed = MagicMock()
+        mock_embed.embed = AsyncMock(return_value=[1.0] * 1024)
+        mock_retriever = MagicMock()
+        mock_retriever.search = AsyncMock(return_value=[{"score": 0.9, "payload": seeded_payload}])
+        mock_retriever.get_profile_chunk = AsyncMock(return_value=None)
+        mock_gen = MagicMock()
+        mock_gen.generate_answer = AsyncMock(return_value="Test answer")
+
+        with patch("src.services.embedder.embedder", mock_embed):
+            with patch("src.services.retriever.retriever", mock_retriever):
+                with patch("src.services.generator.generator", mock_gen):
+                    response = await mock_client.post(
+                        "/api/v1/search",
+                        json={
+                            "query": "Street",
                             "signals": {"autocomplete": "street-address"},
+                            "generate": True,
                         },
                     )
                     assert response.status_code == 200
@@ -229,9 +251,7 @@ class TestFillFormWithNestedData:
         mock_embed = MagicMock()
         mock_embed.embed = AsyncMock(return_value=[1.0] * 1024)
         mock_retriever = MagicMock()
-        mock_retriever.search = AsyncMock(
-            return_value=[{"score": 0.9, "payload": nested_payload}]
-        )
+        mock_retriever.search = AsyncMock(return_value=[{"score": 0.9, "payload": nested_payload}])
         mock_retriever.get_profile_chunk = AsyncMock(return_value=nested_payload)
         mock_gen = MagicMock()
         mock_gen.generate_answer = AsyncMock(return_value="Test answer")
@@ -240,10 +260,11 @@ class TestFillFormWithNestedData:
             with patch("src.services.retriever.retriever", mock_retriever):
                 with patch("src.services.generator.generator", mock_gen):
                     response = await mock_client.post(
-                        "/fill-form",
+                        "/api/v1/search",
                         json={
-                            "label": "City",
+                            "query": "City",
                             "signals": {"autocomplete": "address-level2"},
+                            "generate": True,
                         },
                     )
                     assert response.status_code == 200
@@ -257,9 +278,7 @@ class TestFillFormWithNestedData:
         mock_embed = MagicMock()
         mock_embed.embed = AsyncMock(return_value=[1.0] * 1024)
         mock_retriever = MagicMock()
-        mock_retriever.search = AsyncMock(
-            return_value=[{"score": 0.9, "payload": nested_payload}]
-        )
+        mock_retriever.search = AsyncMock(return_value=[{"score": 0.9, "payload": nested_payload}])
         mock_retriever.get_profile_chunk = AsyncMock(return_value=nested_payload)
         mock_gen = MagicMock()
         mock_gen.generate_answer = AsyncMock(return_value="Test answer")
@@ -268,10 +287,11 @@ class TestFillFormWithNestedData:
             with patch("src.services.retriever.retriever", mock_retriever):
                 with patch("src.services.generator.generator", mock_gen):
                     response = await mock_client.post(
-                        "/fill-form",
+                        "/api/v1/search",
                         json={
-                            "label": "Street",
+                            "query": "Street",
                             "signals": {"autocomplete": "street-address"},
+                            "generate": True,
                         },
                     )
                     assert response.status_code == 200
@@ -298,13 +318,13 @@ class TestFillFormErrorHandling:
             with patch("src.services.retriever.retriever", mock_retriever):
                 with patch("src.services.generator.generator", mock_gen):
                     response = await mock_client.post(
-                        "/fill-form",
-                        json={"label": "Unknown Field"},
+                        "/api/v1/search",
+                        json={"query": "Unknown Field", "generate": True},
                     )
                     assert response.status_code == 200
                     data = response.json()
-                    assert data["has_data"] is False
-                    assert "answer" in data
+                    assert len(data.get("results", [])) == 0
+                    assert "generated_answer" in data
 
     @pytest.mark.asyncio
     async def test_empty_signals(self, mock_client):
@@ -321,9 +341,9 @@ class TestFillFormErrorHandling:
             with patch("src.services.retriever.retriever", mock_retriever):
                 with patch("src.services.generator.generator", mock_gen):
                     response = await mock_client.post(
-                        "/fill-form",
-                        json={"label": "First Name", "signals": {}},
+                        "/api/v1/search",
+                        json={"query": "First Name", "signals": {}, "generate": True},
                     )
                     assert response.status_code == 200
                     data = response.json()
-                    assert "answer" in data
+                    assert "generated_answer" in data

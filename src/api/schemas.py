@@ -150,3 +150,65 @@ class HybridWeights(BaseModel):
     vector_weight: float = Field(default=0.7, description="Weight for dense vector similarity")
     bm25_weight: float = Field(default=0.3, description="Weight for BM25 score")
     phrase_bonus_weight: float = Field(default=0.1, description="Weight for phrase bonus")
+
+
+class SearchRequest(BaseModel):
+    """Request payload for resume search."""
+
+    query: Annotated[str, Field(min_length=1, max_length=500, description="Search query text")]
+    use_hyde: bool = Field(
+        default=True,
+        description="Enable HyDE (Hypothetical Document Embeddings) for improved retrieval",
+    )
+    use_reranking: bool = Field(
+        default=True, description="Enable reranking (cross-encoder + LLM rubric)"
+    )
+    top_k: Annotated[int, Field(default=5, ge=1, le=20, description="Number of results to return")]
+    include_scores: bool = Field(
+        default=True, description="Include detailed score breakdown in results"
+    )
+    generate: bool = Field(default=False, description="Generate an answer using LLM")
+    signals: dict | None = Field(
+        default=None,
+        description="Optional signals for semantic field classification (autocomplete, html_type, label_text, input_name)",
+    )
+
+
+class SearchScores(BaseModel):
+    """Score breakdown for a search result."""
+
+    vector_score: float | None = Field(default=None, description="Dense vector similarity score")
+    bm25_score: float | None = Field(default=None, description="BM25 keyword match score")
+    rerank_score: float | None = Field(
+        default=None, description="Reranking score (cross-encoder/LLM)"
+    )
+
+
+class SearchResult(BaseModel):
+    """Single search result."""
+
+    content: str = Field(description="Resume content chunk text")
+    score: float = Field(description="Combined relevance score")
+    source: str = Field(
+        default="resume", description="Source of the content (profile, resume, skills)"
+    )
+    scores: SearchScores | None = Field(
+        default=None, description="Detailed score breakdown (when include_scores=true)"
+    )
+
+
+class SearchResponse(BaseModel):
+    """Response payload for resume search."""
+
+    results: list[SearchResult] = Field(description="List of search results ranked by relevance")
+    query: str = Field(description="Echo of the original search query")
+    total_retrieved: int = Field(description="Number of results returned")
+    generated_answer: str | None = Field(
+        default=None, description="LLM-generated answer (when generate=true)"
+    )
+    confidence: ConfidenceLevel | None = Field(
+        default=None, description="Confidence level of generated answer"
+    )
+    field_type: str | None = Field(
+        default=None, description="Detected field type (e.g., email, phone, name)"
+    )

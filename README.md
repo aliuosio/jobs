@@ -96,20 +96,21 @@ curl http://localhost:8000/validate
 
 ## Usage
 
-### Fill a Form Field
+### Search and Generate Answers
 
-**API Endpoint**: `POST /fill-form`
+**API Endpoint**: `POST /api/v1/search`
 
 ```bash
-curl -X POST http://localhost:8000/fill-form \
+curl -X POST http://localhost:8000/api/v1/search \
   -H "Content-Type: application/json" \
-  -d '{"label": "What is your work experience?"}'
+  -d '{"query": "What is your work experience?", "generate": true}'
 ```
 
 **Response**:
 ```json
 {
-  "answer": "5 years of software development experience...",
+  "results": [...],
+  "generated_answer": "5 years of software development experience...",
   "has_data": true,
   "confidence": "high",
   "context_chunks": 3,
@@ -123,15 +124,16 @@ curl -X POST http://localhost:8000/fill-form \
 For known field types (name, email, phone), the API can extract values directly:
 
 ```bash
-curl -X POST http://localhost:8000/fill-form \
+curl -X POST http://localhost:8000/api/v1/search \
   -H "Content-Type: application/json" \
-  -d '{"label": "Email Address", "signals": {"autocomplete": "email", "html_type": "email"}}'
+  -d '{"query": "Email Address", "generate": true, "signals": {"autocomplete": "email", "html_type": "email"}}'
 ```
 
 **Response**:
 ```json
 {
-  "answer": "john.doe@example.com",
+  "results": [...],
+  "generated_answer": "john.doe@example.com",
   "has_data": true,
   "confidence": "high",
   "context_chunks": 1,
@@ -200,7 +202,8 @@ The **Job Links** tab displays tracked job postings with their application statu
 |----------|--------|-------------|
 | `/health` | GET | Service health check |
 | `/validate` | GET | Configuration validation |
-| `/fill-form` | POST | Generate answer for form field |
+| `/api/v1/search` | POST | Unified search + generation endpoint (preferred) |
+| `/fill-form` | POST | (removed, use /api/v1/search) |
 | `/job-offers` | GET | List all job offers |
 | `/job-offers` | POST | Create a new job offer |
 | `/job-offers/{id}` | GET | Get a specific job offer |
@@ -338,41 +341,41 @@ The system supports direct field extraction for six core form fields from flat p
 
 ```bash
 # Test First Name
-curl -X POST http://localhost:8000/fill-form \
+curl -X POST http://localhost:8000/api/v1/search \
   -H "Content-Type: application/json" \
-  -d '{"label": "First Name", "signals": {"autocomplete": "given-name"}}'
+  -d '{"query": "First Name", "generate": true, "signals": {"autocomplete": "given-name"}}'
 
 # Test Last Name
-curl -X POST http://localhost:8000/fill-form \
+curl -X POST http://localhost:8000/api/v1/search \
   -H "Content-Type: application/json" \
-  -d '{"label": "Last Name", "signals": {"autocomplete": "family-name"}}'
+  -d '{"query": "Last Name", "generate": true, "signals": {"autocomplete": "family-name"}}'
 
 # Test Email
-curl -X POST http://localhost:8000/fill-form \
+curl -X POST http://localhost:8000/api/v1/search \
   -H "Content-Type: application/json" \
-  -d '{"label": "Email", "signals": {"autocomplete": "email"}}'
+  -d '{"query": "Email", "generate": true, "signals": {"autocomplete": "email"}}'
 
 # Test City
-curl -X POST http://localhost:8000/fill-form \
+curl -X POST http://localhost:8000/api/v1/search \
   -H "Content-Type: application/json" \
-  -d '{"label": "City", "signals": {"autocomplete": "address-level2"}}'
+  -d '{"query": "City", "generate": true, "signals": {"autocomplete": "address-level2"}}'
 
 # Test Postcode
-curl -X POST http://localhost:8000/fill-form \
+curl -X POST http://localhost:8000/api/v1/search \
   -H "Content-Type: application/json" \
-  -d '{"label": "Postcode", "signals": {"autocomplete": "postal-code"}}'
+  -d '{"query": "Postcode", "generate": true, "signals": {"autocomplete": "postal-code"}}'
 
 # Test Street
-curl -X POST http://localhost:8000/fill-form \
+curl -X POST http://localhost:8000/api/v1/search \
   -H "Content-Type: application/json" \
-  -d '{"label": "Street", "signals": {"autocomplete": "street-address"}}'
+  -d '{"query": "Street", "generate": true, "signals": {"autocomplete": "street-address"}}'
 ```
 
 #### Expected Response Format
 
 ```json
 {
-  "answer": "Osiozekha",
+  "generated_answer": "Osiozekha",
   "has_data": true,
   "confidence": "high",
   "context_chunks": 1,
@@ -387,7 +390,7 @@ curl -X POST http://localhost:8000/fill-form \
 # Run unit tests for six-field classification
 pytest tests/unit/test_field_classifier_six_fields.py -v
 
-# Run integration tests for /fill-form endpoint
+# Run integration tests for /api/v1/search endpoint
 pytest tests/integration/test_fill_form.py -v
 
 # Run end-to-end tests

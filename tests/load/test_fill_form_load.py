@@ -1,4 +1,4 @@
-"""Load testing for /fill-form endpoint.
+"""Load testing for /api/v1/search endpoint.
 
 Tests concurrent request handling with 100 parallel requests.
 Requires:
@@ -94,13 +94,13 @@ Errors
 
 
 def make_request(session_id: int) -> tuple[int, float, Optional[str]]:
-    """Make a single /fill-form request.
+    """Make a single /api/v1/search request.
 
     Returns:
         Tuple of (session_id, response_time, error_message)
     """
     # Rotate through test labels to simulate realistic usage
-    labels = [
+    queries = [
         ("First Name", {"autocomplete": "given-name"}),
         ("Last Name", {"autocomplete": "family-name"}),
         ("Email", {"autocomplete": "email"}),
@@ -108,14 +108,14 @@ def make_request(session_id: int) -> tuple[int, float, Optional[str]]:
         ("City", {"autocomplete": "address-level2"}),
         ("Postcode", {"autocomplete": "postal-code"}),
     ]
-    label, signals = labels[session_id % len(labels)]
+    query, signals = queries[session_id % len(queries)]
 
     start = time.time()
     try:
         with httpx.Client(timeout=TIMEOUT_SECONDS) as client:
             response = client.post(
-                f"{TEST_BASE_URL}/fill-form",
-                json={"label": label, "signals": signals},
+                f"{TEST_BASE_URL}/api/v1/search",
+                json={"query": query, "signals": signals, "generate": True},
             )
             elapsed = time.time() - start
 
@@ -142,7 +142,7 @@ def run_load_test(
         LoadTestResult with aggregated metrics
     """
     print(f"Starting load test: {num_requests} requests with {max_workers} workers")
-    print(f"Target: {TEST_BASE_URL}/fill-form")
+    print(f"Target: {TEST_BASE_URL}/api/v1/search")
     print()
 
     start_time = time.time()
@@ -201,7 +201,7 @@ def verify_api_health() -> bool:
 def main():
     """Main entry point for standalone execution."""
     print("=" * 60)
-    print("Load Test: /fill-form Endpoint")
+    print("Load Test: /api/v1/search Endpoint")
     print("=" * 60)
     print()
 
