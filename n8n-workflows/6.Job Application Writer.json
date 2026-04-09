@@ -25,7 +25,7 @@
       "type": "@n8n/n8n-nodes-langchain.agent",
       "typeVersion": 3.1,
       "position": [
-        104,
+        112,
         592
       ],
       "id": "d3de9c59-d7bf-4b55-9659-db3b446f9bd6",
@@ -53,7 +53,7 @@
           "cachedResultName": "Entwürfe"
         },
         "subject": "={{ $('Edit Fields').item.json.subject }}",
-        "from": "={{ $json.sender_name }}",
+        "from": "={{ $json.sender_name }} <{{ $json.sender_email }}>",
         "to": "={{ $('Edit Fields').item.json.email }}",
         "text": "={{ $json.content }}"
       },
@@ -61,7 +61,7 @@
       "typeVersion": 1,
       "position": [
         960,
-        788
+        800
       ],
       "id": "fd5e2f01-e5c5-4d76-b521-1bfca932e670",
       "name": "CreateDraft email",
@@ -87,8 +87,10 @@
     },
     {
       "parameters": {
-        "model": "codestral-latest",
-        "options": {}
+        "model": "mistral-small-latest",
+        "options": {
+          "temperature": 0.3
+        }
       },
       "type": "@n8n/n8n-nodes-langchain.lmChatMistralCloud",
       "typeVersion": 1,
@@ -134,7 +136,7 @@
       "typeVersion": 2.3,
       "position": [
         736,
-        716
+        720
       ],
       "id": "020e4d97-df59-4646-a834-023ee7221e0a",
       "name": "If"
@@ -675,7 +677,7 @@
     "executionOrder": "v1",
     "binaryMode": "separate"
   },
-  "versionId": "3ba73d16-f69a-4c6d-abaf-1addb848349a",
+  "versionId": "88fda2c4-68d5-46dc-8a89-0b133dd5fb97",
   "meta": {
     "templateCredsSetupCompleted": true,
     "instanceId": "b751e283d167317e522f290d63e0b956085524c7c105edc03e657e7409fe8050"
