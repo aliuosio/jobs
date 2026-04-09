@@ -93,6 +93,17 @@ out/
 AGENTS.md
 n8nac-config.json
 .opencode/
+
+# BMAD framework files (keep config only)
+_bmad/core/bmad-*/
+_bmad/bmm/1-analysis/
+_bmad/bmm/2-plan-workflows/
+_bmad/bmm/3-solutioning/
+_bmad/bmm/4-implementation/
+_bmad/bmm/module-help.csv
+_bmad/core/module-help.csv
+_bmad/_config/
+_bmad-output/
 =0.29.0
 .sisyphus/
 .ruff_cache
