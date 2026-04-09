@@ -8,7 +8,7 @@
       "type": "@n8n/n8n-nodes-langchain.toolThink",
       "typeVersion": 1,
       "position": [
-        176,
+        384,
         816
       ],
       "id": "78a02e53-86a3-45b3-8e5f-45790aa92739",
@@ -25,7 +25,7 @@
       "type": "@n8n/n8n-nodes-langchain.agent",
       "typeVersion": 3.1,
       "position": [
-        112,
+        320,
         592
       ],
       "id": "d3de9c59-d7bf-4b55-9659-db3b446f9bd6",
@@ -36,8 +36,8 @@
       "type": "n8n-nodes-base.manualTrigger",
       "typeVersion": 1,
       "position": [
-        -1488,
-        592
+        -1312,
+        864
       ],
       "id": "b174299f-021b-46d6-a877-ba54e3d546cf",
       "name": "When clicking ‘Execute workflow’"
@@ -60,7 +60,7 @@
       "type": "n8n-nodes-imap-enhanced.imapEnhanced",
       "typeVersion": 1,
       "position": [
-        960,
+        1168,
         800
       ],
       "id": "fd5e2f01-e5c5-4d76-b521-1bfca932e670",
@@ -79,8 +79,8 @@
       "type": "n8n-nodes-base.splitInBatches",
       "typeVersion": 3,
       "position": [
-        -592,
-        592
+        -416,
+        768
       ],
       "id": "552f5efa-da27-4591-90d4-0bffc264d574",
       "name": "Loop Over Items"
@@ -95,7 +95,7 @@
       "type": "@n8n/n8n-nodes-langchain.lmChatMistralCloud",
       "typeVersion": 1,
       "position": [
-        48,
+        256,
         816
       ],
       "id": "740866be-a8b2-4aba-8239-64b09a3adf07",
@@ -135,7 +135,7 @@
       "type": "n8n-nodes-base.if",
       "typeVersion": 2.3,
       "position": [
-        736,
+        944,
         720
       ],
       "id": "020e4d97-df59-4646-a834-023ee7221e0a",
@@ -188,7 +188,7 @@
       "type": "n8n-nodes-base.set",
       "typeVersion": 3.4,
       "position": [
-        -176,
+        32,
         592
       ],
       "id": "304e02ee-a8a7-493a-b356-19bedde3bbc6",
@@ -222,7 +222,7 @@
       "type": "n8n-nodes-base.if",
       "typeVersion": 2.3,
       "position": [
-        -400,
+        -192,
         592
       ],
       "id": "1c6528c8-07c7-4072-9fb9-0922a9e9e656",
@@ -358,7 +358,7 @@
       "type": "n8n-nodes-base.postgres",
       "typeVersion": 2.6,
       "position": [
-        512,
+        720,
         592
       ],
       "id": "c2598071-838b-47e6-8f35-a95317053523",
@@ -408,8 +408,8 @@
       "type": "n8n-nodes-base.executeWorkflow",
       "typeVersion": 1.3,
       "position": [
-        -1040,
-        592
+        -864,
+        768
       ],
       "id": "c84d755d-d9c6-4f13-b878-61e26a3f2d4a",
       "name": "Call 'Prompt'"
@@ -443,8 +443,8 @@
       "type": "n8n-nodes-base.set",
       "typeVersion": 3.4,
       "position": [
-        -1264,
-        592
+        -1088,
+        768
       ],
       "id": "b16009ee-f99b-4211-851b-191392a3bff9",
       "name": "Edit Fields1"
@@ -472,7 +472,7 @@
       "type": "n8n-nodes-base.httpRequestTool",
       "typeVersion": 4.4,
       "position": [
-        304,
+        512,
         816
       ],
       "id": "75bf4a04-fb0d-4335-a1d0-f0daa2ce5a48",
@@ -487,8 +487,8 @@
       "type": "n8n-nodes-base.postgres",
       "typeVersion": 2.6,
       "position": [
-        -816,
-        592
+        -640,
+        768
       ],
       "id": "c71dc035-3012-4f34-a924-a4284618e034",
       "name": "Get Offers with Desc without Letter",
@@ -498,6 +498,21 @@
           "name": "Postgres account"
         }
       }
+    },
+    {
+      "parameters": {
+        "path": "writer",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2.1,
+      "position": [
+        -1312,
+        672
+      ],
+      "id": "19457894-d199-4dfe-b980-b9fb5187df17",
+      "name": "Webhook",
+      "webhookId": "99bfffa2-3111-49dc-9d7b-aef87435d3c4"
     }
   ],
   "pinData": {},
@@ -670,6 +685,17 @@
           }
         ]
       ]
+    },
+    "Webhook": {
+      "main": [
+        [
+          {
+            "node": "Edit Fields1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
     }
   },
   "active": false,
@@ -677,7 +703,7 @@
     "executionOrder": "v1",
     "binaryMode": "separate"
   },
-  "versionId": "88fda2c4-68d5-46dc-8a89-0b133dd5fb97",
+  "versionId": "1d91067e-3815-4eb5-b76c-bad644302ffd",
   "meta": {
     "templateCredsSetupCompleted": true,
     "instanceId": "b751e283d167317e522f290d63e0b956085524c7c105edc03e657e7409fe8050"
