@@ -88,6 +88,7 @@ class JobOffersService:
                 jo.id,
                 jo.title,
                 jo.url,
+                jo.description,
                 jop.id as process_id,
                 jop.job_offers_id,
                 jop.research,
@@ -151,6 +152,7 @@ class JobOffersService:
                 jo.id,
                 jo.title,
                 jo.url,
+                jo.description,
                 jop.id as process_id,
                 jop.job_offers_id,
                 jop.research,
@@ -183,6 +185,7 @@ class JobOffersService:
                 "id": row_dict.pop("id"),
                 "title": row_dict.pop("title"),
                 "url": row_dict.pop("url"),
+                "description": row_dict.pop("description"),
                 "process": process_data if process_data["job_offers_id"] is not None else None,
             }
             result.append(job_offer)
@@ -280,6 +283,53 @@ class JobOffersService:
             all_offers = await self.get_all_job_offers_for_broadcast()
             await self.broadcast(all_offers)
         return result
+
+    async def update_job_offer_description(
+        self,
+        job_offer_id: int,
+        description: str | None = None,
+    ) -> dict[str, Any] | None:
+        """Update job offer description field.
+
+        Args:
+            job_offer_id: The ID of the job offer to update.
+            description: New description text (None = preserve existing).
+
+        Returns:
+            Updated job offer dict with description, or None if not found.
+
+        Raises:
+            RuntimeError: If database pool not initialized.
+            asyncpg.PostgresError: Database query failure.
+        """
+        if not self._pool:
+            raise RuntimeError("Database pool not initialized")
+
+        async with self._pool.acquire() as conn:
+            async with conn.transaction():
+                job_exists = await conn.fetchrow(
+                    "SELECT id, title, url, description FROM job_offers WHERE id = $1",
+                    job_offer_id,
+                )
+                if not job_exists:
+                    return None
+
+                if description is not None:
+                    await conn.execute(
+                        "UPDATE job_offers SET description = $2 WHERE id = $1",
+                        job_offer_id,
+                        description,
+                    )
+
+                return {
+                    "id": job_exists["id"],
+                    "title": job_exists["title"],
+                    "url": job_exists["url"],
+                    "description": description
+                    if description is not None
+                    else job_exists["description"],
+                    "process": None,
+                }
 
     async def get_applied_jobs_for_csv(
         self,

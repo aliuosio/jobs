@@ -12,6 +12,7 @@ from src.api.schemas import (
     ConfidenceLevel,
     ErrorResponse,
     HealthResponse,
+    JobOfferUpdateRequest,
     JobOfferWithProcess,
     JobOffersListResponse,
     ProcessUpdateRequest,
@@ -312,6 +313,60 @@ async def update_job_offer_process(
         raise
     except Exception as e:
         logger.error(f"[job-offers-process] unexpected_error: {e}", exc_info=True)
+        raise HTTPException(status_code=500, detail="Internal server error")
+
+
+@router.patch(
+    "/job-offers/{job_offer_id}",
+    response_model=JobOfferWithProcess,
+    responses={
+        400: {"model": ErrorResponse, "description": "Invalid job offer ID"},
+        404: {"model": ErrorResponse, "description": "Job offer not found"},
+        500: {"model": ErrorResponse, "description": "Internal server error"},
+        503: {"model": ErrorResponse, "description": "Database unavailable"},
+    },
+    tags=["job-offers"],
+)
+async def update_job_offer(
+    job_offer_id: int,
+    update_request: JobOfferUpdateRequest,
+) -> JobOfferWithProcess:
+    """Update job offer fields (e.g., description) with partial update behavior.
+
+    Only provided fields are modified. Supports updating description for cover letter generation.
+    """
+    from asyncpg import PostgresError
+
+    from src.services.job_offers import job_offers_service
+
+    if job_offer_id <= 0:
+        raise HTTPException(status_code=400, detail="Job offer ID must be a positive integer")
+
+    logger.info(
+        f"[job-offers] updating job_offer_id={job_offer_id} "
+        f"description={'provided' if update_request.description is not None else 'not provided'}"
+    )
+
+    try:
+        result = await job_offers_service.update_job_offer_description(
+            job_offer_id=job_offer_id,
+            description=update_request.description,
+        )
+
+        if result is None:
+            logger.warning(f"[job-offers] not_found job_offer_id={job_offer_id}")
+            raise HTTPException(status_code=404, detail="Job offer not found")
+
+        logger.info(f"[job-offers] success job_offer_id={job_offer_id}")
+        return JobOfferWithProcess(**result)
+
+    except PostgresError as e:
+        logger.error(f"[job-offers] database_error: {e}")
+        raise HTTPException(status_code=503, detail="Database temporarily unavailable")
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"[job-offers] unexpected_error: {e}", exc_info=True)
         raise HTTPException(status_code=500, detail="Internal server error")
 
 
