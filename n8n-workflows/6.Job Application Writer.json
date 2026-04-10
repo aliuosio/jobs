@@ -9,7 +9,7 @@
       "typeVersion": 1,
       "position": [
         384,
-        816
+        1168
       ],
       "id": "78a02e53-86a3-45b3-8e5f-45790aa92739",
       "name": "Think"
@@ -25,8 +25,8 @@
       "type": "@n8n/n8n-nodes-langchain.agent",
       "typeVersion": 3.1,
       "position": [
-        320,
-        592
+        312,
+        944
       ],
       "id": "d3de9c59-d7bf-4b55-9659-db3b446f9bd6",
       "name": "AI Agent"
@@ -37,7 +37,7 @@
       "typeVersion": 1,
       "position": [
         -1312,
-        864
+        1112
       ],
       "id": "b174299f-021b-46d6-a877-ba54e3d546cf",
       "name": "When clicking ‘Execute workflow’"
@@ -61,7 +61,7 @@
       "typeVersion": 1,
       "position": [
         1168,
-        800
+        1140
       ],
       "id": "fd5e2f01-e5c5-4d76-b521-1bfca932e670",
       "name": "CreateDraft email",
@@ -80,7 +80,7 @@
       "typeVersion": 3,
       "position": [
         -416,
-        768
+        992
       ],
       "id": "552f5efa-da27-4591-90d4-0bffc264d574",
       "name": "Loop Over Items"
@@ -96,7 +96,7 @@
       "typeVersion": 1,
       "position": [
         256,
-        816
+        1168
       ],
       "id": "740866be-a8b2-4aba-8239-64b09a3adf07",
       "name": "Mistral",
@@ -136,7 +136,7 @@
       "typeVersion": 2.3,
       "position": [
         944,
-        720
+        1068
       ],
       "id": "020e4d97-df59-4646-a834-023ee7221e0a",
       "name": "If"
@@ -189,7 +189,7 @@
       "typeVersion": 3.4,
       "position": [
         32,
-        592
+        944
       ],
       "id": "304e02ee-a8a7-493a-b356-19bedde3bbc6",
       "name": "Edit Fields"
@@ -223,7 +223,7 @@
       "typeVersion": 2.3,
       "position": [
         -192,
-        592
+        944
       ],
       "id": "1c6528c8-07c7-4072-9fb9-0922a9e9e656",
       "name": "If1"
@@ -359,7 +359,7 @@
       "typeVersion": 2.6,
       "position": [
         720,
-        592
+        944
       ],
       "id": "c2598071-838b-47e6-8f35-a95317053523",
       "name": "Save",
@@ -409,7 +409,7 @@
       "typeVersion": 1.3,
       "position": [
         -864,
-        768
+        992
       ],
       "id": "c84d755d-d9c6-4f13-b878-61e26a3f2d4a",
       "name": "Call 'Prompt'"
@@ -444,7 +444,7 @@
       "typeVersion": 3.4,
       "position": [
         -1088,
-        768
+        992
       ],
       "id": "b16009ee-f99b-4211-851b-191392a3bff9",
       "name": "Edit Fields1"
@@ -473,7 +473,7 @@
       "typeVersion": 4.4,
       "position": [
         512,
-        816
+        1168
       ],
       "id": "75bf4a04-fb0d-4335-a1d0-f0daa2ce5a48",
       "name": "FastAPI"
@@ -488,7 +488,7 @@
       "typeVersion": 2.6,
       "position": [
         -640,
-        768
+        992
       ],
       "id": "c71dc035-3012-4f34-a924-a4284618e034",
       "name": "Get Offers with Desc without Letter",
@@ -508,11 +508,25 @@
       "typeVersion": 2.1,
       "position": [
         -1312,
-        672
+        920
       ],
       "id": "19457894-d199-4dfe-b980-b9fb5187df17",
       "name": "Webhook",
       "webhookId": "99bfffa2-3111-49dc-9d7b-aef87435d3c4"
+    },
+    {
+      "parameters": {
+        "respondWith": "allIncomingItems",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.5,
+      "position": [
+        -192,
+        752
+      ],
+      "id": "a989ffa7-751e-4107-a11c-5a542d4cdfbf",
+      "name": "Respond to Webhook"
     }
   ],
   "pinData": {},
@@ -552,7 +566,13 @@
     },
     "Loop Over Items": {
       "main": [
-        [],
+        [
+          {
+            "node": "Respond to Webhook",
+            "type": "main",
+            "index": 0
+          }
+        ],
         [
           {
             "node": "If1",
@@ -698,12 +718,16 @@
       ]
     }
   },
-  "active": false,
+  "active": true,
   "settings": {
     "executionOrder": "v1",
-    "binaryMode": "separate"
+    "binaryMode": "separate",
+    "timeSavedMode": "fixed",
+    "saveDataSuccessExecution": "all",
+    "callerPolicy": "workflowsFromSameOwner",
+    "availableInMCP": false
   },
-  "versionId": "1d91067e-3815-4eb5-b76c-bad644302ffd",
+  "versionId": "153d5c8f-927e-4b57-899d-4ff4efb3721a",
   "meta": {
     "templateCredsSetupCompleted": true,
     "instanceId": "b751e283d167317e522f290d63e0b956085524c7c105edc03e657e7409fe8050"
