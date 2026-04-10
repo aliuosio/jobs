@@ -8,8 +8,8 @@
       "type": "@n8n/n8n-nodes-langchain.toolThink",
       "typeVersion": 1,
       "position": [
-        528,
-        1088
+        384,
+        816
       ],
       "id": "78a02e53-86a3-45b3-8e5f-45790aa92739",
       "name": "Think"
@@ -17,7 +17,7 @@
     {
       "parameters": {
         "promptType": "define",
-        "text": "=# METADATA\nJOB_COMPANY:{{ $json.company }}\nNOW:{{ $now }}\nJOB_TITLE: {{ $json.subject }}\nJOB_DESCRIPTION:{{ $json.description }}",
+        "text": "=# INPUT\nJOB_COMPANY:{{ $json.company }}\nNOW:{{ $now }}\nJOB_TITLE: {{ $json.subject }}\nJOB_DESCRIPTION:{{ $json.description }}\n\n",
         "options": {
           "systemMessage": "={{ $('Call \\'Prompt\\'').item.json.prompt }}"
         }
@@ -25,8 +25,8 @@
       "type": "@n8n/n8n-nodes-langchain.agent",
       "typeVersion": 3.1,
       "position": [
-        464,
-        864
+        320,
+        592
       ],
       "id": "d3de9c59-d7bf-4b55-9659-db3b446f9bd6",
       "name": "AI Agent"
@@ -36,7 +36,7 @@
       "type": "n8n-nodes-base.manualTrigger",
       "typeVersion": 1,
       "position": [
-        -1216,
+        -1312,
         864
       ],
       "id": "b174299f-021b-46d6-a877-ba54e3d546cf",
@@ -53,15 +53,15 @@
           "cachedResultName": "Entwürfe"
         },
         "subject": "={{ $('Edit Fields').item.json.subject }}",
-        "from": "={{ $json.sender_name }}",
+        "from": "={{ $json.sender_name }} <{{ $json.sender_email }}>",
         "to": "={{ $('Edit Fields').item.json.email }}",
         "text": "={{ $json.content }}"
       },
       "type": "n8n-nodes-imap-enhanced.imapEnhanced",
       "typeVersion": 1,
       "position": [
-        1472,
-        1120
+        1168,
+        800
       ],
       "id": "fd5e2f01-e5c5-4d76-b521-1bfca932e670",
       "name": "CreateDraft email",
@@ -74,124 +74,32 @@
     },
     {
       "parameters": {
-        "operation": "select",
-        "schema": {
-          "__rl": true,
-          "mode": "list",
-          "value": "public"
-        },
-        "table": {
-          "__rl": true,
-          "value": "job_offers",
-          "mode": "list",
-          "cachedResultName": "job_offers"
-        },
-        "returnAll": true,
-        "where": {
-          "values": [
-            {
-              "column": "email",
-              "condition": "!=",
-              "value": "null"
-            },
-            {
-              "column": "description",
-              "condition": "!=",
-              "value": "=null"
-            }
-          ]
-        },
-        "combineConditions": "OR",
-        "options": {}
-      },
-      "type": "n8n-nodes-base.postgres",
-      "typeVersion": 2.6,
-      "position": [
-        -992,
-        864
-      ],
-      "id": "b5ec441b-494a-4b32-8275-7e149a1295af",
-      "name": "Job Offers",
-      "credentials": {
-        "postgres": {
-          "id": "g5e3W2e5yHEjzZoI",
-          "name": "Postgres account"
-        }
-      }
-    },
-    {
-      "parameters": {
-        "mode": "retrieve-as-tool",
-        "toolDescription": "Use this tool to retrieve verified professional experience, technical skills, and project references for me the writer. Access this database to find concrete evidence of expertise in Magento, PHP, and web development. It contains specific 'points' with start/end years and lead-role indicators. Use it to ground all career claims in factual data",
-        "qdrantCollection": {
-          "__rl": true,
-          "value": "resume",
-          "mode": "list",
-          "cachedResultName": "resume"
-        },
-        "topK": 10,
-        "options": {}
-      },
-      "type": "@n8n/n8n-nodes-langchain.vectorStoreQdrant",
-      "typeVersion": 1.3,
-      "position": [
-        656,
-        1088
-      ],
-      "id": "6fec6890-9688-4d5c-8d25-783598129d58",
-      "name": "Qdrant Vector Store",
-      "credentials": {
-        "qdrantApi": {
-          "id": "ZBxpJm0RU3lTDLvz",
-          "name": "Qdrant account"
-        }
-      }
-    },
-    {
-      "parameters": {
         "options": {}
       },
       "type": "n8n-nodes-base.splitInBatches",
       "typeVersion": 3,
       "position": [
-        -320,
-        864
+        -416,
+        768
       ],
       "id": "552f5efa-da27-4591-90d4-0bffc264d574",
       "name": "Loop Over Items"
     },
     {
       "parameters": {
-        "model": "codestral-latest",
-        "options": {}
+        "model": "mistral-small-latest",
+        "options": {
+          "temperature": 0.3
+        }
       },
       "type": "@n8n/n8n-nodes-langchain.lmChatMistralCloud",
       "typeVersion": 1,
       "position": [
-        400,
-        1088
+        256,
+        816
       ],
       "id": "740866be-a8b2-4aba-8239-64b09a3adf07",
       "name": "Mistral",
-      "credentials": {
-        "mistralCloudApi": {
-          "id": "mNGknH3RPQM36hPs",
-          "name": "Mistral Cloud account"
-        }
-      }
-    },
-    {
-      "parameters": {
-        "options": {}
-      },
-      "type": "@n8n/n8n-nodes-langchain.embeddingsMistralCloud",
-      "typeVersion": 1,
-      "position": [
-        736,
-        1296
-      ],
-      "id": "2e81a72c-d38a-4534-af73-2b9a943691c5",
-      "name": "Embeddings Mistral Cloud",
       "credentials": {
         "mistralCloudApi": {
           "id": "mNGknH3RPQM36hPs",
@@ -227,8 +135,8 @@
       "type": "n8n-nodes-base.if",
       "typeVersion": 2.3,
       "position": [
-        1248,
-        1040
+        944,
+        720
       ],
       "id": "020e4d97-df59-4646-a834-023ee7221e0a",
       "name": "If"
@@ -280,8 +188,8 @@
       "type": "n8n-nodes-base.set",
       "typeVersion": 3.4,
       "position": [
-        176,
-        864
+        32,
+        592
       ],
       "id": "304e02ee-a8a7-493a-b356-19bedde3bbc6",
       "name": "Edit Fields"
@@ -314,8 +222,8 @@
       "type": "n8n-nodes-base.if",
       "typeVersion": 2.3,
       "position": [
-        -48,
-        864
+        -192,
+        592
       ],
       "id": "1c6528c8-07c7-4072-9fb9-0922a9e9e656",
       "name": "If1"
@@ -341,9 +249,8 @@
             "recp_email": "={{ $('Edit Fields').item.json.email }}",
             "title": "={{ $('Edit Fields').item.json.subject }}",
             "content": "={{ $json.output }}",
-            "sender_name": "={{ $('Edit Fields').item.json.sender_name }}",
-            "sender_email": "={{ $('Edit Fields').item.json.sender_email }}",
-            "recp_name": "={{ $('Edit Fields').item.json.sender_name }}"
+            "sender_name": "={{ $('Edit Fields1').item.json.sender_name }}",
+            "sender_email": "={{ $('Edit Fields1').item.json.sender_email }}"
           },
           "matchingColumns": [
             "id"
@@ -393,7 +300,8 @@
               "defaultMatch": false,
               "display": true,
               "type": "string",
-              "canBeUsedToMatch": true
+              "canBeUsedToMatch": true,
+              "removed": true
             },
             {
               "id": "recp_email",
@@ -450,8 +358,8 @@
       "type": "n8n-nodes-base.postgres",
       "typeVersion": 2.6,
       "position": [
-        1024,
-        864
+        720,
+        592
       ],
       "id": "c2598071-838b-47e6-8f35-a95317053523",
       "name": "Save",
@@ -500,8 +408,8 @@
       "type": "n8n-nodes-base.executeWorkflow",
       "typeVersion": 1.3,
       "position": [
-        -544,
-        864
+        -864,
+        768
       ],
       "id": "c84d755d-d9c6-4f13-b878-61e26a3f2d4a",
       "name": "Call 'Prompt'"
@@ -535,11 +443,76 @@
       "type": "n8n-nodes-base.set",
       "typeVersion": 3.4,
       "position": [
-        -768,
-        864
+        -1088,
+        768
       ],
       "id": "b16009ee-f99b-4211-851b-191392a3bff9",
       "name": "Edit Fields1"
+    },
+    {
+      "parameters": {
+        "toolDescription": "FastAPI Endpoint for Skills and Experience on the Candidate",
+        "method": "POST",
+        "url": "http://api-backend:8000/api/v1/search",
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "query",
+              "value": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('parameters0_Value', ``, 'string') }}"
+            },
+            {
+              "name": "include_scores",
+              "value": "false"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequestTool",
+      "typeVersion": 4.4,
+      "position": [
+        512,
+        816
+      ],
+      "id": "75bf4a04-fb0d-4335-a1d0-f0daa2ce5a48",
+      "name": "FastAPI"
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "SELECT * FROM job_offers jo \nWHERE (jo.email IS NOT NULL OR jo.description IS NOT NULL)\n  AND LENGTH(jo.description) > 200\n  AND NOT EXISTS (\n      SELECT 1 \n      FROM job_applications ja \n      WHERE ja.job_offers_id = jo.id\n  );",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.6,
+      "position": [
+        -640,
+        768
+      ],
+      "id": "c71dc035-3012-4f34-a924-a4284618e034",
+      "name": "Get Offers with Desc without Letter",
+      "credentials": {
+        "postgres": {
+          "id": "g5e3W2e5yHEjzZoI",
+          "name": "Postgres account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "path": "writer",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2.1,
+      "position": [
+        -1312,
+        672
+      ],
+      "id": "19457894-d199-4dfe-b980-b9fb5187df17",
+      "name": "Webhook",
+      "webhookId": "99bfffa2-3111-49dc-9d7b-aef87435d3c4"
     }
   ],
   "pinData": {},
@@ -559,7 +532,7 @@
       "main": [
         [
           {
-            "node": "Job Offers",
+            "node": "Edit Fields1",
             "type": "main",
             "index": 0
           }
@@ -572,28 +545,6 @@
           {
             "node": "Save",
             "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
-    "Job Offers": {
-      "main": [
-        [
-          {
-            "node": "Edit Fields1",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
-    "Qdrant Vector Store": {
-      "ai_tool": [
-        [
-          {
-            "node": "AI Agent",
-            "type": "ai_tool",
             "index": 0
           }
         ]
@@ -628,17 +579,6 @@
           {
             "node": "AI Agent",
             "type": "ai_languageModel",
-            "index": 0
-          }
-        ]
-      ]
-    },
-    "Embeddings Mistral Cloud": {
-      "ai_embedding": [
-        [
-          {
-            "node": "Qdrant Vector Store",
-            "type": "ai_embedding",
             "index": 0
           }
         ]
@@ -717,7 +657,40 @@
       "main": [
         [
           {
+            "node": "Get Offers with Desc without Letter",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "FastAPI": {
+      "ai_tool": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get Offers with Desc without Letter": {
+      "main": [
+        [
+          {
             "node": "Loop Over Items",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Webhook": {
+      "main": [
+        [
+          {
+            "node": "Edit Fields1",
             "type": "main",
             "index": 0
           }
@@ -730,7 +703,7 @@
     "executionOrder": "v1",
     "binaryMode": "separate"
   },
-  "versionId": "cb31ac45-ac16-4d6d-87e1-0280b6233850",
+  "versionId": "1d91067e-3815-4eb5-b76c-bad644302ffd",
   "meta": {
     "templateCredsSetupCompleted": true,
     "instanceId": "b751e283d167317e522f290d63e0b956085524c7c105edc03e657e7409fe8050"

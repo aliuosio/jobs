@@ -116,6 +116,7 @@ class JobOfferWithProcess(BaseModel):
     id: int = Field(description="Job offer primary key")
     title: str = Field(description="Job posting title")
     url: str | None = Field(default=None, description="URL to job posting")
+    description: str | None = Field(default=None, description="Job description text")
     process: JobOfferProcess | None = Field(
         default=None, description="Processing metadata, null if no process record"
     )
@@ -138,6 +139,14 @@ class ProcessUpdateRequest(BaseModel):
     )
     applied: bool | None = Field(
         default=None, description="Whether job application has been submitted"
+    )
+
+
+class JobOfferUpdateRequest(BaseModel):
+    """Request payload for updating job offer fields (e.g., description)."""
+
+    description: str | None = Field(
+        default=None, description="Job description text for cover letter generation"
     )
 
 
