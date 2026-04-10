@@ -168,14 +168,20 @@ function handleJobOffersUpdate(data) {
   const { jobOffers } = data;
   console.log('[Popup] SSE update received:', jobOffers.length, 'offers');
   
-  jobLinks = jobOffers.map(offer => ({
-    id: offer.id,
-    title: offer.title,
-    url: offer.url,
-    applied: offer.process?.applied ?? false,
-    pending: false,
-    error: false
-  }));
+  jobLinks = jobOffers.map(offer => {
+    const existing = jobLinks.find(j => j.id === offer.id);
+    return {
+      id: offer.id,
+      title: offer.title,
+      url: offer.url,
+      description: offer.description || '',
+      applied: offer.process?.applied ?? false,
+      pending: false,
+      error: false,
+      cl_status: existing?.cl_status || 'none',
+      cl_start_time: existing?.cl_start_time || null
+    };
+  });
   
   const filteredLinks = filterJobLinks(jobLinks, showAppliedFilter);
   renderJobLinksList(filteredLinks);
@@ -313,7 +319,6 @@ async function forceRefreshJobLinks() {
     updateStaleIndicator(false);
   } catch (err) {
     console.error('[Popup] forceRefreshJobLinks error:', err);
-    // If we have cached data, show it with error
     if (jobLinks.length > 0) {
       hideLoading();
       showToggleError('Failed to refresh: ' + err.message);
@@ -401,14 +406,20 @@ async function fetchJobOffers() {
     if (!response.success) {
       throw new Error(response.error?.message || 'Failed to fetch job offers');
     }
-    return (response.job_offers || []).map(offer => ({
-      id: offer.id,
-      title: offer.title,
-      url: offer.url,
-      applied: offer.process?.applied ?? false,
-      pending: false,
-      error: false
-    }));
+    return (response.job_offers || []).map(offer => {
+      const existing = jobLinks.find(j => j.id === offer.id);
+      return {
+        id: offer.id,
+        title: offer.title,
+        url: offer.url,
+        description: offer.description || existing?.description || '',
+        applied: offer.process?.applied ?? false,
+        pending: false,
+        error: false,
+        cl_status: existing?.cl_status || 'none',
+        cl_start_time: existing?.cl_start_time || null
+      };
+    });
   } catch (err) {
     throw err;
   }
