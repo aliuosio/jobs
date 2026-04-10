@@ -1,5 +1,5 @@
 {
-  "name": "3.Job Skills Import",
+  "name": "2.Job Skills Import",
   "nodes": [
     {
       "parameters": {
@@ -40,7 +40,7 @@
     },
     {
       "parameters": {
-        "model": "mistral-small-latest",
+        "model": "mistral-small-2603",
         "options": {
           "temperature": 0.1
         }
@@ -55,7 +55,7 @@
       ],
       "credentials": {
         "mistralCloudApi": {
-          "id": "yy2J74r8rO6wyA97",
+          "id": "mNGknH3RPQM36hPs",
           "name": "Mistral Cloud account"
         }
       }
@@ -237,8 +237,8 @@
       ],
       "credentials": {
         "qdrantApi": {
-          "id": "5zLckKlW4WMSmDEm",
-          "name": "QdrantApi account"
+          "id": "ZBxpJm0RU3lTDLvz",
+          "name": "Qdrant account"
         }
       }
     },
@@ -318,7 +318,7 @@
       ],
       "credentials": {
         "mistralCloudApi": {
-          "id": "yy2J74r8rO6wyA97",
+          "id": "mNGknH3RPQM36hPs",
           "name": "Mistral Cloud account"
         }
       }
@@ -556,7 +556,7 @@
     "callerPolicy": "workflowsFromSameOwner",
     "availableInMCP": false
   },
-  "versionId": "e4f2727b-c527-4752-8186-e9b445fd09da",
+  "versionId": "a16680bc-b6dd-48b0-bc1d-f9cb8c23d59d",
   "meta": {
     "templateCredsSetupCompleted": true,
     "instanceId": "b751e283d167317e522f290d63e0b956085524c7c105edc03e657e7409fe8050"

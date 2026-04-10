@@ -371,6 +371,44 @@ async def update_job_offer(
 
 
 @router.get(
+    "/job-offers/{job_offer_id}/letter-status",
+    response_model=dict,
+    responses={
+        400: {"model": ErrorResponse, "description": "Invalid job offer ID"},
+        404: {"model": ErrorResponse, "description": "Job offer not found"},
+        500: {"model": ErrorResponse, "description": "Internal server error"},
+        503: {"model": ErrorResponse, "description": "Database unavailable"},
+    },
+    tags=["job-offers"],
+)
+async def get_letter_status(job_offer_id: int) -> dict:
+    from asyncpg import PostgresError
+
+    from src.services.job_offers import job_offers_service
+
+    if job_offer_id <= 0:
+        raise HTTPException(status_code=400, detail="Job offer ID must be a positive integer")
+
+    logger.info(f"[letter-status] checking job_offer_id={job_offer_id}")
+
+    try:
+        letter_generated = await job_offers_service.check_letter_generated(job_offer_id)
+        logger.info(
+            f"[letter-status] success job_offer_id={job_offer_id} letter_generated={letter_generated}"
+        )
+        return {"letter_generated": letter_generated}
+
+    except PostgresError as e:
+        logger.error(f"[letter-status] database_error: {e}")
+        raise HTTPException(status_code=503, detail="Database temporarily unavailable")
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"[letter-status] unexpected_error: {e}", exc_info=True)
+        raise HTTPException(status_code=500, detail="Internal server error")
+
+
+@router.get(
     "/api/v1/stream",
     tags=["job-offers"],
 )

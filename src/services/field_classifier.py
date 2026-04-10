@@ -303,6 +303,21 @@ def extract_field_value_from_payload(
     Returns:
         The extracted field value or None if not found.
     """
+    # 0) Check for flat fields at root level first (priority)
+    flat_field_mapping = {
+        SemanticFieldType.FIRST_NAME: "firstname",
+        SemanticFieldType.LAST_NAME: "lastname",
+        SemanticFieldType.EMAIL: "email",
+        SemanticFieldType.CITY: "city",
+        SemanticFieldType.POSTCODE: "postcode",
+        SemanticFieldType.ZIP: "postcode",
+        SemanticFieldType.STREET: "street",
+    }
+    if field_type in flat_field_mapping:
+        flat_key = flat_field_mapping[field_type]
+        if flat_key in payload:
+            return str(payload[flat_key])
+
     # 1) Try direct field access using the updated field mappings
     field_path = get_profile_field_name(field_type)
     if field_path:

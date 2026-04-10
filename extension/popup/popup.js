@@ -2,15 +2,44 @@
  * Popup Script for Job Forms Helper
  * Handles UI interactions and communication with background/content scripts
  */
+console.log('[Popup] Script loaded, waiting for DOM...');
 
 // =============================================================================
-// STORAGE CONSTANTS (T004)
+// CACHE CONFIGURATION (T004)
 // =============================================================================
+
+/** @type {number} Cache TTL in milliseconds (30 minutes) */
+const CACHE_TTL_MS = 30 * 60 * 1000;
+
+/**
+ * Check if cached job offers are still valid
+ * @returns {Promise<{valid: boolean, isStale: boolean, age: number}>}
+ */
+async function isCacheValid() {
+  try {
+    const result = await browser.storage.local.get('jobOffersTimestamp');
+    const timestamp = result.jobOffersTimestamp || 0;
+    
+    if (timestamp === 0) {
+      return { valid: false, isStale: true, age: 0 };
+    }
+    
+    const age = Date.now() - timestamp;
+    const isStale = age > CACHE_TTL_MS;
+    const valid = age <= CACHE_TTL_MS;
+    
+    return { valid, isStale, age };
+  } catch (error) {
+    console.error('[Popup] Error checking cache validity:', error);
+    return { valid: false, isStale: true, age: 0 };
+  }
+}
 
 /** @type {Object} Storage keys for browser.storage.local */
 const API_ENDPOINT = 'http://localhost:8000';
 const API_TIMEOUT_MS = 10000;
 const N8N_WEBHOOK_URL = 'http://localhost:5678/webhook/writer';
+const MIN_DESCRIPTION_LENGTH = 200;
 
 const STORAGE_KEYS = {
   JOB_OFFERS: 'jobOffers',
@@ -49,6 +78,9 @@ let showAppliedFilter = false;
 /** @type {string} SSE connection status */
 let sseStatus = 'disconnected';
 
+/** @type {Map<number, boolean>} Letter status cache per job ID */
+let letterStatusCache = new Map();
+
 // DOM Elements
 const elements = {
   // Tab Navigation
@@ -84,63 +116,68 @@ function updateStaleIndicator(isStale) {
   }
 }
 
-/**
- * Initialize popup
- */
 async function init() {
+  console.log('[Popup] init() START');
   try {
     const [tab] = await browser.tabs.query({ active: true, currentWindow: true });
     currentTabId = tab.id;
     currentUrl = tab.url;
+    console.log('[Popup] Tab loaded:', tab.id);
     
     setupEventListeners();
     setupSSEMessageListener();
     setupDescModal();
     setupClEventListeners();
+    console.log('[Popup] Event listeners set up');
     
     await restoreTabPreference();
     await restoreFormFieldsState();
     await restoreShowAppliedFilter();
+    console.log('[Popup] State restored');
 
-    const hasCachedData = await loadCachedJobLinks();
+    const cacheResult = await loadCachedJobLinks();
+    console.log('[Popup] Cache result:', cacheResult);
     
-    if (!hasCachedData) {
+    if (!cacheResult.hasData) {
+      console.log('[Popup] No cache - calling forceRefreshJobLinks');
       await forceRefreshJobLinks();
+    } else if (cacheResult.needsRefresh) {
+      console.log('[Popup] Cache stale - background refresh');
+      forceRefreshJobLinks().catch(err => 
+        console.error('[Popup] Background refresh failed:', err)
+      );
     }
+    console.log('[Popup] init() COMPLETE');
   } catch (e) {
-    console.error('Popup init failed:', e);
+    console.error('[Popup] init() FAILED:', e);
   }
 }
 
 /**
  * Load cached job links from storage for instant display
- * @returns {Promise<boolean>} true if cached data exists
+ * @returns {Promise<{hasData: boolean, needsRefresh: boolean}>}
  */
 async function loadCachedJobLinks() {
   try {
-    const allKeys = await browser.storage.local.get(null);
-    console.log('All storage keys:', Object.keys(allKeys));
-    console.log('jobOffers in storage?', 'jobOffers' in allKeys, allKeys.jobOffers ? allKeys.jobOffers.length : 0);
-    
+    const cacheStatus = await isCacheValid();
     const result = await browser.storage.local.get('jobOffers');
+    
     if (!result.jobOffers || result.jobOffers.length === 0) {
-      console.log('No cached jobs found');
-      return false;
+      return { hasData: false, needsRefresh: true };
     }
-    console.log('Found', result.jobOffers.length, 'cached jobs');
+    
     jobLinks = result.jobOffers;
-    const timestampResult = await browser.storage.local.get('jobOffersTimestamp');
     const filteredLinks = filterJobLinks(jobLinks, showAppliedFilter);
-    console.log('Filtered to', filteredLinks.length, 'jobs (showAppliedFilter:', showAppliedFilter, ')');
     await renderJobLinksList(filteredLinks);
-    const cacheAge = Date.now() - (timestampResult.jobOffersTimestamp || 0);
-    if (cacheAge > 5 * 60 * 1000) {
+    
+    if (cacheStatus.isStale) {
       updateStaleIndicator(true);
+      return { hasData: true, needsRefresh: true };
     }
-    return true;
+    
+    return { hasData: true, needsRefresh: false };
   } catch (error) {
-    console.log('Error loading cached jobs:', error);
-    return false;
+    return { hasData: false, needsRefresh: true };
   }
 }
 
@@ -302,32 +339,51 @@ function showJobError(message) {
  * Handle Refresh Jobs button click - force fresh fetch
  */
 async function forceRefreshJobLinks() {
-  const btn = elements.refreshLinksBtn;
-  const originalText = btn.textContent;
+  console.log('[Popup] forceRefreshJobLinks() called');
   
-  btn.disabled = true;
-  btn.textContent = 'Refreshing...';
-  showSkeleton();
+  if (elements.refreshLinksBtn) {
+    const btn = elements.refreshLinksBtn;
+    const originalText = btn.textContent;
+    btn.disabled = true;
+    btn.textContent = 'Refreshing...';
+  }
+  
+  if (elements.jobLinksLoading && elements.jobLinksList && elements.jobLinksError) {
+    showSkeleton();
+  }
   
   try {
+    console.log('[Popup] Fetching job offers from background...');
     const links = await fetchJobOffers();
+    console.log('[Popup] Got', links.length, 'links from background');
     jobLinks = links;
-    hideLoading();
+    
+    if (elements.jobLinksLoading && elements.jobLinksList && elements.jobLinksError) {
+      hideLoading();
+    }
+    
     const filteredLinks = filterJobLinks(jobLinks, showAppliedFilter);
     renderJobLinksList(filteredLinks);
     await cacheJobOffers();
     updateStaleIndicator(false);
+    console.log('[Popup] Jobs rendered successfully');
   } catch (err) {
     console.error('[Popup] forceRefreshJobLinks error:', err);
     if (jobLinks.length > 0) {
-      hideLoading();
+      if (elements.jobLinksLoading && elements.jobLinksList && elements.jobLinksError) {
+        hideLoading();
+      }
       showToggleError('Failed to refresh: ' + err.message);
     } else {
-      showJobError('Failed to load jobs: ' + err.message);
+      if (elements.jobLinksLoading && elements.jobLinksList && elements.jobLinksError) {
+        showJobError('Failed to load jobs: ' + err.message);
+      }
     }
   } finally {
-    btn.disabled = false;
-    btn.textContent = originalText;
+    if (elements.refreshLinksBtn) {
+      elements.refreshLinksBtn.disabled = false;
+      elements.refreshLinksBtn.textContent = 'Refresh Jobs';
+    }
   }
 }
 
@@ -367,7 +423,8 @@ function filterJobLinks(links, showApplied) {
   if (showApplied) {
     return links;
   }
-  return links.filter(link => !link.applied);
+  const applied = link => link.process?.applied ?? link.applied ?? false;
+  return links.filter(link => !applied(link));
 }
 
 /**
@@ -401,8 +458,10 @@ async function handleShowAppliedToggle() {
  * @returns {Promise<Array>} JobLinkState array
  */
 async function fetchJobOffers() {
+  console.log('[Popup] fetchJobOffers() - sending message to background');
   try {
     const response = await browser.runtime.sendMessage({ type: 'GET_JOB_OFFERS' });
+    console.log('[Popup] fetchJobOffers() - response:', response);
     if (!response.success) {
       throw new Error(response.error?.message || 'Failed to fetch job offers');
     }
@@ -421,6 +480,7 @@ async function fetchJobOffers() {
       };
     });
   } catch (err) {
+    console.error('[Popup] fetchJobOffers() - error:', err);
     throw err;
   }
 }
@@ -720,9 +780,13 @@ async function renderJobLinksList(links) {
     const isLastClicked = link.id === lastClickedJobLink;
     const clStatus = link.cl_status || 'none';
     const clStartTime = link.cl_start_time || null;
-    const badgeClass = getClBadgeClass(clStatus);
-    const badgeText = getClBadgeText(clStatus, clStartTime);
-    const canGenerate = clStatus === 'saved' || clStatus === 'ready';
+    const descriptionLength = link.description ? link.description.trim().length : 0;
+    const hasLongDescription = descriptionLength >= MIN_DESCRIPTION_LENGTH;
+    const hasDescription = descriptionLength > 0;
+    const canGenerate = descriptionLength >= MIN_DESCRIPTION_LENGTH;
+    const badgeClass = getClBadgeClass(link, hasLongDescription);
+    const badgeText = getClBadgeText(link, hasLongDescription);
+    const canGenerateReason = clStatus === 'ready' ? 'Letter available' : (!hasDescription ? 'Enter a description' : `Description must be at least ${MIN_DESCRIPTION_LENGTH} characters`);
     const isGenerating = clStatus === 'generating';
     return `
     <div class="job-link-item${isVisited ? ' job-link-visited' : ''}${isLastClicked ? ' job-link-highlight' : ''}" data-job-id="${link.id}">
@@ -734,8 +798,8 @@ async function renderJobLinksList(links) {
       <a class="job-link-title" href="${link.url}" title="${link.title}" data-job-id="${link.id}">${link.title}</a>
       <span class="cl-badge ${badgeClass}">${badgeText}</span>
       <div class="cl-actions">
-        <button class="btn btn-xs btn-secondary cl-save-btn" data-job-id="${link.id}" ${clStatus !== 'none' ? 'disabled' : ''}>Save Desc</button>
-        <button class="btn btn-xs btn-primary cl-generate-btn" data-job-id="${link.id}" ${!canGenerate ? 'disabled' : ''}>${isGenerating ? 'Generating...' : 'Generate'}</button>
+        <button class="btn btn-xs btn-secondary cl-save-btn" data-job-id="${link.id}">Save Desc</button>
+        <button class="btn btn-xs btn-primary cl-generate-btn" data-job-id="${link.id}" ${!canGenerate ? 'disabled' : ''} title="${canGenerateReason}">${isGenerating ? 'Generating...' : 'Generate'}</button>
       </div>
     </div>`;
   }).join('');
@@ -875,6 +939,13 @@ async function getApiUrl() {
 
 // Initialize on DOM ready
 document.addEventListener('DOMContentLoaded', init);
+
+// Backup: call init after a short delay anyway
+setTimeout(() => {
+  console.log('[Popup] Backup init called');
+  init().catch(e => console.error('[Popup] Backup init error:', e));
+}, 500);
+
 /**
  * Handle status icon click — optimistic toggle
  * @param {number} jobId
@@ -952,30 +1023,29 @@ function showToggleError(message) {
   setTimeout(() => msgEl.remove(), 3000);
 }
 
-function getClBadgeClass(status) {
-  switch (status) {
-    case 'saved': return 'cl-badge-ready';
-    case 'generating': return 'cl-badge-generating';
-    case 'ready': return 'cl-badge-ready';
-    case 'error': return 'cl-badge-error';
-    default: return 'cl-badge-no-desc';
-  }
+function getClBadgeClass(link, hasLongDescription) {
+  const status = link.cl_status || 'none';
+  if (status === 'generating') return 'cl-badge-generating';
+  if (status === 'error') return 'cl-badge-error';
+  if (status === 'saved' || status === 'ready') return 'cl-badge-ready';
+  if (hasLongDescription) return 'cl-badge-ready';
+  return 'cl-badge-no-desc';
 }
 
-function getClBadgeText(status, startTime) {
+function getClBadgeText(link, hasLongDescription) {
+  const status = link.cl_status || 'none';
+  const startTime = link.cl_start_time || null;
   if (status === 'generating' && startTime) {
     const elapsed = Math.floor((Date.now() - startTime) / 1000);
     const mins = Math.floor(elapsed / 60);
     const secs = elapsed % 60;
     return `${mins}:${secs.toString().padStart(2, '0')}`;
   }
-  switch (status) {
-    case 'saved': return 'Saved';
-    case 'generating': return 'Generating';
-    case 'ready': return 'Ready';
-    case 'error': return 'Error';
-    default: return 'No Desc';
-  }
+  if (status === 'generating') return 'Generating';
+  if (status === 'error') return 'Error';
+  if (status === 'saved' || status === 'ready') return 'Saved';
+  if (hasLongDescription) return 'Saved';
+  return 'No Desc';
 }
 
 function updateClState(jobId, status) {
@@ -994,34 +1064,19 @@ function updateClState(jobId, status) {
 
 let currentClJobId = null;
 
+function openDescModal(jobId, existingDescription) {
+  currentClJobId = jobId;
+  document.getElementById('desc-modal').style.display = 'flex';
+  document.getElementById('desc-textarea').value = existingDescription || '';
+  document.getElementById('desc-textarea').focus();
+}
+
 async function handleClSave(jobId) {
   const link = jobLinks.find(l => l.id === jobId);
   if (!link) return;
   
-  let description = link.description || '';
-  
-  if (!description) {
-    currentClJobId = jobId;
-    document.getElementById('desc-modal').style.display = 'flex';
-    document.getElementById('desc-textarea').value = '';
-    document.getElementById('desc-textarea').focus();
-    return;
-  }
-  
-  updateClState(jobId, 'saving');
-  
-  try {
-    await fetch(`${API_ENDPOINT}/job-offers/${jobId}`, {
-      method: 'PATCH',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ description }),
-      signal: AbortSignal.timeout(API_TIMEOUT_MS)
-    });
-    updateClState(jobId, 'saved');
-  } catch (err) {
-    console.error('Save description failed:', err);
-    updateClState(jobId, 'error');
-  }
+  const description = link.description || '';
+  openDescModal(jobId, description);
 }
 
 function setupDescModal() {
@@ -1089,21 +1144,27 @@ async function pollForCompletion(jobId, timeoutMs) {
     await new Promise(r => setTimeout(r, 5000));
     
     try {
-      const resp = await fetch(`${API_ENDPOINT}/job-applications?job_offer_id=${jobId}`, {
-        signal: AbortSignal.timeout(API_TIMEOUT_MS)
-      });
-      const data = await resp.json();
-      const app = data.job_applications?.[0];
-      if (app?.content) return { completed: true };
-    } catch (e) {
-      console.error('Polling error:', e);
+      const letterGenerated = await window.apiService.checkLetterStatus(jobId);
+      if (letterGenerated) {
+        const link = jobLinks.find(l => l.id === jobId);
+        if (link) {
+          link.cl_status = 'ready';
+          link.cl_start_time = null;
+        }
+        const filtered = filterJobLinks(jobLinks, showAppliedFilter);
+        renderJobLinksList(filtered);
+        return { completed: true };
+      }
+    } catch (err) {
+      console.warn('pollForCompletion: failed to check letter status:', err);
     }
     
     const link = jobLinks.find(l => l.id === jobId);
-    if (link?.cl_status !== 'generating') break;
+    if (!link) break;
     
-    const filtered = filterJobLinks(jobLinks, showAppliedFilter);
-    renderJobLinksList(filtered);
+    if (link.cl_status === 'error' || link.cl_status === 'none') {
+      return { completed: false };
+    }
   }
   
   return { completed: false };
@@ -1124,5 +1185,52 @@ function setupClEventListeners() {
       const jobId = parseInt(btn.dataset.jobId, 10);
       handleClGenerate(jobId);
     };
+    
+    btn.onmouseover = async (e) => {
+      const jobId = parseInt(btn.dataset.jobId, 10);
+      let letterGenerated = null;
+      
+      if (letterStatusCache.has(jobId)) {
+        letterGenerated = letterStatusCache.get(jobId);
+      } else {
+        try {
+          letterGenerated = await window.apiService.checkLetterStatus(jobId);
+          letterStatusCache.set(jobId, letterGenerated);
+        } catch (err) {
+          console.warn('Failed to fetch letter status:', err);
+        }
+      }
+      
+      if (letterGenerated === true) {
+        btn.title = 'Letter Generated';
+      } else if (letterGenerated === false) {
+        btn.title = 'Letter Not Generated';
+      }
+    };
+    
+    btn.onmouseout = (e) => {
+      const jobId = parseInt(btn.dataset.jobId, 10);
+      const link = jobLinks.find(l => l.id === jobId);
+      if (link) {
+        const clStatus = link.cl_status || 'none';
+        const descriptionLength = link.description ? link.description.trim().length : 0;
+        const hasDescription = descriptionLength > 0;
+        
+        if (clStatus === 'ready') {
+          btn.title = 'Letter available';
+        } else if (!hasDescription) {
+          btn.title = 'Enter a description';
+        } else {
+          btn.title = `Description must be at least ${MIN_DESCRIPTION_LENGTH} characters`;
+        }
+      }
+    };
   });
 }
+
+document.addEventListener('DOMContentLoaded', init);
+
+setTimeout(() => {
+  console.log('[Popup] Backup init');
+  init().catch(e => console.error('[Popup] Backup err:', e));
+}, 500);

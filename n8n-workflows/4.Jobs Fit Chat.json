@@ -1,5 +1,5 @@
 {
-  "name": "7.Jobs Fit Chat",
+  "name": "4.Jobs Fit Chat",
   "nodes": [
     {
       "parameters": {
@@ -92,7 +92,7 @@
       "name": "Mistral",
       "credentials": {
         "mistralCloudApi": {
-          "id": "yy2J74r8rO6wyA97",
+          "id": "mNGknH3RPQM36hPs",
           "name": "Mistral Cloud account"
         }
       }
@@ -112,7 +112,7 @@
       "name": "Memory",
       "credentials": {
         "postgres": {
-          "id": "ceRmvobzfi3fViKu",
+          "id": "g5e3W2e5yHEjzZoI",
           "name": "Postgres account"
         }
       }
@@ -131,7 +131,7 @@
       "name": "Embeddings Mistral Cloud",
       "credentials": {
         "mistralCloudApi": {
-          "id": "yy2J74r8rO6wyA97",
+          "id": "mNGknH3RPQM36hPs",
           "name": "Mistral Cloud account"
         }
       }
@@ -332,12 +332,12 @@
       ]
     }
   },
-  "active": true,
+  "active": false,
   "settings": {
     "executionOrder": "v1",
     "binaryMode": "separate"
   },
-  "versionId": "c27747d5-066e-4e10-aac6-2cc005219dbc",
+  "versionId": "78190a7f-186b-45b6-922c-dac21bd4af1b",
   "meta": {
     "instanceId": "b751e283d167317e522f290d63e0b956085524c7c105edc03e657e7409fe8050"
   },

@@ -382,5 +382,30 @@ class JobOffersService:
         logger.info(f"Retrieved {len(result)} applied job offers for CSV export")
         return result
 
+    async def check_letter_generated(self, job_offer_id: int) -> bool:
+        """Check if a cover letter has been generated for a job offer.
+
+        Args:
+            job_offer_id: The ID of the job offer to check.
+
+        Returns:
+            True if a letter exists, False otherwise.
+        """
+        if not self._pool:
+            raise RuntimeError("Database pool not initialized")
+
+        query = """
+            SELECT content FROM job_applications
+            WHERE job_offers_id = $1
+            AND content IS NOT NULL
+            AND content <> ''
+            LIMIT 1
+        """
+
+        async with self._pool.acquire() as conn:
+            row = await conn.fetchrow(query, job_offer_id)
+
+        return row is not None
+
 
 job_offers_service = JobOffersService()

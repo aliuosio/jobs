@@ -213,6 +213,27 @@ async function broadcastJobOffers(jobOffers) {
 // Initialize SSE connection on startup
 connectSSE();
 
+// Pre-load cache on browser startup
+browser.runtime.onStartup.addListener(async () => {
+  console.log('[Background] Browser started - pre-loading job cache');
+  try {
+    const state = await browser.storage.local.get(['jobOffers', 'jobOffersTimestamp']);
+    const timestamp = state.jobOffersTimestamp || 0;
+    const cacheAge = Date.now() - timestamp;
+    const CACHE_TTL_MS = 30 * 60 * 1000;
+    
+    if (state.jobOffers && state.jobOffers.length > 0 && cacheAge <= CACHE_TTL_MS) {
+      console.log('[Background] Using existing cache, no fetch needed');
+      return;
+    }
+    
+    console.log('[Background] Cache missing or stale - fetching fresh data');
+    await handleGetJobOffers({});
+  } catch (error) {
+    console.error('[Background] Startup cache pre-load failed:', error);
+  }
+});
+
 /**
  * Message handler for all extension messages
  */

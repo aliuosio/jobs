@@ -85,9 +85,9 @@
     {
       "parameters": {
         "operation": "executeQuery",
-        "query": "INSERT INTO job_offers (\n  company,\n  email,\n  title,\n  url,\n  description,\n  location,\n  salary,\n  schedule_type,\n  posted,\n  via\n)\nVALUES (\n  $1, $2, $3, $4, $5, $6, $7,\n  $8,\n  NULLIF($9, 'null')::timestamp,\n  $10\n)\nON CONFLICT (url) DO NOTHING\nRETURNING id;",
+        "query": "INSERT INTO job_offers (\n  company, email, title, url, description, \n  location, salary, schedule_type, via\n)\nVALUES (\n  $1, $2, $3, $4, $5, $6, $7, $8, $9\n)\nON CONFLICT (url) DO NOTHING\nRETURNING id;",
         "options": {
-          "queryReplacement": "={{ $json.company }}, {{ $json.email }}, {{ $json.title }}, {{ $json.url }}, {{ $json.description }}, {{ $json.location }}, {{ $json.salary }}, {{ $json.schedule_type }}, {{ $json.posted }}, {{ $json.via }}"
+          "queryReplacement": "={{ $json.company }}, {{ $json.email }}, {{ $json.title }}, {{ $json.url }}, {{ $json.description }}, {{ $json.location }}, {{ $json.salary }}, {{ $json.schedule_type }}, {{ $json.via }}"
         }
       },
       "type": "n8n-nodes-base.postgres",
@@ -386,7 +386,7 @@
       ]
     }
   },
-  "active": false,
+  "active": true,
   "settings": {
     "executionOrder": "v1",
     "binaryMode": "separate",
@@ -396,7 +396,7 @@
     "saveDataSuccessExecution": "all",
     "saveManualExecutions": true
   },
-  "versionId": "092b0b16-4cc6-41e9-a1b8-5a3e59005599",
+  "versionId": "0733c2d6-b66d-45b1-bc62-6cabd91614a3",
   "meta": {
     "templateCredsSetupCompleted": true,
     "instanceId": "b751e283d167317e522f290d63e0b956085524c7c105edc03e657e7409fe8050"
