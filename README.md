@@ -1,6 +1,6 @@
 # Jobs
 
-**Version 0.5.3**
+**Version 0.7.1**
 
 An AI-powered system for job application management: automatically fills job application forms using resume data (RAG pipeline) and tracks job postings with application status. The extension provides a Job Links Manager to monitor applied, in-progress, and pending job applications with local caching, real-time sync, and instant UI rendering.
 
@@ -289,7 +289,11 @@ The **Job Links** tab displays tracked job postings with their application statu
 │   ├── background/        # Background script
 │   └── manifest.json      # Extension manifest
 ├── scripts/               # Utility scripts
-│   └── ingest_profile.py  # Profile ingestion
+│   ├── ingest_profile.py  # Profile ingestion
+│   ├── export_stories.py  # BMAD story exporter
+│   ├── sync_stories.py    # BMAD GitHub bridge
+│   ├── migrate_sparse_vectors.py # Hybrid search data migration
+│   └── init-env.sh        # Environment initialization
 ├── tests/                 # Test files
 ├── specs/                 # Feature specifications
 │   ├── 002-dynamic-field-detection/ # Dynamic field detection
@@ -303,8 +307,11 @@ The **Job Links** tab displays tracked job postings with their application statu
 │   └── 012-job-status-sync/ # Real-time status sync
 ├── docs/                  # Documentation
 ├── docker-compose.yml     # Docker services
+├── .docker/               # Docker configurations
+│   └── api-backend/
+│       └── requirements.txt # Production Python dependencies
 ├── Dockerfile             # Backend container
-└── requirements.txt       # Python dependencies
+└── requirements.txt       # Development Python dependencies
 ```
 
 ## Development
@@ -411,7 +418,7 @@ docker-compose up -d
 
 ## Key Features
 
-### Recent Updates (v0.5.3)
+### Recent Updates (v0.7.1)
 
 ✅ **Cache-first job loading** - instant popup rendering with local persistence
 ✅ **Highlight styling** for new/updated job postings
@@ -506,7 +513,18 @@ Run `/validate` endpoint and check each check result:
 
 ## Changelog
 
-### 0.5.3 (Current)
+### 0.7.1 (Current)
+- ✅ Added BMAD story management system
+- ✅ Added GitHub sync bridge for stories
+- ✅ Added hybrid search with BM25 weighting
+- ✅ Added Redis caching layer
+- ✅ Added profile ingestion script
+- ✅ Added sparse vector migration tools
+- ✅ Fixed popup width increased to 480px
+- ✅ Added job offer letter status endpoint
+- ✅ Improved cover letter generation flow
+
+### 0.5.3
 - ✅ Added cache-first job loading with instant popup startup
 - ✅ Added highlight styling for new job postings
 - ✅ Fixed refresh job button loading state
