@@ -945,6 +945,9 @@ setTimeout(() => {
   console.log('[Popup] Backup init called');
   init().catch(e => console.error('[Popup] Backup init error:', e));
 }, 500);
+
+/**
+ * Handle status icon click — optimistic toggle
  * @param {number} jobId
  */
 async function handleStatusClick(jobId) {
@@ -1226,3 +1229,8 @@ function setupClEventListeners() {
 }
 
 document.addEventListener('DOMContentLoaded', init);
+
+setTimeout(() => {
+  console.log('[Popup] Backup init');
+  init().catch(e => console.error('[Popup] Backup err:', e));
+}, 500);
