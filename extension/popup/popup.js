@@ -11,6 +11,7 @@
 const API_ENDPOINT = 'http://localhost:8000';
 const API_TIMEOUT_MS = 10000;
 const N8N_WEBHOOK_URL = 'http://localhost:5678/webhook/writer';
+const MIN_DESCRIPTION_LENGTH = 200;
 
 const STORAGE_KEYS = {
   JOB_OFFERS: 'jobOffers',
@@ -48,6 +49,9 @@ let currentUrl = null;
 let showAppliedFilter = false;
 /** @type {string} SSE connection status */
 let sseStatus = 'disconnected';
+
+/** @type {Map<number, boolean>} Letter status cache per job ID */
+let letterStatusCache = new Map();
 
 // DOM Elements
 const elements = {
@@ -721,11 +725,12 @@ async function renderJobLinksList(links) {
     const clStatus = link.cl_status || 'none';
     const clStartTime = link.cl_start_time || null;
     const descriptionLength = link.description ? link.description.trim().length : 0;
-    const hasLongDescription = descriptionLength > 0;
+    const hasLongDescription = descriptionLength >= MIN_DESCRIPTION_LENGTH;
     const hasDescription = descriptionLength > 0;
+    const canGenerate = descriptionLength >= MIN_DESCRIPTION_LENGTH;
     const badgeClass = getClBadgeClass(link, hasLongDescription);
     const badgeText = getClBadgeText(link, hasLongDescription);
-    const canGenerate = hasDescription;
+    const canGenerateReason = clStatus === 'ready' ? 'Letter available' : (!hasDescription ? 'Enter a description' : `Description must be at least ${MIN_DESCRIPTION_LENGTH} characters`);
     const isGenerating = clStatus === 'generating';
     return `
     <div class="job-link-item${isVisited ? ' job-link-visited' : ''}${isLastClicked ? ' job-link-highlight' : ''}" data-job-id="${link.id}">
@@ -738,7 +743,7 @@ async function renderJobLinksList(links) {
       <span class="cl-badge ${badgeClass}">${badgeText}</span>
       <div class="cl-actions">
         <button class="btn btn-xs btn-secondary cl-save-btn" data-job-id="${link.id}">Save Desc</button>
-        <button class="btn btn-xs btn-primary cl-generate-btn" data-job-id="${link.id}" ${!canGenerate ? 'disabled' : ''}>${isGenerating ? 'Generating...' : 'Generate'}</button>
+        <button class="btn btn-xs btn-primary cl-generate-btn" data-job-id="${link.id}" ${!canGenerate ? 'disabled' : ''} title="${canGenerateReason}">${isGenerating ? 'Generating...' : 'Generate'}</button>
       </div>
     </div>`;
   }).join('');
@@ -1076,21 +1081,27 @@ async function pollForCompletion(jobId, timeoutMs) {
     await new Promise(r => setTimeout(r, 5000));
     
     try {
-      const resp = await fetch(`${API_ENDPOINT}/job-applications?job_offer_id=${jobId}`, {
-        signal: AbortSignal.timeout(API_TIMEOUT_MS)
-      });
-      const data = await resp.json();
-      const app = data.job_applications?.[0];
-      if (app?.content) return { completed: true };
-    } catch (e) {
-      console.error('Polling error:', e);
+      const letterGenerated = await window.apiService.checkLetterStatus(jobId);
+      if (letterGenerated) {
+        const link = jobLinks.find(l => l.id === jobId);
+        if (link) {
+          link.cl_status = 'ready';
+          link.cl_start_time = null;
+        }
+        const filtered = filterJobLinks(jobLinks, showAppliedFilter);
+        renderJobLinksList(filtered);
+        return { completed: true };
+      }
+    } catch (err) {
+      console.warn('pollForCompletion: failed to check letter status:', err);
     }
     
     const link = jobLinks.find(l => l.id === jobId);
-    if (link?.cl_status !== 'generating') break;
+    if (!link) break;
     
-    const filtered = filterJobLinks(jobLinks, showAppliedFilter);
-    renderJobLinksList(filtered);
+    if (link.cl_status === 'error' || link.cl_status === 'none') {
+      return { completed: false };
+    }
   }
   
   return { completed: false };
@@ -1110,6 +1121,46 @@ function setupClEventListeners() {
       e.preventDefault();
       const jobId = parseInt(btn.dataset.jobId, 10);
       handleClGenerate(jobId);
+    };
+    
+    btn.onmouseover = async (e) => {
+      const jobId = parseInt(btn.dataset.jobId, 10);
+      let letterGenerated = null;
+      
+      if (letterStatusCache.has(jobId)) {
+        letterGenerated = letterStatusCache.get(jobId);
+      } else {
+        try {
+          letterGenerated = await window.apiService.checkLetterStatus(jobId);
+          letterStatusCache.set(jobId, letterGenerated);
+        } catch (err) {
+          console.warn('Failed to fetch letter status:', err);
+        }
+      }
+      
+      if (letterGenerated === true) {
+        btn.title = 'Letter Generated';
+      } else if (letterGenerated === false) {
+        btn.title = 'Letter Not Generated';
+      }
+    };
+    
+    btn.onmouseout = (e) => {
+      const jobId = parseInt(btn.dataset.jobId, 10);
+      const link = jobLinks.find(l => l.id === jobId);
+      if (link) {
+        const clStatus = link.cl_status || 'none';
+        const descriptionLength = link.description ? link.description.trim().length : 0;
+        const hasDescription = descriptionLength > 0;
+        
+        if (clStatus === 'ready') {
+          btn.title = 'Letter available';
+        } else if (!hasDescription) {
+          btn.title = 'Enter a description';
+        } else {
+          btn.title = `Description must be at least ${MIN_DESCRIPTION_LENGTH} characters`;
+        }
+      }
     };
   });
 }

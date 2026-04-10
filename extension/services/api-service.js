@@ -119,6 +119,16 @@ async function checkGenerationStatus(jobId) {
   return { status: 'processing' };
 }
 
+async function checkLetterStatus(jobId) {
+  const response = await fetch(`${API_ENDPOINT}/job-offers/${jobId}/letter-status`, {
+    method: 'GET',
+    signal: AbortSignal.timeout(API_TIMEOUT_MS)
+  });
+  if (!response.ok) throw new Error(`Letter status check failed: ${response.status}`);
+  const data = await response.json();
+  return data.letter_generated === true;
+}
+
 const apiService = {
   API_ENDPOINT,
   fetchJobOffers,
@@ -128,7 +138,8 @@ const apiService = {
   checkHealth,
   saveJobDescription,
   triggerCoverLetterGeneration,
-  checkGenerationStatus
+  checkGenerationStatus,
+  checkLetterStatus
 };
 
 if (typeof window !== 'undefined') {
