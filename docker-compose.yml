@@ -23,7 +23,7 @@ services:
       - "host.docker.internal:host-gateway"
     volumes:
       - n8n_data:${MAIN_WORKDIR}
-      - ${PROMPTS_FOLDER_JOBS}:/home/node/.n8n-files/Prompts/jobs
+      - ./.prompts:/home/node/.n8n-files/Prompts/jobs
       - ./.shared/:/home/node/.n8n-files/.shared
       - ./n8n-workflows:/home/node/import:ro
     entrypoint: >
