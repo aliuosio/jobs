@@ -720,10 +720,12 @@ async function renderJobLinksList(links) {
     const isLastClicked = link.id === lastClickedJobLink;
     const clStatus = link.cl_status || 'none';
     const clStartTime = link.cl_start_time || null;
-    const hasDescription = !!(link.description && link.description.trim());
-    const badgeClass = getClBadgeClass(link);
-    const badgeText = getClBadgeText(link);
-    const canGenerate = hasDescription && (clStatus === 'saved' || clStatus === 'ready');
+    const descriptionLength = link.description ? link.description.trim().length : 0;
+    const hasLongDescription = descriptionLength > 0;
+    const hasDescription = descriptionLength > 0;
+    const badgeClass = getClBadgeClass(link, hasLongDescription);
+    const badgeText = getClBadgeText(link, hasLongDescription);
+    const canGenerate = hasDescription;
     const isGenerating = clStatus === 'generating';
     return `
     <div class="job-link-item${isVisited ? ' job-link-visited' : ''}${isLastClicked ? ' job-link-highlight' : ''}" data-job-id="${link.id}">
@@ -953,20 +955,18 @@ function showToggleError(message) {
   setTimeout(() => msgEl.remove(), 3000);
 }
 
-function getClBadgeClass(link) {
+function getClBadgeClass(link, hasLongDescription) {
   const status = link.cl_status || 'none';
-  const hasDescription = !!(link.description && link.description.trim());
   if (status === 'generating') return 'cl-badge-generating';
   if (status === 'error') return 'cl-badge-error';
   if (status === 'saved' || status === 'ready') return 'cl-badge-ready';
-  if (hasDescription) return 'cl-badge-ready';
+  if (hasLongDescription) return 'cl-badge-ready';
   return 'cl-badge-no-desc';
 }
 
-function getClBadgeText(link) {
+function getClBadgeText(link, hasLongDescription) {
   const status = link.cl_status || 'none';
   const startTime = link.cl_start_time || null;
-  const hasDescription = !!(link.description && link.description.trim());
   if (status === 'generating' && startTime) {
     const elapsed = Math.floor((Date.now() - startTime) / 1000);
     const mins = Math.floor(elapsed / 60);
@@ -976,7 +976,7 @@ function getClBadgeText(link) {
   if (status === 'generating') return 'Generating';
   if (status === 'error') return 'Error';
   if (status === 'saved' || status === 'ready') return 'Saved';
-  if (hasDescription) return 'Saved';
+  if (hasLongDescription) return 'Saved';
   return 'No Desc';
 }
 
