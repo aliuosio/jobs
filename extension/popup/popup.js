@@ -2,10 +2,38 @@
  * Popup Script for Job Forms Helper
  * Handles UI interactions and communication with background/content scripts
  */
+console.log('[Popup] Script loaded, waiting for DOM...');
 
 // =============================================================================
-// STORAGE CONSTANTS (T004)
+// CACHE CONFIGURATION (T004)
 // =============================================================================
+
+/** @type {number} Cache TTL in milliseconds (30 minutes) */
+const CACHE_TTL_MS = 30 * 60 * 1000;
+
+/**
+ * Check if cached job offers are still valid
+ * @returns {Promise<{valid: boolean, isStale: boolean, age: number}>}
+ */
+async function isCacheValid() {
+  try {
+    const result = await browser.storage.local.get('jobOffersTimestamp');
+    const timestamp = result.jobOffersTimestamp || 0;
+    
+    if (timestamp === 0) {
+      return { valid: false, isStale: true, age: 0 };
+    }
+    
+    const age = Date.now() - timestamp;
+    const isStale = age > CACHE_TTL_MS;
+    const valid = age <= CACHE_TTL_MS;
+    
+    return { valid, isStale, age };
+  } catch (error) {
+    console.error('[Popup] Error checking cache validity:', error);
+    return { valid: false, isStale: true, age: 0 };
+  }
+}
 
 /** @type {Object} Storage keys for browser.storage.local */
 const API_ENDPOINT = 'http://localhost:8000';
@@ -88,63 +116,68 @@ function updateStaleIndicator(isStale) {
   }
 }
 
-/**
- * Initialize popup
- */
 async function init() {
+  console.log('[Popup] init() START');
   try {
     const [tab] = await browser.tabs.query({ active: true, currentWindow: true });
     currentTabId = tab.id;
     currentUrl = tab.url;
+    console.log('[Popup] Tab loaded:', tab.id);
     
     setupEventListeners();
     setupSSEMessageListener();
     setupDescModal();
     setupClEventListeners();
+    console.log('[Popup] Event listeners set up');
     
     await restoreTabPreference();
     await restoreFormFieldsState();
     await restoreShowAppliedFilter();
+    console.log('[Popup] State restored');
 
-    const hasCachedData = await loadCachedJobLinks();
+    const cacheResult = await loadCachedJobLinks();
+    console.log('[Popup] Cache result:', cacheResult);
     
-    if (!hasCachedData) {
+    if (!cacheResult.hasData) {
+      console.log('[Popup] No cache - calling forceRefreshJobLinks');
       await forceRefreshJobLinks();
+    } else if (cacheResult.needsRefresh) {
+      console.log('[Popup] Cache stale - background refresh');
+      forceRefreshJobLinks().catch(err => 
+        console.error('[Popup] Background refresh failed:', err)
+      );
     }
+    console.log('[Popup] init() COMPLETE');
   } catch (e) {
-    console.error('Popup init failed:', e);
+    console.error('[Popup] init() FAILED:', e);
   }
 }
 
 /**
  * Load cached job links from storage for instant display
- * @returns {Promise<boolean>} true if cached data exists
+ * @returns {Promise<{hasData: boolean, needsRefresh: boolean}>}
  */
 async function loadCachedJobLinks() {
   try {
-    const allKeys = await browser.storage.local.get(null);
-    console.log('All storage keys:', Object.keys(allKeys));
-    console.log('jobOffers in storage?', 'jobOffers' in allKeys, allKeys.jobOffers ? allKeys.jobOffers.length : 0);
-    
+    const cacheStatus = await isCacheValid();
     const result = await browser.storage.local.get('jobOffers');
+    
     if (!result.jobOffers || result.jobOffers.length === 0) {
-      console.log('No cached jobs found');
-      return false;
+      return { hasData: false, needsRefresh: true };
     }
-    console.log('Found', result.jobOffers.length, 'cached jobs');
+    
     jobLinks = result.jobOffers;
-    const timestampResult = await browser.storage.local.get('jobOffersTimestamp');
     const filteredLinks = filterJobLinks(jobLinks, showAppliedFilter);
-    console.log('Filtered to', filteredLinks.length, 'jobs (showAppliedFilter:', showAppliedFilter, ')');
     await renderJobLinksList(filteredLinks);
-    const cacheAge = Date.now() - (timestampResult.jobOffersTimestamp || 0);
-    if (cacheAge > 5 * 60 * 1000) {
+    
+    if (cacheStatus.isStale) {
       updateStaleIndicator(true);
+      return { hasData: true, needsRefresh: true };
     }
-    return true;
+    
+    return { hasData: true, needsRefresh: false };
   } catch (error) {
-    console.log('Error loading cached jobs:', error);
-    return false;
+    return { hasData: false, needsRefresh: true };
   }
 }
 
@@ -306,32 +339,51 @@ function showJobError(message) {
  * Handle Refresh Jobs button click - force fresh fetch
  */
 async function forceRefreshJobLinks() {
-  const btn = elements.refreshLinksBtn;
-  const originalText = btn.textContent;
+  console.log('[Popup] forceRefreshJobLinks() called');
   
-  btn.disabled = true;
-  btn.textContent = 'Refreshing...';
-  showSkeleton();
+  if (elements.refreshLinksBtn) {
+    const btn = elements.refreshLinksBtn;
+    const originalText = btn.textContent;
+    btn.disabled = true;
+    btn.textContent = 'Refreshing...';
+  }
+  
+  if (elements.jobLinksLoading && elements.jobLinksList && elements.jobLinksError) {
+    showSkeleton();
+  }
   
   try {
+    console.log('[Popup] Fetching job offers from background...');
     const links = await fetchJobOffers();
+    console.log('[Popup] Got', links.length, 'links from background');
     jobLinks = links;
-    hideLoading();
+    
+    if (elements.jobLinksLoading && elements.jobLinksList && elements.jobLinksError) {
+      hideLoading();
+    }
+    
     const filteredLinks = filterJobLinks(jobLinks, showAppliedFilter);
     renderJobLinksList(filteredLinks);
     await cacheJobOffers();
     updateStaleIndicator(false);
+    console.log('[Popup] Jobs rendered successfully');
   } catch (err) {
     console.error('[Popup] forceRefreshJobLinks error:', err);
     if (jobLinks.length > 0) {
-      hideLoading();
+      if (elements.jobLinksLoading && elements.jobLinksList && elements.jobLinksError) {
+        hideLoading();
+      }
       showToggleError('Failed to refresh: ' + err.message);
     } else {
-      showJobError('Failed to load jobs: ' + err.message);
+      if (elements.jobLinksLoading && elements.jobLinksList && elements.jobLinksError) {
+        showJobError('Failed to load jobs: ' + err.message);
+      }
     }
   } finally {
-    btn.disabled = false;
-    btn.textContent = originalText;
+    if (elements.refreshLinksBtn) {
+      elements.refreshLinksBtn.disabled = false;
+      elements.refreshLinksBtn.textContent = 'Refresh Jobs';
+    }
   }
 }
 
@@ -371,7 +423,8 @@ function filterJobLinks(links, showApplied) {
   if (showApplied) {
     return links;
   }
-  return links.filter(link => !link.applied);
+  const applied = link => link.process?.applied ?? link.applied ?? false;
+  return links.filter(link => !applied(link));
 }
 
 /**
@@ -405,8 +458,10 @@ async function handleShowAppliedToggle() {
  * @returns {Promise<Array>} JobLinkState array
  */
 async function fetchJobOffers() {
+  console.log('[Popup] fetchJobOffers() - sending message to background');
   try {
     const response = await browser.runtime.sendMessage({ type: 'GET_JOB_OFFERS' });
+    console.log('[Popup] fetchJobOffers() - response:', response);
     if (!response.success) {
       throw new Error(response.error?.message || 'Failed to fetch job offers');
     }
@@ -425,6 +480,7 @@ async function fetchJobOffers() {
       };
     });
   } catch (err) {
+    console.error('[Popup] fetchJobOffers() - error:', err);
     throw err;
   }
 }
@@ -883,8 +939,12 @@ async function getApiUrl() {
 
 // Initialize on DOM ready
 document.addEventListener('DOMContentLoaded', init);
-/**
- * Handle status icon click — optimistic toggle
+
+// Backup: call init after a short delay anyway
+setTimeout(() => {
+  console.log('[Popup] Backup init called');
+  init().catch(e => console.error('[Popup] Backup init error:', e));
+}, 500);
  * @param {number} jobId
  */
 async function handleStatusClick(jobId) {
@@ -1164,3 +1224,5 @@ function setupClEventListeners() {
     };
   });
 }
+
+document.addEventListener('DOMContentLoaded', init);
