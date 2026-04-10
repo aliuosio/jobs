@@ -720,9 +720,10 @@ async function renderJobLinksList(links) {
     const isLastClicked = link.id === lastClickedJobLink;
     const clStatus = link.cl_status || 'none';
     const clStartTime = link.cl_start_time || null;
-    const badgeClass = getClBadgeClass(clStatus);
-    const badgeText = getClBadgeText(clStatus, clStartTime);
-    const canGenerate = clStatus === 'saved' || clStatus === 'ready';
+    const hasDescription = !!(link.description && link.description.trim());
+    const badgeClass = getClBadgeClass(link);
+    const badgeText = getClBadgeText(link);
+    const canGenerate = hasDescription && (clStatus === 'saved' || clStatus === 'ready');
     const isGenerating = clStatus === 'generating';
     return `
     <div class="job-link-item${isVisited ? ' job-link-visited' : ''}${isLastClicked ? ' job-link-highlight' : ''}" data-job-id="${link.id}">
@@ -734,7 +735,7 @@ async function renderJobLinksList(links) {
       <a class="job-link-title" href="${link.url}" title="${link.title}" data-job-id="${link.id}">${link.title}</a>
       <span class="cl-badge ${badgeClass}">${badgeText}</span>
       <div class="cl-actions">
-        <button class="btn btn-xs btn-secondary cl-save-btn" data-job-id="${link.id}" ${clStatus !== 'none' ? 'disabled' : ''}>Save Desc</button>
+        <button class="btn btn-xs btn-secondary cl-save-btn" data-job-id="${link.id}">Save Desc</button>
         <button class="btn btn-xs btn-primary cl-generate-btn" data-job-id="${link.id}" ${!canGenerate ? 'disabled' : ''}>${isGenerating ? 'Generating...' : 'Generate'}</button>
       </div>
     </div>`;
@@ -952,30 +953,31 @@ function showToggleError(message) {
   setTimeout(() => msgEl.remove(), 3000);
 }
 
-function getClBadgeClass(status) {
-  switch (status) {
-    case 'saved': return 'cl-badge-ready';
-    case 'generating': return 'cl-badge-generating';
-    case 'ready': return 'cl-badge-ready';
-    case 'error': return 'cl-badge-error';
-    default: return 'cl-badge-no-desc';
-  }
+function getClBadgeClass(link) {
+  const status = link.cl_status || 'none';
+  const hasDescription = !!(link.description && link.description.trim());
+  if (status === 'generating') return 'cl-badge-generating';
+  if (status === 'error') return 'cl-badge-error';
+  if (status === 'saved' || status === 'ready') return 'cl-badge-ready';
+  if (hasDescription) return 'cl-badge-ready';
+  return 'cl-badge-no-desc';
 }
 
-function getClBadgeText(status, startTime) {
+function getClBadgeText(link) {
+  const status = link.cl_status || 'none';
+  const startTime = link.cl_start_time || null;
+  const hasDescription = !!(link.description && link.description.trim());
   if (status === 'generating' && startTime) {
     const elapsed = Math.floor((Date.now() - startTime) / 1000);
     const mins = Math.floor(elapsed / 60);
     const secs = elapsed % 60;
     return `${mins}:${secs.toString().padStart(2, '0')}`;
   }
-  switch (status) {
-    case 'saved': return 'Saved';
-    case 'generating': return 'Generating';
-    case 'ready': return 'Ready';
-    case 'error': return 'Error';
-    default: return 'No Desc';
-  }
+  if (status === 'generating') return 'Generating';
+  if (status === 'error') return 'Error';
+  if (status === 'saved' || status === 'ready') return 'Saved';
+  if (hasDescription) return 'Saved';
+  return 'No Desc';
 }
 
 function updateClState(jobId, status) {
@@ -994,34 +996,19 @@ function updateClState(jobId, status) {
 
 let currentClJobId = null;
 
+function openDescModal(jobId, existingDescription) {
+  currentClJobId = jobId;
+  document.getElementById('desc-modal').style.display = 'flex';
+  document.getElementById('desc-textarea').value = existingDescription || '';
+  document.getElementById('desc-textarea').focus();
+}
+
 async function handleClSave(jobId) {
   const link = jobLinks.find(l => l.id === jobId);
   if (!link) return;
   
-  let description = link.description || '';
-  
-  if (!description) {
-    currentClJobId = jobId;
-    document.getElementById('desc-modal').style.display = 'flex';
-    document.getElementById('desc-textarea').value = '';
-    document.getElementById('desc-textarea').focus();
-    return;
-  }
-  
-  updateClState(jobId, 'saving');
-  
-  try {
-    await fetch(`${API_ENDPOINT}/job-offers/${jobId}`, {
-      method: 'PATCH',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ description }),
-      signal: AbortSignal.timeout(API_TIMEOUT_MS)
-    });
-    updateClState(jobId, 'saved');
-  } catch (err) {
-    console.error('Save description failed:', err);
-    updateClState(jobId, 'error');
-  }
+  const description = link.description || '';
+  openDescModal(jobId, description);
 }
 
 function setupDescModal() {
