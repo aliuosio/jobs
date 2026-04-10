@@ -1,0 +1,573 @@
+{
+  "name": "2.Job Skills Import",
+  "nodes": [
+    {
+      "parameters": {
+        "options": {}
+      },
+      "id": "70774a99-225c-4bf1-acfb-aea4a084e092",
+      "name": "Default Data Loader",
+      "type": "@n8n/n8n-nodes-langchain.documentDefaultDataLoader",
+      "typeVersion": 1,
+      "position": [
+        3408,
+        1168
+      ]
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "id": "4e1ba3fd-f324-4cc2-a3c2-bb6f15c89a2b",
+      "name": "Recursive Character Text Splitter",
+      "type": "@n8n/n8n-nodes-langchain.textSplitterRecursiveCharacterTextSplitter",
+      "typeVersion": 1,
+      "position": [
+        3488,
+        1376
+      ]
+    },
+    {
+      "parameters": {},
+      "id": "66068150-3fe6-4aae-99da-4fe64f3158da",
+      "name": "When clicking ‘Execute workflow’",
+      "type": "n8n-nodes-base.manualTrigger",
+      "typeVersion": 1,
+      "position": [
+        240,
+        944
+      ]
+    },
+    {
+      "parameters": {
+        "model": "mistral-small-2603",
+        "options": {
+          "temperature": 0.1
+        }
+      },
+      "id": "ff975493-e718-47f6-818f-6d0b7ead22ab",
+      "name": "Mistral Small",
+      "type": "@n8n/n8n-nodes-langchain.lmChatMistralCloud",
+      "typeVersion": 1,
+      "position": [
+        2784,
+        1168
+      ],
+      "credentials": {
+        "mistralCloudApi": {
+          "id": "mNGknH3RPQM36hPs",
+          "name": "Mistral Cloud account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "text",
+        "destinationKey": "text",
+        "options": {}
+      },
+      "id": "aa791fbc-cef6-439d-bb2e-63518e06c8f8",
+      "name": "Extract from File",
+      "type": "n8n-nodes-base.extractFromFile",
+      "typeVersion": 1.1,
+      "position": [
+        2480,
+        944
+      ]
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "={{ $json.text }}",
+        "messages": {
+          "messageValues": [
+            {
+              "message": "={{ $('Call \\'Prompt\\'').item.json.prompt }}"
+            }
+          ]
+        },
+        "batching": {}
+      },
+      "id": "d6e276fa-a694-4977-b9a6-ebd373b6b285",
+      "name": "Resume Import",
+      "type": "@n8n/n8n-nodes-langchain.chainLlm",
+      "typeVersion": 1.9,
+      "position": [
+        2704,
+        944
+      ]
+    },
+    {
+      "parameters": {
+        "fileSelector": "={{ $('Set Vars').item.json[\"resume-path\"] }}",
+        "options": {}
+      },
+      "id": "b47ca598-e612-4b30-b686-69e97dce3ee4",
+      "name": "Read/Write Files from Disk",
+      "type": "n8n-nodes-base.readWriteFile",
+      "typeVersion": 1.1,
+      "position": [
+        2256,
+        944
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "return [\n  { field: \"type\", type: \"keyword\" },\n  { field: \"domain\", type: \"keyword\" },\n  { field: \"tech\", type: \"keyword\" },\n  { field: \"role\", type: \"keyword\" },\n  { field: \"language\", type: \"keyword\" },\n  { field: \"is_lead_role\", type: \"bool\" },\n  { field: \"start_year\", type: \"integer\" },\n  { field: \"end_year\", type: \"integer\" }\n];"
+      },
+      "id": "45c560e2-4a65-437d-ac5b-38ceae217fa6",
+      "name": "Payload Indexes",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1360,
+        944
+      ]
+    },
+    {
+      "parameters": {
+        "method": "PUT",
+        "url": "http://qdrant:6333/collections/resume/index",
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "field_name",
+              "value": "={{ $json.field }}"
+            },
+            {
+              "name": "field_schema",
+              "value": "={{ $json.type }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "875d02cf-638f-48e6-9cc7-8d21ab6619e6",
+      "name": "Payload Indexes To Qdrant",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.4,
+      "position": [
+        1584,
+        944
+      ]
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "d39f259f-5ae0-4389-9cfa-1d3031633266",
+              "name": "path",
+              "value": "/home/node/.n8n-files/Prompts/jobs/resume-import.md",
+              "type": "string"
+            },
+            {
+              "id": "dc393da6-21c8-4647-adc3-810db96b54e8",
+              "name": "resume-path",
+              "value": "/home/node/.n8n-files/.shared/resume-all.md",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "463eeb8c-0000-4f40-941b-9bd96e72d50a",
+      "name": "Set Vars",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        1808,
+        944
+      ]
+    },
+    {
+      "parameters": {
+        "method": "PUT",
+        "url": "http://qdrant:6333/collections/resume",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "{\n  \"vectors\": {\n    \"size\": 1024, \n    \"distance\": \"Cosine\"\n  }\n}",
+        "options": {}
+      },
+      "id": "1f4258f3-9893-4db3-b7d0-e72289f122cf",
+      "name": "Create Collection Resume",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.4,
+      "position": [
+        1136,
+        944
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "// 1. Extract the raw string from the AI Agent safely\n// Handle different possible AI output structures\nconst inputItem = $input.first();\nlet rawInput;\n\n// Try different possible paths for AI output\nif (inputItem.json && inputItem.json.data && inputItem.json.data[1] && inputItem.json.data[1].text) {\n  rawInput = inputItem.json.data[1].text;\n} else if (inputItem.json && inputItem.json.text) {\n  rawInput = inputItem.json.text;\n} else if (inputItem.json && inputItem.json.message && inputItem.json.message.content) {\n  rawInput = inputItem.json.message.content;\n} else {\n  // Fallback: try to find text in any nested structure\n  const jsonString = JSON.stringify(inputItem.json);\n  const textMatch = jsonString.match(/\"text\":\"([^\"]+)\"/);\n  if (textMatch) {\n    rawInput = textMatch[1];\n  } else {\n    rawInput = jsonString;\n  }\n}\n\nif (!rawInput) {\n  throw new Error(\"No data received from AI Agent. Check if the AI output is empty.\");\n}\n\n// 2. Clean and Parse the JSON\n// Removes markdown code blocks if the AI included them\nconst cleanData = rawInput.replace(/```json|```/g, \"\").trim();\nlet records;\n\ntry {\n  records = JSON.parse(cleanData);\n} catch (e) {\n  // Handle truncated JSON by trying to fix common issues\n  let fixedData = cleanData;\n  \n  // Try to fix truncated JSON by adding missing closing brackets\n  const openBrackets = (fixedData.match(/\\{/g) || []).length;\n  const closeBrackets = (fixedData.match(/\\}/g) || []).length;\n  const openArrays = (fixedData.match(/\\[/g) || []).length;\n  const closeArrays = (fixedData.match(/\\]/g) || []).length;\n  \n  // Add missing closing brackets/arrays\n  for (let i = 0; i < openBrackets - closeBrackets; i++) {\n    fixedData += \"}\";\n  }\n  for (let i = 0; i < openArrays - closeArrays; i++) {\n    fixedData += \"]\";\n  }\n  \n  try {\n    records = JSON.parse(fixedData);\n  } catch (e2) {\n    // If still failing, try to extract valid JSON objects from the string\n    const jsonObjects = [];\n    const objectRegex = /\\{[^{}]*(?:\\{[^{}]*\\}[^{}]*)*\\}/g;\n    let match;\n    \n    while ((match = objectRegex.exec(fixedData)) !== null) {\n      try {\n        const obj = JSON.parse(match[0]);\n        jsonObjects.push(obj);\n      } catch (e3) {\n        // Skip invalid objects\n      }\n    }\n    \n    if (jsonObjects.length > 0) {\n      records = jsonObjects;\n    } else {\n      throw new Error(\"Failed to parse AI output as JSON even after fixing. Raw text: \" + cleanData.substring(0, 200));\n    }\n  }\n}\n\n// 3. Map into n8n Item Format\nreturn records.map(item => {\n  // Create a descriptive string for the Embedding node to vectorize\n  const renderText = `Role: ${item.role || 'N/A'}. Domain: ${item.domain || 'N/A'}. Tech: ${(item.tech && item.tech.length > 0) ? item.tech.join(', ') : 'None'}.`;\n\n  return {\n    json: {\n      // TOP-LEVEL 'text' field is critical for the Gemini Embedding node\n      text: renderText,\n      \n      // All metadata fields for Qdrant filtering\n      metadata: {\n        type: item.type || \"experience\",\n        domain: item.domain || \"N/A\",\n        role: item.role || \"N/A\",\n        is_lead: !!item.is_lead_role, // Force boolean\n        company: item.company || null,\n        tech: item.tech || [],\n        start_year: item.start_year || null,\n        end_year: item.end_year || null,\n        language: item.language || \"English\"\n      }\n    }\n  };\n});"
+      },
+      "id": "4c388687-0011-47f0-b3a5-6ff5e6546698",
+      "name": "Code Node",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        3056,
+        944
+      ]
+    },
+    {
+      "parameters": {
+        "mode": "insert",
+        "qdrantCollection": {
+          "__rl": true,
+          "value": "resume",
+          "mode": "list",
+          "cachedResultName": "resume"
+        },
+        "embeddingBatchSize": 100,
+        "options": {
+          "contentPayloadKey": "text",
+          "metadataPayloadKey": "metadata"
+        }
+      },
+      "id": "6c6808f2-afc8-4988-a6d3-bf2a97d49399",
+      "name": "Qdrant Vector Store",
+      "type": "@n8n/n8n-nodes-langchain.vectorStoreQdrant",
+      "typeVersion": 1.3,
+      "position": [
+        3312,
+        944
+      ],
+      "credentials": {
+        "qdrantApi": {
+          "id": "ZBxpJm0RU3lTDLvz",
+          "name": "Qdrant account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "url": "http://qdrant:6333/collections/resume",
+        "options": {}
+      },
+      "id": "4ca416f6-e884-4619-87ca-9dfc2774d675",
+      "name": "Check For  Collection",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.4,
+      "position": [
+        464,
+        944
+      ]
+    },
+    {
+      "parameters": {
+        "method": "DELETE",
+        "url": "http://qdrant:6333/collections/resume",
+        "options": {}
+      },
+      "id": "5211d38b-8042-471f-a324-01df4ac1b853",
+      "name": "Delete Collection",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.4,
+      "position": [
+        912,
+        864
+      ]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "09334913-bda3-4edd-b45b-9bb02a37266d",
+              "leftValue": "={{ $json.result.status }}",
+              "rightValue": "green",
+              "operator": {
+                "type": "string",
+                "operation": "equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "e3538ef8-99c0-4e1a-93cc-3616edae0708",
+      "name": "If",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        688,
+        944
+      ]
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "id": "cd413356-c4cb-4ad6-9cb3-e713f4a4455a",
+      "name": "Embeddings Mistral Cloud",
+      "type": "@n8n/n8n-nodes-langchain.embeddingsMistralCloud",
+      "typeVersion": 1,
+      "position": [
+        3280,
+        1168
+      ],
+      "credentials": {
+        "mistralCloudApi": {
+          "id": "mNGknH3RPQM36hPs",
+          "name": "Mistral Cloud account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "workflowId": {
+          "__rl": true,
+          "value": "rGIluizJ8qfWnidf",
+          "mode": "list",
+          "cachedResultUrl": "/workflow/rGIluizJ8qfWnidf",
+          "cachedResultName": "Prompt"
+        },
+        "workflowInputs": {
+          "mappingMode": "defineBelow",
+          "value": {},
+          "matchingColumns": [],
+          "schema": [],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": true
+        },
+        "options": {}
+      },
+      "id": "abbfcb1f-a4c1-4d63-afa3-435ab3edb275",
+      "name": "Call 'Prompt'",
+      "type": "n8n-nodes-base.executeWorkflow",
+      "typeVersion": 1.3,
+      "position": [
+        2032,
+        944
+      ]
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Default Data Loader": {
+      "ai_document": [
+        [
+          {
+            "node": "Qdrant Vector Store",
+            "type": "ai_document",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Recursive Character Text Splitter": {
+      "ai_textSplitter": [
+        [
+          {
+            "node": "Default Data Loader",
+            "type": "ai_textSplitter",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "When clicking ‘Execute workflow’": {
+      "main": [
+        [
+          {
+            "node": "Check For  Collection",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Extract from File": {
+      "main": [
+        [
+          {
+            "node": "Resume Import",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Resume Import": {
+      "main": [
+        [
+          {
+            "node": "Code Node",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Read/Write Files from Disk": {
+      "main": [
+        [
+          {
+            "node": "Extract from File",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Payload Indexes": {
+      "main": [
+        [
+          {
+            "node": "Payload Indexes To Qdrant",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Payload Indexes To Qdrant": {
+      "main": [
+        [
+          {
+            "node": "Set Vars",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Set Vars": {
+      "main": [
+        [
+          {
+            "node": "Call 'Prompt'",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Create Collection Resume": {
+      "main": [
+        [
+          {
+            "node": "Payload Indexes",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code Node": {
+      "main": [
+        [
+          {
+            "node": "Qdrant Vector Store",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Check For  Collection": {
+      "main": [
+        [
+          {
+            "node": "If",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Delete Collection": {
+      "main": [
+        [
+          {
+            "node": "Create Collection Resume",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "If": {
+      "main": [
+        [
+          {
+            "node": "Delete Collection",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Create Collection Resume",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Embeddings Mistral Cloud": {
+      "ai_embedding": [
+        [
+          {
+            "node": "Qdrant Vector Store",
+            "type": "ai_embedding",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Call 'Prompt'": {
+      "main": [
+        [
+          {
+            "node": "Read/Write Files from Disk",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Mistral Small": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "Resume Import",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate",
+    "callerPolicy": "workflowsFromSameOwner",
+    "availableInMCP": false
+  },
+  "versionId": "a16680bc-b6dd-48b0-bc1d-f9cb8c23d59d",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "b751e283d167317e522f290d63e0b956085524c7c105edc03e657e7409fe8050"
+  },
+  "id": "SMcBZC552RHqRGga",
+  "tags": [
+    {
+      "updatedAt": "2026-03-20T09:53:00.595Z",
+      "createdAt": "2026-03-20T09:53:00.595Z",
+      "id": "lw4tE7ESajawvgkE",
+      "name": "jobs"
+    }
+  ]
+}
