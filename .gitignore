@@ -111,3 +111,4 @@ _bmad/_config/
 .shared/*.snapshot
 workflows/
 package.json
+.specify
