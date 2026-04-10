@@ -1,5 +1,6 @@
 const API_ENDPOINT = 'http://localhost:8000';
 const API_TIMEOUT_MS = 10000;
+const N8N_WEBHOOK_URL = 'http://localhost:5678/webhook/writer';
 
 async function fetchJobOffers(limit, offset) {
   const url = new URL(`${API_ENDPOINT}/job-offers`);
@@ -83,13 +84,51 @@ async function checkHealth() {
   }
 }
 
+async function saveJobDescription(jobId, description) {
+  const response = await fetch(`${API_ENDPOINT}/job-offers/${jobId}`, {
+    method: 'PATCH',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ description }),
+    signal: AbortSignal.timeout(API_TIMEOUT_MS)
+  });
+  if (!response.ok) throw new Error(`Save failed: ${response.status}`);
+  return response.json();
+}
+
+async function triggerCoverLetterGeneration(jobId) {
+  const response = await fetch(N8N_WEBHOOK_URL, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ job_offers_id: jobId }),
+    signal: AbortSignal.timeout(API_TIMEOUT_MS)
+  });
+  if (!response.ok) throw new Error(`Webhook failed: ${response.status}`);
+  return response.json();
+}
+
+async function checkGenerationStatus(jobId) {
+  const response = await fetch(`${API_ENDPOINT}/job-applications?job_offer_id=${jobId}`, {
+    method: 'GET',
+    signal: AbortSignal.timeout(API_TIMEOUT_MS)
+  });
+  if (!response.ok) throw new Error(`Status check failed: ${response.status}`);
+  const data = await response.json();
+  const app = data.job_applications?.[0];
+  if (!app) return { status: 'none' };
+  if (app.content) return { status: 'completed' };
+  return { status: 'processing' };
+}
+
 const apiService = {
   API_ENDPOINT,
   fetchJobOffers,
   fillForm,
   updateJobOfferProcess,
   fetchCSV,
-  checkHealth
+  checkHealth,
+  saveJobDescription,
+  triggerCoverLetterGeneration,
+  checkGenerationStatus
 };
 
 if (typeof window !== 'undefined') {

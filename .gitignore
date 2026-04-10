@@ -103,7 +103,7 @@ _bmad/bmm/4-implementation/
 _bmad/bmm/module-help.csv
 _bmad/core/module-help.csv
 _bmad/_config/
-_bmad-output/
+# _bmad-output/
 =0.29.0
 .sisyphus/
 .ruff_cache

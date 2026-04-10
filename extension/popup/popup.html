@@ -7,6 +7,19 @@
   <link rel="stylesheet" href="popup.css">
 </head>
 <body>
+  <!-- Description Input Modal -->
+  <div id="desc-modal" class="modal" style="display: none;">
+    <div class="modal-content">
+      <h3>Enter Job Description</h3>
+      <p class="modal-hint">Paste the job description from the job posting</p>
+      <textarea id="desc-textarea" rows="10" placeholder="Paste job description here..."></textarea>
+      <div class="modal-actions">
+        <button id="desc-cancel-btn" class="btn btn-secondary">Cancel</button>
+        <button id="desc-save-btn" class="btn btn-primary">Save</button>
+      </div>
+    </div>
+  </div>
+
   <div class="popup-container">
     <!-- Tab Navigation -->
     <div class="tabs-header">
