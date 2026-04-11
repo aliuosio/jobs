@@ -34,11 +34,12 @@ async def lifespan(app: FastAPI):
     await job_offers_service.connect()
     logger.info("Connected to PostgreSQL")
 
-    yield
-
-    await job_offers_service.close()
-    await retriever.close()
-    logger.info("Shutting down RAG Backend API...")
+    try:
+        yield
+    finally:
+        await job_offers_service.close()
+        await retriever.close()
+        logger.info("Shutting down RAG Backend API...")
 
 
 # Create FastAPI application
