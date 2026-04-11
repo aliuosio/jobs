@@ -134,3 +134,12 @@ services:
       timeout: 5s
       retries: 3
       start_period: 30s
+
+  ollama:
+    image: ollama/ollama:latest
+    container_name: ollama
+    pull_policy: always 
+    volumes:
+      - ./ollama_data:/root/.ollama
+    ports:
+      - "11434:11434"
