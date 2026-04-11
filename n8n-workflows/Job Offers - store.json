@@ -104,8 +104,8 @@
       "waitBetweenTries": 5000,
       "credentials": {
         "postgres": {
-          "id": "wthjjnZmr2Hf72m0",
-          "name": "Postgres account 2"
+          "id": "ruUGYCYQ1TvOrXXH",
+          "name": "Postgres account"
         }
       }
     },
@@ -215,7 +215,7 @@
       "waitBetweenTries": 5000,
       "credentials": {
         "postgres": {
-          "id": "wthjjnZmr2Hf72m0",
+          "id": "42BVU0W1x776KbvO",
           "name": "Postgres account 2"
         }
       }
@@ -240,7 +240,7 @@
       "waitBetweenTries": 5000,
       "credentials": {
         "postgres": {
-          "id": "wthjjnZmr2Hf72m0",
+          "id": "42BVU0W1x776KbvO",
           "name": "Postgres account 2"
         }
       }
@@ -299,7 +299,7 @@
       "waitBetweenTries": 5000,
       "credentials": {
         "postgres": {
-          "id": "wthjjnZmr2Hf72m0",
+          "id": "42BVU0W1x776KbvO",
           "name": "Postgres account 2"
         }
       }
@@ -393,13 +393,12 @@
     "timeSavedMode": "fixed",
     "callerPolicy": "workflowsFromSameOwner",
     "availableInMCP": false,
-    "saveDataSuccessExecution": "all",
-    "saveManualExecutions": true
+    "executionTimeout": -1
   },
-  "versionId": "0733c2d6-b66d-45b1-bc62-6cabd91614a3",
+  "versionId": "21981c9d-1fc5-4d21-8f8e-e47b0e68ef80",
   "meta": {
     "templateCredsSetupCompleted": true,
-    "instanceId": "b751e283d167317e522f290d63e0b956085524c7c105edc03e657e7409fe8050"
+    "instanceId": "c96184e9c73110ff841fa8dd362b23e4b0a56fb6dbfa8b67e0ab632a82eb0843"
   },
   "id": "LHkRO7NbYVvWkxt2",
   "tags": [
