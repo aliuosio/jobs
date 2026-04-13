@@ -1,6 +1,4 @@
-const API_ENDPOINT = 'http://localhost:8000';
-const API_TIMEOUT_MS = 10000;
-const N8N_WEBHOOK_URL = 'http://localhost:5678/webhook/writer';
+const { API_ENDPOINT, API_TIMEOUT_MS, N8N_WEBHOOK_URL } = require('./constants.js');
 
 async function fetchJobOffers(limit, offset) {
   const url = new URL(`${API_ENDPOINT}/job-offers`);

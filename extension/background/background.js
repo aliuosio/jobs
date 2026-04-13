@@ -5,8 +5,7 @@
  * Supports SSE for real-time job offer updates
  */
 
-const API_ENDPOINT = 'http://localhost:8000';
-const SSE_ENDPOINT = `${API_ENDPOINT}/api/v1/stream`;
+const { API_ENDPOINT, SSE_ENDPOINT, SSE_TIMEOUT_MS, CACHE_TTL_MS } = require('../services/constants.js');
 
 // =============================================================================
 // SSE CLIENT (T019, T020, T022)
@@ -35,9 +34,6 @@ const BASE_RECONNECT_DELAY_MS = 1000;
 
 /** @type {number} Maximum delay for exponential backoff in milliseconds */
 const MAX_RECONNECT_DELAY_MS = 30000;
-
-/** @type {number} SSE connection timeout in milliseconds */
-const SSE_TIMEOUT_MS = 60000;
 
 /**
  * Get current connection status
@@ -97,15 +93,15 @@ function connectSSE() {
 
     // Handle successful connection
     eventSource.onopen = () => {
-      console.log('[Background] SSE connected');
       reconnectAttempts = 0;
       updateConnectionStatus('connected');
     };
 
     // Handle messages
     eventSource.onmessage = (event) => {
+      let jobOffers;
       try {
-        const jobOffers = JSON.parse(event.data);
+        jobOffers = JSON.parse(event.data);
       } catch (err) {
         console.error('[Background] Malformed JSON in SSE message:', err);
         return;
@@ -220,7 +216,6 @@ browser.runtime.onStartup.addListener(async () => {
     const state = await browser.storage.local.get(['jobOffers', 'jobOffersTimestamp']);
     const timestamp = state.jobOffersTimestamp || 0;
     const cacheAge = Date.now() - timestamp;
-    const CACHE_TTL_MS = 30 * 60 * 1000;
     
     if (state.jobOffers && state.jobOffers.length > 0 && cacheAge <= CACHE_TTL_MS) {
       console.log('[Background] Using existing cache, no fetch needed');
