@@ -39,6 +39,7 @@ CRITICAL RULES:
 3. For unknown fields, return "unknown" as field_type and generate a contextual answer
 4. Be precise with field types - use the standard types listed below
 5. Return valid JSON only - no explanations outside the JSON structure
+6. For simple field types (first_name, last_name, email, phone, city, street, postcode), return ONLY the raw value in the "answer" field - DO NOT add any explanatory text, phrases, or sentences. Example: return "aliu@dev-hh.de" not "The email address is aliu@dev-hh.de"
 
 FIELD TYPES (use these exact values when applicable):
 - first_name, last_name, full_name, email, phone, birthdate
@@ -53,7 +54,9 @@ Return this exact JSON structure:
   "field_value": "extracted_value_or_null",
   "confidence": "high|medium|low",
   "answer": "generated_answer_text"
-}"""
+}
+
+IMPORTANT: For first_name, last_name, email, phone, city, street, postcode - the answer must be the raw value only, never add extra text."""
 
 
 @dataclass
