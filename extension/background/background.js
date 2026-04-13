@@ -5,8 +5,8 @@
  * Supports SSE for real-time job offer updates
  */
 
-const API_ENDPOINT = 'http://localhost:8000';
-const SSE_ENDPOINT = `${API_ENDPOINT}/api/v1/stream`;
+import { API_ENDPOINT, SSE_ENDPOINT, SSE_TIMEOUT_MS, CACHE_TTL_MS } from '../services/constants.js';
+import { timeoutSignal } from '../services/timeout-signal.js';
 
 // =============================================================================
 // SSE CLIENT (T019, T020, T022)
@@ -35,9 +35,6 @@ const BASE_RECONNECT_DELAY_MS = 1000;
 
 /** @type {number} Maximum delay for exponential backoff in milliseconds */
 const MAX_RECONNECT_DELAY_MS = 30000;
-
-/** @type {number} SSE connection timeout in milliseconds */
-const SSE_TIMEOUT_MS = 60000;
 
 /**
  * Get current connection status
@@ -97,15 +94,15 @@ function connectSSE() {
 
     // Handle successful connection
     eventSource.onopen = () => {
-      console.log('[Background] SSE connected');
       reconnectAttempts = 0;
       updateConnectionStatus('connected');
     };
 
     // Handle messages
     eventSource.onmessage = (event) => {
+      let jobOffers;
       try {
-        const jobOffers = JSON.parse(event.data);
+        jobOffers = JSON.parse(event.data);
       } catch (err) {
         console.error('[Background] Malformed JSON in SSE message:', err);
         return;
@@ -220,7 +217,6 @@ browser.runtime.onStartup.addListener(async () => {
     const state = await browser.storage.local.get(['jobOffers', 'jobOffersTimestamp']);
     const timestamp = state.jobOffersTimestamp || 0;
     const cacheAge = Date.now() - timestamp;
-    const CACHE_TTL_MS = 30 * 60 * 1000;
     
     if (state.jobOffers && state.jobOffers.length > 0 && cacheAge <= CACHE_TTL_MS) {
       console.log('[Background] Using existing cache, no fetch needed');
@@ -301,7 +297,7 @@ async function handleUpdateApplied(data) {
         'Content-Type': 'application/json'
       },
       body: JSON.stringify({ applied }),
-      signal: AbortSignal.timeout(10000)
+      signal: timeoutSignal(10000)
     });
 
     if (!response.ok) {
@@ -398,7 +394,7 @@ async function handleFillForm(data) {
         signals: data.signals || null,
         generate: true
       }),
-      signal: AbortSignal.timeout(10000)
+      signal: timeoutSignal(10000)
     });
 
     if (!response.ok) {
@@ -474,7 +470,7 @@ async function handleGetJobOffers(data) {
 
     const response = await fetch(url.toString(), {
       method: 'GET',
-      signal: AbortSignal.timeout(10000)
+      signal: timeoutSignal(10000)
     });
     console.log('[Background] API response status:', response.status);
 
@@ -633,7 +629,7 @@ async function handleGetStatus() {
   try {
     const response = await fetch(`${API_ENDPOINT}/health`, {
       method: 'GET',
-      signal: AbortSignal.timeout(3000)
+      signal: timeoutSignal(3000)
     });
     apiConnected = response.ok;
   } catch (error) {

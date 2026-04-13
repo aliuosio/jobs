@@ -4,12 +4,17 @@
  */
 console.log('[Popup] Script loaded, waiting for DOM...');
 
-// =============================================================================
-// CACHE CONFIGURATION (T004)
-// =============================================================================
+import {
+  API_ENDPOINT,
+  API_TIMEOUT_MS,
+  N8N_WEBHOOK_URL,
+  CACHE_TTL_MS,
+  STORAGE_KEYS,
+  CURRENT_STORAGE_VERSION
+} from '../services/constants.js';
+import { timeoutSignal } from '../services/timeout-signal.js';
 
-/** @type {number} Cache TTL in milliseconds (30 minutes) */
-const CACHE_TTL_MS = 30 * 60 * 1000;
+const MIN_DESCRIPTION_LENGTH = 200;
 
 /**
  * Check if cached job offers are still valid
@@ -34,28 +39,6 @@ async function isCacheValid() {
     return { valid: false, isStale: true, age: 0 };
   }
 }
-
-/** @type {Object} Storage keys for browser.storage.local */
-const API_ENDPOINT = 'http://localhost:8000';
-const API_TIMEOUT_MS = 10000;
-const N8N_WEBHOOK_URL = 'http://localhost:5678/webhook/writer';
-const MIN_DESCRIPTION_LENGTH = 200;
-
-const STORAGE_KEYS = {
-  JOB_OFFERS: 'jobOffers',
-  JOB_OFFERS_TIMESTAMP: 'jobOffersTimestamp',
-  DETECTED_FIELDS: 'detectedFields',
-  LAST_URL: 'lastUrl',
-  LAST_TAB: 'lastTab',
-  STORAGE_VERSION: 'storageVersion',
-  SHOW_APPLIED_FILTER: 'showAppliedFilter',
-  SSE_STATUS: 'sseStatus',
-  VISITED_LINKS: 'visitedLinks',
-  LAST_CLICKED_JOB_LINK: 'lastClickedJobLink'
-};
-
-/** @type {number} Current storage schema version */
-const CURRENT_STORAGE_VERSION = 1;
 
 // =============================================================================
 // STATE
@@ -1102,7 +1085,7 @@ function setupDescModal() {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ description }),
-        signal: AbortSignal.timeout(API_TIMEOUT_MS)
+        signal: timeoutSignal(API_TIMEOUT_MS)
       });
       updateClState(currentClJobId, 'saved');
     } catch (err) {
@@ -1122,7 +1105,7 @@ async function handleClGenerate(jobId) {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ job_offers_id: jobId }),
-      signal: AbortSignal.timeout(API_TIMEOUT_MS)
+      signal: timeoutSignal(API_TIMEOUT_MS)
     });
     
     const result = await pollForCompletion(jobId, 180000);
@@ -1227,10 +1210,3 @@ function setupClEventListeners() {
     };
   });
 }
-
-document.addEventListener('DOMContentLoaded', init);
-
-setTimeout(() => {
-  console.log('[Popup] Backup init');
-  init().catch(e => console.error('[Popup] Backup err:', e));
-}, 500);

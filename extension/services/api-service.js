@@ -1,6 +1,5 @@
-const API_ENDPOINT = 'http://localhost:8000';
-const API_TIMEOUT_MS = 10000;
-const N8N_WEBHOOK_URL = 'http://localhost:5678/webhook/writer';
+import { API_ENDPOINT, API_TIMEOUT_MS, N8N_WEBHOOK_URL } from './constants.js';
+import { timeoutSignal } from './timeout-signal.js';
 
 async function fetchJobOffers(limit, offset) {
   const url = new URL(`${API_ENDPOINT}/job-offers`);
@@ -9,7 +8,7 @@ async function fetchJobOffers(limit, offset) {
 
   const response = await fetch(url.toString(), {
     method: 'GET',
-    signal: AbortSignal.timeout(API_TIMEOUT_MS)
+    signal: timeoutSignal(API_TIMEOUT_MS)
   });
 
   if (!response.ok) {
@@ -29,7 +28,7 @@ async function fillForm(label, signals) {
       signals,
       generate: true 
     }),
-    signal: AbortSignal.timeout(API_TIMEOUT_MS)
+    signal: timeoutSignal(API_TIMEOUT_MS)
   });
 
   if (!response.ok) {
@@ -52,7 +51,7 @@ async function updateJobOfferProcess(jobOfferId, applied) {
     method: 'PATCH',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ applied }),
-    signal: AbortSignal.timeout(API_TIMEOUT_MS)
+    signal: timeoutSignal(API_TIMEOUT_MS)
   });
 
   if (!response.ok) {
@@ -76,7 +75,7 @@ async function checkHealth() {
   try {
     const response = await fetch(`${API_ENDPOINT}/health`, {
       method: 'GET',
-      signal: AbortSignal.timeout(3000)
+      signal: timeoutSignal(3000)
     });
     return response.ok;
   } catch {
@@ -89,7 +88,7 @@ async function saveJobDescription(jobId, description) {
     method: 'PATCH',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ description }),
-    signal: AbortSignal.timeout(API_TIMEOUT_MS)
+    signal: timeoutSignal(API_TIMEOUT_MS)
   });
   if (!response.ok) throw new Error(`Save failed: ${response.status}`);
   return response.json();
@@ -100,7 +99,7 @@ async function triggerCoverLetterGeneration(jobId) {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ job_offers_id: jobId }),
-    signal: AbortSignal.timeout(API_TIMEOUT_MS)
+    signal: timeoutSignal(API_TIMEOUT_MS)
   });
   if (!response.ok) throw new Error(`Webhook failed: ${response.status}`);
   return response.json();
@@ -109,7 +108,7 @@ async function triggerCoverLetterGeneration(jobId) {
 async function checkGenerationStatus(jobId) {
   const response = await fetch(`${API_ENDPOINT}/job-applications?job_offer_id=${jobId}`, {
     method: 'GET',
-    signal: AbortSignal.timeout(API_TIMEOUT_MS)
+    signal: timeoutSignal(API_TIMEOUT_MS)
   });
   if (!response.ok) throw new Error(`Status check failed: ${response.status}`);
   const data = await response.json();
@@ -122,7 +121,7 @@ async function checkGenerationStatus(jobId) {
 async function checkLetterStatus(jobId) {
   const response = await fetch(`${API_ENDPOINT}/job-offers/${jobId}/letter-status`, {
     method: 'GET',
-    signal: AbortSignal.timeout(API_TIMEOUT_MS)
+    signal: timeoutSignal(API_TIMEOUT_MS)
   });
   if (!response.ok) throw new Error(`Letter status check failed: ${response.status}`);
   const data = await response.json();

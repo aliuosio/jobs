@@ -7,8 +7,7 @@
 
 'use strict';
 
-const API_ENDPOINT = 'http://localhost:8000';
-const N8N_WEBHOOK_URL = 'http://localhost:5678/webhook/writer';
+const { API_ENDPOINT, N8N_WEBHOOK_URL } = require('../services/constants.js');
 
 let testsPassed = 0;
 let testsFailed = 0;

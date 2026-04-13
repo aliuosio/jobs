@@ -3,33 +3,43 @@
  * Run with: node extension/tests/maxlength.test.js
  */
 
+'use strict';
+
 const assert = require('assert');
 
-const {
-  fillField,
-} = require('../content/field-filler.js');
+const mockComputedStyles = new WeakMap();
+global.window = {
+  getComputedStyle: (el) => mockComputedStyles.get(el) || { display: '', visibility: 'visible' },
+  HTMLTextAreaElement: { prototype: Object.create({}, { value: { set: () => {} } }) },
+  HTMLInputElement: { prototype: Object.create({}, { value: { set: () => {} } }) }
+};
 
-const {
-  sanitizeSignalText,
-} = require('../content/signal-extractor.js');
+// Mock document object
+global.document = {
+  createElement: (tag) => ({
+    tagName: tag.toUpperCase(),
+    getAttribute: () => null,
+    querySelector: () => null,
+    appendChild: () => {},
+    insertAdjacentElement: () => null,
+    style: {}
+  })
+};
 
-const {
-  extractAutocomplete,
-  extractAriaLabel,
-  extractPlaceholder,
-  buildFieldSignals,
-  signalsToPayload
-  countSignals
-  cleanLabelText
-} = require('../content/signal-extractor.js');
+const scanner = require('../content/form-scanner.js');
+global.scanForm = scanner.scanForm;
+global.scanPage = scanner.scanPage;
+global.isElementFillable = scanner.isElementFillable;
+global.getFieldType = scanner.getFieldType;
+global.getFieldType = (el) => {
+  const tag = el.tagName?.toLowerCase() || '';
+  if (tag === 'textarea') return 'textarea';
+  if (tag === 'select') return 'select';
+  if (el.isContentEditable) return 'contenteditable';
+  return el.type?.toLowerCase() || 'text';
+};
 
-const {
-  scanForm,
-} = require('../content/form-scanner.js');
-
-const {
-  getFieldType
-} = require('../content/form-scanner.js');
+const { fillField } = require('../content/field-filler.js');
 
 let passed = 0;
 let failed = 0;
@@ -46,84 +56,110 @@ function test(name, fn) {
   }
 }
 
-// ========== maxlength handling tests ==========
-
-test('fillField: no truncation when maxlength is -1', () => {
-  // Create a mock element
+function createMockElement(overrides = {}) {
   const element = {
     tagName: 'INPUT',
     type: 'text',
     value: '',
     maxLength: -1,
+    readOnly: false,
+    disabled: false,
     focus: () => {},
     dispatchEvent: () => {},
-    classList: { add: () => {}, remove: () => }
+    classList: { 
+      add: () => {}, 
+      remove: () => {}, 
+      contains: () => false, 
+      toggle: () => {} 
+    },
+    _valueTracker: { setValue: () => {} },
+    getAttribute: () => null,
+    style: { display: '', visibility: '' },
+    ...overrides
   };
-  
-  // Test with a 14-character value
+  mockComputedStyles.set(element, { display: '', visibility: 'visible' });
+  return element;
+}
+
+// ========== maxlength handling tests ==========
+
+test('fillField: no truncation when maxlength is -1', () => {
+  const element = createMockElement({ maxLength: -1 });
   const result = fillField(element, 'This is 14 chars');
-  
-  // Verify no truncation occurred
   assert.strictEqual(result.success, true);
   assert.strictEqual(result.truncated, false);
-  assert.strictEqual(result.filledLength, 14);
+  assert.strictEqual(result.filledLength, 16);
 });
 
 test('fillField: no truncation when maxlength is undefined', () => {
-  // Create a mock element without maxLength
-  const element = {
-    tagName: 'INPUT',
-    type: 'text',
-    value: '',
-    focus: () => {},
-    dispatchEvent: () => {},
-    classList: { add: () => {}, remove: () => {} }
-  };
-  
+  const element = createMockElement();
   const result = fillField(element, 'This is 14 chars');
   
   assert.strictEqual(result.success, true);
   assert.strictEqual(result.truncated, false);
-  assert.strictEqual(result.filledLength, 14);
+  assert.strictEqual(result.filledLength, 16);
 });
 
 test('fillField: truncation occurs when maxlength is 5', () => {
-  // Create a mock element with maxlength = 5
-  const element = {
-    tagName: 'INPUT',
-    type: 'text',
-    value: '',
-    maxLength: 5,
-    focus: () => {},
-    dispatchEvent: () => {},
-    classList: { add: () => {}, remove: () => {} }
-  };
-  
+  const element = createMockElement({ maxLength: 5 });
   const result = fillField(element, 'This is 14 chars', { maxlength: 5 });
-  
+
   assert.strictEqual(result.success, true);
   assert.strictEqual(result.truncated, true);
   assert.strictEqual(result.filledLength, 5);
 });
 
 test('fillField: no truncation when maxlength is 0', () => {
-  // Create a mock element with maxlength = 0
-  const element = {
-    tagName: 'INPUT',
-    type: 'text',
-    value: '',
-    maxLength: 0,
-    focus: () => {},
-    dispatchEvent: () => {},
-    classList: { add: () => {}, remove: () => {} }
-  };
-  
+  const element = createMockElement({ maxLength: 0 });
   const result = fillField(element, 'This is 14 chars', { maxlength: 0 });
-  
+
   assert.strictEqual(result.success, true);
   assert.strictEqual(result.truncated, false);
-    assert.strictEqual(result.filledLength, 14);
+  assert.strictEqual(result.filledLength, 16);
+});
+
+test('fillField: rejects non-fillable element (password)', () => {
+  const element = createMockElement({ type: 'password' });
+  const result = fillField(element, 'secret');
+  
+  assert.strictEqual(result.success, false);
+  assert.strictEqual(result.error, 'Field is not fillable');
+});
+
+test('fillField: rejects disabled element', () => {
+  const element = createMockElement({ disabled: true });
+  const result = fillField(element, 'value');
+  
+  assert.strictEqual(result.success, false);
+  assert.strictEqual(result.error, 'Field is not fillable');
+});
+
+test('fillField: rejects readonly element', () => {
+  const element = createMockElement({ readOnly: true });
+  const result = fillField(element, 'value');
+  
+  assert.strictEqual(result.success, false);
+  assert.strictEqual(result.error, 'Field is not fillable');
+});
+
+test('fillField: returns error for null element', () => {
+  const result = fillField(null, 'value');
+  
+  assert.strictEqual(result.success, false);
+  assert.strictEqual(result.error, 'Element not found');
+});
+
+test('fillField: handles textarea with maxlength', () => {
+  const element = createMockElement({ tagName: 'TEXTAREA', maxLength: 10 });
+  const result = fillField(element, 'This is longer than 10 chars', { maxlength: 10 });
+
+  assert.strictEqual(result.success, true);
+  assert.strictEqual(result.truncated, true);
+  assert.strictEqual(result.filledLength, 10);
 });
 
 // ========== Summary ==========
 console.log(`\n${passed} tests passed, ${failed} tests failed`);
+if (failed > 0) {
+  process.exit(1);
+}

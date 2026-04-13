@@ -105,13 +105,7 @@ function resetDom() {
 // Load popup.js functions
 // ============================================================================
 
-const STORAGE_KEYS = {
-  JOB_OFFERS: 'jobOffers',
-  JOB_OFFERS_TIMESTAMP: 'jobOffersTimestamp',
-  SHOW_APPLIED_FILTER: 'showAppliedFilter',
-  SSE_STATUS: 'sseStatus',
-  VISITED_LINKS: 'visitedLinks'
-};
+const { STORAGE_KEYS } = require('../services/constants.js');
 
 let jobLinks = [];
 let showAppliedFilter = false;

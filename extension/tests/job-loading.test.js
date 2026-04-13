@@ -7,6 +7,8 @@
 
 'use strict';
 
+const { CACHE_TTL_MS, STORAGE_KEYS } = require('../services/constants.js');
+
 // ============================================================================
 // Test Data
 // ============================================================================
@@ -107,8 +109,6 @@ function assertOk(value, msg) {
 // ============================================================================
 // Load popup.js Functions (Inline)
 // ============================================================================
-
-const CACHE_TTL_MS = 30 * 60 * 1000;
 
 async function isCacheValid(browserStorage) {
   try {

@@ -75,6 +75,9 @@ docker compose logs -f n8n # wait for the workflows to be imported
 
 This starts:
 - **Qdrant** (vector database) on ports 6333/6334
+- **PostgreSQL** (persistent database) on port 5432
+- **Redis** (cache layer) on port 6379
+- **n8n** (automation workflows) on port 5678
 - **Backend API** on port 8000
 
 ### 3. Verify Services
@@ -257,6 +260,9 @@ The **Job Links** tab displays tracked job postings with their application statu
 | Backend API | 8000 | HTTP API |
 | Qdrant HTTP | 6333 | REST API + Dashboard |
 | Qdrant gRPC | 6334 | gRPC API |
+| PostgreSQL | 5432 | Relational database |
+| Redis | 6379 | Cache layer |
+| n8n | 5678 | Automation workflows UI |
 
 ## Project Structure
 
@@ -543,10 +549,9 @@ Run `/validate` endpoint and check each check result:
 ## Roadmap
 
 * [ ] Verify resume input/output pipeline
-* [ ] Optimise Crawler for job description extraction
 * [ ] Automated cover letter generation
 * [ ] Integrate cover letter generation into Extension
-* [ ] LinkedIn application automation
+* [x] LinkedIn application automation
 * [ ] Multi-profile support
 * [ ] Analytics dashboard for application success rate
 
