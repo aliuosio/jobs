@@ -6,12 +6,18 @@ An AI-powered system for job application management: automatically fills job app
 
 ## Overview
 
-Job Forms Helper consists of two main components:
+Job Forms Helper consists of four main components:
 
-1. **Backend API** - A FastAPI service that processes form field labels and generates answers based on resume data stored in a vector database
-2. **Firefox Extension** - A browser extension with two main features:
+1. **Backend API** - A FastAPI service that processes form field labels and generates answers based on resume data stored in a vector database. Built with FastAPI and Pydantic v2, uses vector embeddings, reranking, and hybrid search.
+2. **Browser Extension** - A Chrome/Firefox extension with two main features:
    - **Job Forms Helper** - Detects form fields on job application pages and fills them using the backend API
    - **Job Links Manager** - Tracks job postings with application status (Applied/In Progress/Not Applied), displays job lists, and exports applied jobs as CSV
+   - Currently undergoing ES Module conversion refactoring
+3. **n8n Automation Workflows** - No-code automation pipelines for job offers extraction, skills import, application writer, and job fit chat
+4. **Test Suite** - Comprehensive testing including unit, integration, end-to-end, and load tests
+
+Git repository: `git@github.com:aliuosio/jobs.git`
+Latest commit: `49c7ed81b4991fee77e21d447a6782571a56353a`
 
 ## Architecture
 
@@ -77,8 +83,14 @@ This starts:
 - **Qdrant** (vector database) on ports 6333/6334
 - **PostgreSQL** (persistent database) on port 5432
 - **Redis** (cache layer) on port 6379
-- **n8n** (automation workflows) on port 5678
+- **n8n** (no-code automation workflows) on port 5678
 - **Backend API** on port 8000
+
+n8n workflows include:
+  - Job Offers Extractor
+  - Job Skills Import
+  - Job Application Writer
+  - Jobs Fit Chat
 
 ### 3. Verify Services
 
@@ -294,7 +306,7 @@ The **Job Links** tab displays tracked job postings with their application statu
 │   ├── popup/             # Popup UI
 │   ├── background/        # Background script
 │   └── manifest.json      # Extension manifest
-├── scripts/               # Utility scripts
+├── scripts/               # Utility scripts (Python and bash) for environment setup, data migration, and sync operations
 │   ├── ingest_profile.py  # Profile ingestion
 │   ├── export_stories.py  # BMAD story exporter
 │   ├── sync_stories.py    # BMAD GitHub bridge
@@ -302,6 +314,7 @@ The **Job Links** tab displays tracked job postings with their application statu
 │   └── init-env.sh        # Environment initialization
 ├── tests/                 # Test files
 ├── specs/                 # Feature specifications
+│   ├── 001-es-module-conversion/ # ES Module conversion specification
 │   ├── 002-dynamic-field-detection/ # Dynamic field detection
 │   ├── 003-unit-tests-english/ # English unit tests
 │   ├── 004-job-links-selector/ # Job links selector
