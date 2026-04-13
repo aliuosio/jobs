@@ -5,7 +5,8 @@
  * Supports SSE for real-time job offer updates
  */
 
-const { API_ENDPOINT, SSE_ENDPOINT, SSE_TIMEOUT_MS, CACHE_TTL_MS } = require('../services/constants.js');
+import { API_ENDPOINT, SSE_ENDPOINT, SSE_TIMEOUT_MS, CACHE_TTL_MS } from '../services/constants.js';
+import { timeoutSignal } from '../services/timeout-signal.js';
 
 // =============================================================================
 // SSE CLIENT (T019, T020, T022)
@@ -296,7 +297,7 @@ async function handleUpdateApplied(data) {
         'Content-Type': 'application/json'
       },
       body: JSON.stringify({ applied }),
-      signal: AbortSignal.timeout(10000)
+      signal: timeoutSignal(10000)
     });
 
     if (!response.ok) {
@@ -393,7 +394,7 @@ async function handleFillForm(data) {
         signals: data.signals || null,
         generate: true
       }),
-      signal: AbortSignal.timeout(10000)
+      signal: timeoutSignal(10000)
     });
 
     if (!response.ok) {
@@ -469,7 +470,7 @@ async function handleGetJobOffers(data) {
 
     const response = await fetch(url.toString(), {
       method: 'GET',
-      signal: AbortSignal.timeout(10000)
+      signal: timeoutSignal(10000)
     });
     console.log('[Background] API response status:', response.status);
 
@@ -628,7 +629,7 @@ async function handleGetStatus() {
   try {
     const response = await fetch(`${API_ENDPOINT}/health`, {
       method: 'GET',
-      signal: AbortSignal.timeout(3000)
+      signal: timeoutSignal(3000)
     });
     apiConnected = response.ok;
   } catch (error) {
