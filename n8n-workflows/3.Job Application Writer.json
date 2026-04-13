@@ -67,7 +67,7 @@
       "name": "CreateDraft email",
       "credentials": {
         "imapApi": {
-          "id": "TFG2gg5FUgDD4Oyd",
+          "id": "yK6Mg1KEC7H2roJy",
           "name": "IMAP Credentials account"
         }
       }
@@ -102,7 +102,7 @@
       "name": "Mistral",
       "credentials": {
         "mistralCloudApi": {
-          "id": "mNGknH3RPQM36hPs",
+          "id": "NtmdihjvK8CE1c3p",
           "name": "Mistral Cloud account"
         }
       }
@@ -365,7 +365,7 @@
       "name": "Save",
       "credentials": {
         "postgres": {
-          "id": "g5e3W2e5yHEjzZoI",
+          "id": "ipa39GlGPyFeBDrh",
           "name": "Postgres account"
         }
       },
@@ -494,7 +494,7 @@
       "name": "Get Offers with Desc without Letter",
       "credentials": {
         "postgres": {
-          "id": "g5e3W2e5yHEjzZoI",
+          "id": "ipa39GlGPyFeBDrh",
           "name": "Postgres account"
         }
       }
@@ -728,10 +728,10 @@
     "availableInMCP": false,
     "saveManualExecutions": true
   },
-  "versionId": "9b13c851-6358-4c35-9d3d-b40b3bb24909",
+  "versionId": "9ccd0dcb-ee43-4eeb-b581-969b4270ef42",
   "meta": {
     "templateCredsSetupCompleted": true,
-    "instanceId": "b751e283d167317e522f290d63e0b956085524c7c105edc03e657e7409fe8050"
+    "instanceId": "e6141a4b4c9a583f1eec0a06afb1ffde3ec3dbb6c7b0ed0bd0331c0e44cad2d1"
   },
   "id": "VKuRwjXo1SdXDOKh",
   "tags": [
