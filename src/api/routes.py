@@ -124,7 +124,7 @@ async def search_resume(search_req: SearchRequest) -> SearchResponse:
             except Exception as e:
                 logger.warning(f"[search] profile_chunk_fetch_failed: {e}")
 
-            if search_req.signals:
+            if search_req.signals and any(search_req.signals.values()):
                 field_type_detected = classify_field_type(search_req.signals)
                 if field_type_detected:
                     field_value = extract_direct_field_value(chunks, field_type_detected)
