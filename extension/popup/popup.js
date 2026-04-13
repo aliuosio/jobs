@@ -4,14 +4,15 @@
  */
 console.log('[Popup] Script loaded, waiting for DOM...');
 
-const {
+import {
   API_ENDPOINT,
   API_TIMEOUT_MS,
   N8N_WEBHOOK_URL,
   CACHE_TTL_MS,
   STORAGE_KEYS,
   CURRENT_STORAGE_VERSION
-} = require('../services/constants.js');
+} from '../services/constants.js';
+import { timeoutSignal } from '../services/timeout-signal.js';
 
 const MIN_DESCRIPTION_LENGTH = 200;
 
@@ -1084,7 +1085,7 @@ function setupDescModal() {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ description }),
-        signal: AbortSignal.timeout(API_TIMEOUT_MS)
+        signal: timeoutSignal(API_TIMEOUT_MS)
       });
       updateClState(currentClJobId, 'saved');
     } catch (err) {
@@ -1104,7 +1105,7 @@ async function handleClGenerate(jobId) {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ job_offers_id: jobId }),
-      signal: AbortSignal.timeout(API_TIMEOUT_MS)
+      signal: timeoutSignal(API_TIMEOUT_MS)
     });
     
     const result = await pollForCompletion(jobId, 180000);
