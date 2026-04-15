@@ -3,20 +3,6 @@
   "nodes": [
     {
       "parameters": {
-        "amount": "={{ Math.floor(Math.random() * 30) + 1 }}"
-      },
-      "type": "n8n-nodes-base.wait",
-      "typeVersion": 1.1,
-      "position": [
-        784,
-        192
-      ],
-      "id": "0622dba5-a5c6-431d-a326-15cf3cc4347e",
-      "name": "Wait",
-      "webhookId": "94e8563b-32b3-4c49-bb01-b85c176a9a96"
-    },
-    {
-      "parameters": {
         "options": {}
       },
       "type": "n8n-nodes-base.splitInBatches",
@@ -43,7 +29,7 @@
           "mode": "list",
           "cachedResultName": "job_offers"
         },
-        "limit": 1,
+        "returnAll": true,
         "sort": {
           "values": [
             {
@@ -67,7 +53,7 @@
       "waitBetweenTries": 5000,
       "credentials": {
         "postgres": {
-          "id": "ipa39GlGPyFeBDrh",
+          "id": "EYfvo1U3cbPB2TYV",
           "name": "Postgres account"
         }
       }
@@ -186,18 +172,20 @@
       "name": "Mistral",
       "credentials": {
         "mistralCloudApi": {
-          "id": "NtmdihjvK8CE1c3p",
+          "id": "GDArvIq99nR7iVjE",
           "name": "Mistral Cloud account"
         }
       }
     },
     {
-      "parameters": {},
+      "parameters": {
+        "numberInputs": 3
+      },
       "type": "n8n-nodes-base.merge",
       "typeVersion": 3.2,
       "position": [
         -560,
-        16
+        0
       ],
       "id": "24880f1f-a979-48c3-83e7-953402dc12b3",
       "name": "Merge"
@@ -226,14 +214,14 @@
       "typeVersion": 1,
       "position": [
         -784,
-        112
+        96
       ],
       "id": "5f89c2f0-212b-4a8b-9603-2f57b92a0a8e",
       "name": "DEVHH - Indeed",
       "credentials": {
         "imapApi": {
-          "id": "yK6Mg1KEC7H2roJy",
-          "name": "IMAP Credentials account"
+          "id": "RAQOJvVV6FYYNPgC",
+          "name": "DEVHH"
         }
       }
     },
@@ -255,20 +243,20 @@
         "includeParts": [
           "textContent"
         ],
-        "limit": {}
+        "limit": null
       },
       "type": "n8n-nodes-imap-enhanced.imapEnhanced",
       "typeVersion": 1,
       "position": [
         -784,
-        -80
+        -96
       ],
       "id": "0c9a5381-dd67-497b-a453-85fd6b0933e6",
       "name": "DEVHH - Xing & LinkedIn",
       "credentials": {
         "imapApi": {
-          "id": "yK6Mg1KEC7H2roJy",
-          "name": "IMAP Credentials account"
+          "id": "RAQOJvVV6FYYNPgC",
+          "name": "DEVHH"
         }
       }
     },
@@ -382,21 +370,56 @@
       ],
       "id": "7c33f73a-079a-45ee-aa3b-2d361f0e5661",
       "name": "Call 'Job Offers - store'"
+    },
+    {
+      "parameters": {
+        "resource": "email",
+        "mailboxes": [
+          "INBOX"
+        ],
+        "emailDateRange": {
+          "since": "={{ $json.since }}"
+        },
+        "emailFlags": {},
+        "customLabels": {},
+        "emailSearchFilters": {
+          "from": "=donotreply@match.indeed.com"
+        },
+        "includeParts": [
+          "textContent"
+        ],
+        "limit": null
+      },
+      "type": "n8n-nodes-imap-enhanced.imapEnhanced",
+      "typeVersion": 1,
+      "position": [
+        -784,
+        288
+      ],
+      "id": "dab41ec2-2e3e-4742-b5c2-9239ffc11776",
+      "name": "GMAIL",
+      "credentials": {
+        "imapApi": {
+          "id": "gAnbE2KPQbUTSmnl",
+          "name": "GMAIL"
+        }
+      }
+    },
+    {
+      "parameters": {},
+      "type": "n8n-nodes-base.wait",
+      "typeVersion": 1.1,
+      "position": [
+        688,
+        16
+      ],
+      "id": "60489007-f090-4801-b4e9-badca3e259be",
+      "name": "Wait",
+      "webhookId": "386168b2-6fc8-483a-a3e5-210227dd5d0e"
     }
   ],
   "pinData": {},
   "connections": {
-    "Wait": {
-      "main": [
-        [
-          {
-            "node": "Loop",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
     "Loop": {
       "main": [
         [
@@ -430,12 +453,17 @@
       "main": [
         [
           {
+            "node": "DEVHH - Xing & LinkedIn",
+            "type": "main",
+            "index": 0
+          },
+          {
             "node": "DEVHH - Indeed",
             "type": "main",
             "index": 0
           },
           {
-            "node": "DEVHH - Xing & LinkedIn",
+            "node": "GMAIL",
             "type": "main",
             "index": 0
           }
@@ -578,17 +606,39 @@
           }
         ]
       ]
+    },
+    "GMAIL": {
+      "main": [
+        [
+          {
+            "node": "Merge",
+            "type": "main",
+            "index": 2
+          }
+        ]
+      ]
+    },
+    "Wait": {
+      "main": [
+        [
+          {
+            "node": "Loop",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
     }
   },
-  "active": true,
+  "active": false,
   "settings": {
     "executionOrder": "v1",
     "binaryMode": "separate"
   },
-  "versionId": "a9a91497-d201-4aaf-8e66-9192cb392f68",
+  "versionId": "7680ad73-d62b-484b-bfc9-9559399f72b4",
   "meta": {
     "templateCredsSetupCompleted": true,
-    "instanceId": "e6141a4b4c9a583f1eec0a06afb1ffde3ec3dbb6c7b0ed0bd0331c0e44cad2d1"
+    "instanceId": "b751e283d167317e522f290d63e0b956085524c7c105edc03e657e7409fe8050"
   },
   "id": "T0n6peG7krZLH0bz",
   "tags": [
