@@ -37,7 +37,7 @@
       "typeVersion": 1,
       "position": [
         -1312,
-        1120
+        1296
       ],
       "id": "b174299f-021b-46d6-a877-ba54e3d546cf",
       "name": "When clicking ‘Execute workflow’"
@@ -67,7 +67,7 @@
       "name": "CreateDraft email",
       "credentials": {
         "imapApi": {
-          "id": "yK6Mg1KEC7H2roJy",
+          "id": "PJbxZj5iTcAXhLz2",
           "name": "IMAP Credentials account"
         }
       }
@@ -89,7 +89,7 @@
       "parameters": {
         "model": "mistral-small-latest",
         "options": {
-          "temperature": 0.3
+          "temperature": 0.2
         }
       },
       "type": "@n8n/n8n-nodes-langchain.lmChatMistralCloud",
@@ -102,7 +102,7 @@
       "name": "Mistral",
       "credentials": {
         "mistralCloudApi": {
-          "id": "NtmdihjvK8CE1c3p",
+          "id": "GDArvIq99nR7iVjE",
           "name": "Mistral Cloud account"
         }
       }
@@ -365,7 +365,7 @@
       "name": "Save",
       "credentials": {
         "postgres": {
-          "id": "ipa39GlGPyFeBDrh",
+          "id": "EYfvo1U3cbPB2TYV",
           "name": "Postgres account"
         }
       },
@@ -409,7 +409,7 @@
       "typeVersion": 1.3,
       "position": [
         -864,
-        992
+        1200
       ],
       "id": "c84d755d-d9c6-4f13-b878-61e26a3f2d4a",
       "name": "Call 'Prompt'"
@@ -444,7 +444,7 @@
       "typeVersion": 3.4,
       "position": [
         -1088,
-        992
+        1200
       ],
       "id": "b16009ee-f99b-4211-851b-191392a3bff9",
       "name": "Edit Fields1"
@@ -488,13 +488,13 @@
       "typeVersion": 2.6,
       "position": [
         -640,
-        992
+        1200
       ],
       "id": "c71dc035-3012-4f34-a924-a4284618e034",
       "name": "Get Offers with Desc without Letter",
       "credentials": {
         "postgres": {
-          "id": "ipa39GlGPyFeBDrh",
+          "id": "EYfvo1U3cbPB2TYV",
           "name": "Postgres account"
         }
       }
@@ -508,7 +508,7 @@
       "typeVersion": 2.1,
       "position": [
         -1312,
-        928
+        1104
       ],
       "id": "19457894-d199-4dfe-b980-b9fb5187df17",
       "name": "Webhook",
@@ -718,7 +718,7 @@
       ]
     }
   },
-  "active": true,
+  "active": false,
   "settings": {
     "executionOrder": "v1",
     "binaryMode": "separate",
@@ -728,10 +728,10 @@
     "availableInMCP": false,
     "saveManualExecutions": true
   },
-  "versionId": "9ccd0dcb-ee43-4eeb-b581-969b4270ef42",
+  "versionId": "3e1632d0-7b69-448c-9333-55bd4744cc17",
   "meta": {
     "templateCredsSetupCompleted": true,
-    "instanceId": "e6141a4b4c9a583f1eec0a06afb1ffde3ec3dbb6c7b0ed0bd0331c0e44cad2d1"
+    "instanceId": "b751e283d167317e522f290d63e0b956085524c7c105edc03e657e7409fe8050"
   },
   "id": "VKuRwjXo1SdXDOKh",
   "tags": [
