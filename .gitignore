@@ -114,4 +114,5 @@ package.json
 .specify/*
 !.specify/memory/constitution.md
 .shared/*
+!.shared/.gitkeep
 scripts/ingest_profile.py
