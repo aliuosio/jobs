@@ -114,3 +114,4 @@ package.json
 .specify/*
 !.specify/memory/constitution.md
 .shared/*
+scripts/ingest_profile.py
