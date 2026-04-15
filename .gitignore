@@ -113,3 +113,4 @@ workflows/
 package.json
 .specify/*
 !.specify/memory/constitution.md
+.shared/*
