@@ -111,7 +111,7 @@ _bmad/_config/
 .shared/*.snapshot
 workflows/
 package.json
-.specify/*
+.specify
 !.specify/memory/constitution.md
 .shared/*
 !.shared/.gitkeep
