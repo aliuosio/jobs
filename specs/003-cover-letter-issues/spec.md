@@ -92,8 +92,8 @@ The application automatically selects the appropriate webhook URL based on wheth
 - **FR-003**: Polling for completion status MUST fetch fresh data from the API instead of relying on potentially stale cache
 - **FR-004**: Polling failures after multiple retries MUST display error state in the UI (error badge or message)
 - **FR-005**: The `job_applications` table schema MUST include a `content` column for the letter content query to work correctly
-- **FR-006**: Cover letter generation webhook MUST use `http://localhost:5678/webhook-test/writer` when running on the host machine
-- **FR-007**: Cover letter generation webhook MUST use `http://n8n:5678/webhook-test/writer` when running inside a container
+- **FR-006**: Cover letter generation webhook MUST use `http://localhost:5678/webhook/writer` when running on the host machine
+- **FR-007**: Cover letter generation webhook MUST use `http://n8n:5678/webhook/writer` when running inside a container
 - **FR-008**: The system MUST detect environment (host vs container) to select the appropriate webhook URL
 
 ### Non-Functional Requirements
