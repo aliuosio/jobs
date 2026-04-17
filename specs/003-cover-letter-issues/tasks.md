@@ -59,7 +59,7 @@ User Stories 2-4 depend on US1 completion since they involve the status endpoint
 
 ### Tests (TDD)
 
-- [ ] T010 [P] [US3] Write failing test: polling failure shows error state in `extension/tests/`
+- [ ] T010 [P] [US3] Write failing test: polling failure shows error state in `tests/integration/test_cover_letter_generation.py`
 
 ### Implementation
 
@@ -81,13 +81,18 @@ User Stories 2-4 depend on US1 completion since they involve the status endpoint
 - [ ] T016 [US4] Update cover letter generation service to use webhook config
 - [ ] T017 [US4] Add environment test for URL selection
 
+### Webhook Timeout Handling (SC-006)
+
+- [ ] T017b [P] [US4] Add webhook timeout handling (60s per SC-006) in `src/services/webhook_config.py`
+- [ ] T017c [US4] Add error handling for unreachable webhook (timeout, malformed response)
+
 ---
 
 ## Phase 7: Polish & Cross-Cutting Concerns
 
 - [ ] T018 Run full test suite: `docker compose exec api-backend pytest tests/ -v`
 - [ ] T019 Verify all success criteria from spec.md are met
-- [ ] T020 Update integration tests for edge cases
+- [ ] T020 [P] Performance verification: add timing test for NFR-001 (500ms) and NFR-002 (100ms cache)
 
 ## Implementation Strategy
 
@@ -111,11 +116,11 @@ User Stories 2-4 depend on US1 completion since they involve the status endpoint
 
 ## Summary
 
-- **Total Tasks**: 20
+- **Total Tasks**: 22
 - **US1**: 4 tasks (MVP)
 - **US2**: 3 tasks
 - **US3**: 4 tasks
-- **US4**: 4 tasks
+- **US4**: 6 tasks (added timeout handling)
 - **Setup/Foundational**: 2 tasks
 - **Polish**: 3 tasks
-- **Parallelizable**: 5 tasks identified
+- **Parallelizable**: 7 tasks identified
