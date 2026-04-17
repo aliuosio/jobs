@@ -771,6 +771,7 @@ async function renderJobLinksList(links) {
     const badgeText = getClBadgeText(link, hasLongDescription);
     const canGenerateReason = clStatus === 'ready' ? 'Letter available' : (!hasDescription ? 'Enter a description' : `Description must be at least ${MIN_DESCRIPTION_LENGTH} characters`);
     const isGenerating = clStatus === 'generating';
+    const isDeleting = link.delete_pending === true;
     return `
     <div class="job-link-item${isVisited ? ' job-link-visited' : ''}${isLastClicked ? ' job-link-highlight' : ''}" data-job-id="${link.id}">
       <span class="job-status-indicator ${link.applied ? 'job-status-applied' : 'job-status-new'}${link.pending ? ' job-status-pending' : ''}" 
@@ -779,6 +780,7 @@ async function renderJobLinksList(links) {
             title="${link.pending ? 'Updating...' : (link.applied ? 'Applied - click to mark as not applied' : 'Not applied - click to mark as applied')}"
             role="button" aria-label="${link.pending ? 'Updating...' : (link.applied ? 'Applied' : 'Not applied')}" ></span>
       <a class="job-link-title" href="${link.url}" title="${link.title}" data-job-id="${link.id}">${link.title}</a>
+      <button class="btn-delete" data-action="delete" data-job-id="${link.id}" title="Delete job" ${isDeleting ? 'disabled' : ''}>${isDeleting ? '...' : '×'}</button>
       <span class="cl-badge ${badgeClass}">${badgeText}</span>
       <div class="cl-actions">
         <button class="btn btn-xs btn-secondary cl-save-btn" data-job-id="${link.id}">Save Desc</button>
@@ -826,6 +828,23 @@ async function renderJobLinksList(links) {
         await browser.tabs.update(currentTabId, { url: link.href });
       } catch (error) {
         console.error('Failed to navigate to job link:', error);
+      }
+    });
+  });
+
+  elements.jobLinksList.querySelectorAll('[data-action="delete"]').forEach(btn => {
+    btn.addEventListener('click', async (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+      const jobId = parseInt(btn.dataset.jobId, 10);
+      await handleDeleteClick(jobId);
+    });
+    btn.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter' || e.key === ' ') {
+        e.preventDefault();
+        e.stopPropagation();
+        const jobId = parseInt(btn.dataset.jobId, 10);
+        handleDeleteClick(jobId);
       }
     });
   });
@@ -978,9 +997,61 @@ async function handleStatusClick(jobId) {
   }
 }
 
-/**
- * Persist current job offers state to storage
- */
+async function handleDeleteClick(jobId) {
+  const link = jobLinks.find(l => l.id === jobId);
+  if (!link || link.delete_pending) return;
+
+  link.delete_pending = true;
+  await persistJobOffersState();
+
+  const filteredLinks = filterJobLinks(jobLinks, showAppliedFilter);
+  renderJobLinksList(filteredLinks);
+
+  try {
+    const apiUrl = await getApiUrl();
+    const response = await fetch(`${apiUrl}/job-offers/${jobId}`, {
+      method: 'DELETE',
+      signal: timeoutSignal(API_TIMEOUT_MS)
+    });
+
+    if (response.ok) {
+      jobLinks = jobLinks.filter(l => l.id !== jobId);
+      await persistJobOffersState();
+      showDeleteSuccess('Job deleted');
+      const newFilteredLinks = filterJobLinks(jobLinks, showAppliedFilter);
+      renderJobLinksList(newFilteredLinks);
+    } else {
+      link.delete_pending = false;
+      await persistJobOffersState();
+      renderJobLinksList(filteredLinks);
+      showDeleteError('Delete failed. Please try again.');
+    }
+  } catch (err) {
+    link.delete_pending = false;
+    await persistJobOffersState();
+    renderJobLinksList(filteredLinks);
+    showDeleteError('Delete failed. Please try again.');
+  }
+}
+
+function showDeleteSuccess(message) {
+  document.querySelectorAll('.delete-message').forEach(el => el.remove());
+  const msgEl = document.createElement('div');
+  msgEl.className = 'message message-success delete-message';
+  msgEl.textContent = message;
+  elements.jobLinksList.parentElement.insertBefore(msgEl, elements.jobLinksList);
+  setTimeout(() => msgEl.remove(), 3000);
+}
+
+function showDeleteError(message) {
+  document.querySelectorAll('.delete-message').forEach(el => el.remove());
+  const msgEl = document.createElement('div');
+  msgEl.className = 'message message-error delete-message';
+  msgEl.textContent = message;
+  elements.jobLinksList.parentElement.insertBefore(msgEl, elements.jobLinksList);
+  setTimeout(() => msgEl.remove(), 3000);
+}
+
 async function persistJobOffersState() {
   try {
     await saveStateToStorage({

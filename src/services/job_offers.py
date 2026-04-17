@@ -407,5 +407,33 @@ class JobOffersService:
 
         return row is not None
 
+    async def delete_job_offer(self, job_offer_id: int) -> bool:
+        """Delete a job offer and its associated process data."""
+        if not self._pool:
+            raise RuntimeError("Database pool not initialized")
+
+        async with self._pool.acquire() as conn:
+            async with conn.transaction():
+                job_exists = await conn.fetchrow(
+                    "SELECT id FROM job_offers WHERE id = $1",
+                    job_offer_id,
+                )
+                if not job_exists:
+                    logger.warning(f"delete_job_offer: job_offer_id={job_offer_id} not found")
+                    return False
+
+                await conn.execute(
+                    "DELETE FROM job_offers_process WHERE job_offers_id = $1",
+                    job_offer_id,
+                )
+
+                await conn.execute(
+                    "DELETE FROM job_offers WHERE id = $1",
+                    job_offer_id,
+                )
+
+        logger.info(f"Deleted job_offer_id={job_offer_id} and its process data")
+        return True
+
 
 job_offers_service = JobOffersService()

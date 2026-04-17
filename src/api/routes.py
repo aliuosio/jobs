@@ -370,6 +370,47 @@ async def update_job_offer(
         raise HTTPException(status_code=500, detail="Internal server error")
 
 
+@router.delete(
+    "/job-offers/{job_offer_id}",
+    status_code=204,
+    responses={
+        400: {"model": ErrorResponse, "description": "Invalid job offer ID"},
+        404: {"model": ErrorResponse, "description": "Job offer not found"},
+        500: {"model": ErrorResponse, "description": "Internal server error"},
+        503: {"model": ErrorResponse, "description": "Database unavailable"},
+    },
+    tags=["job-offers"],
+)
+async def delete_job_offer(job_offer_id: int) -> None:
+    """Delete a job offer and its associated process data."""
+    from asyncpg import PostgresError
+
+    from src.services.job_offers import job_offers_service
+
+    if job_offer_id <= 0:
+        raise HTTPException(status_code=400, detail="Job offer ID must be a positive integer")
+
+    logger.info(f"[job-offers] deleting job_offer_id={job_offer_id}")
+
+    try:
+        deleted = await job_offers_service.delete_job_offer(job_offer_id)
+
+        if not deleted:
+            logger.warning(f"[job-offers] not_found job_offer_id={job_offer_id}")
+            raise HTTPException(status_code=404, detail="Job offer not found")
+
+        logger.info(f"[job-offers] deleted job_offer_id={job_offer_id}")
+
+    except PostgresError as e:
+        logger.error(f"[job-offers] database_error: {e}")
+        raise HTTPException(status_code=503, detail="Database temporarily unavailable")
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"[job-offers] unexpected_error: {e}", exc_info=True)
+        raise HTTPException(status_code=500, detail="Internal server error")
+
+
 @router.get(
     "/job-offers/{job_offer_id}/letter-status",
     response_model=dict,
