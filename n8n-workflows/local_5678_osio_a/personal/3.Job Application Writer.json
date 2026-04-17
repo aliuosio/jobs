@@ -1,0 +1,737 @@
+{
+  "name": "3.Job Application Writer",
+  "nodes": [
+    {
+      "parameters": {
+        "description": "Use this tool to decompose the job offer and plan the narrative strategy. Mandatory for analyzing the required tech stack, company tone, and core responsibilities before searching the Vector Store. Use it to ensure the final application is grounded in logic and matches the specific requirements of the role without using forbidden buzzwords."
+      },
+      "type": "@n8n/n8n-nodes-langchain.toolThink",
+      "typeVersion": 1,
+      "position": [
+        384,
+        1168
+      ],
+      "id": "78a02e53-86a3-45b3-8e5f-45790aa92739",
+      "name": "Think"
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=# INPUT\nJOB_COMPANY:{{ $json.company }}\nNOW:{{ $now }}\nJOB_TITLE: {{ $json.subject }}\nJOB_DESCRIPTION:{{ $json.description }}\n\n",
+        "options": {
+          "systemMessage": "={{ $('Call \\'Prompt\\'').item.json.prompt }}"
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 3.1,
+      "position": [
+        320,
+        944
+      ],
+      "id": "d3de9c59-d7bf-4b55-9659-db3b446f9bd6",
+      "name": "AI Agent"
+    },
+    {
+      "parameters": {},
+      "type": "n8n-nodes-base.manualTrigger",
+      "typeVersion": 1,
+      "position": [
+        -1312,
+        1296
+      ],
+      "id": "b174299f-021b-46d6-a877-ba54e3d546cf",
+      "name": "When clicking \u2018Execute workflow\u2019"
+    },
+    {
+      "parameters": {
+        "resource": "email",
+        "operation": "createDraft",
+        "destinationMailbox": {
+          "__rl": true,
+          "value": "Entw\u00fcrfe",
+          "mode": "list",
+          "cachedResultName": "Entw\u00fcrfe"
+        },
+        "subject": "={{ $('Edit Fields').item.json.subject }}",
+        "from": "={{ $json.sender_name }} <{{ $json.sender_email }}>",
+        "to": "={{ $('Edit Fields').item.json.email }}",
+        "text": "={{ $json.content }}"
+      },
+      "type": "n8n-nodes-imap-enhanced.imapEnhanced",
+      "typeVersion": 1,
+      "position": [
+        1168,
+        1152
+      ],
+      "id": "fd5e2f01-e5c5-4d76-b521-1bfca932e670",
+      "name": "CreateDraft email",
+      "credentials": {
+        "imapApi": {
+          "id": "PJbxZj5iTcAXhLz2",
+          "name": "IMAP Credentials account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "n8n-nodes-base.splitInBatches",
+      "typeVersion": 3,
+      "position": [
+        -416,
+        992
+      ],
+      "id": "552f5efa-da27-4591-90d4-0bffc264d574",
+      "name": "Loop Over Items"
+    },
+    {
+      "parameters": {
+        "model": "mistral-small-latest",
+        "options": {
+          "temperature": 0.2
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatMistralCloud",
+      "typeVersion": 1,
+      "position": [
+        256,
+        1168
+      ],
+      "id": "740866be-a8b2-4aba-8239-64b09a3adf07",
+      "name": "Mistral",
+      "credentials": {
+        "mistralCloudApi": {
+          "id": "GDArvIq99nR7iVjE",
+          "name": "Mistral Cloud account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "loose",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "200f1c16-a4b3-4cb6-840b-e5d5ab746495",
+              "leftValue": "={{ $('Edit Fields').item.json.email }}",
+              "rightValue": "null",
+              "operator": {
+                "type": "string",
+                "operation": "notEquals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "looseTypeValidation": true,
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        944,
+        1072
+      ],
+      "id": "020e4d97-df59-4646-a834-023ee7221e0a",
+      "name": "If"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "433715e5-6ff7-4a01-8bd0-220ac93892ec",
+              "name": "id",
+              "value": "={{ $json.id }}",
+              "type": "number"
+            },
+            {
+              "id": "c36d91c2-cc1f-4286-93f3-e578ce14b347",
+              "name": "company",
+              "value": "={{ $json.company }}",
+              "type": "string"
+            },
+            {
+              "id": "e70eb84d-2d35-4986-b245-1965b7a83191",
+              "name": "email",
+              "value": "={{ $json.email }}",
+              "type": "string"
+            },
+            {
+              "id": "a5729bbe-f05b-407b-8728-cad3d8f79f8a",
+              "name": "company_url",
+              "value": "={{ $json.company_url }}",
+              "type": "string"
+            },
+            {
+              "id": "5f2aa5c3-ee6c-42da-93a2-75ad3d3fc6c3",
+              "name": "subject",
+              "value": "=Bewerbung: {{ $json.title }}",
+              "type": "string"
+            },
+            {
+              "id": "980cdc07-5764-469b-9343-9896096db69c",
+              "name": "description",
+              "value": "={{ $json.description }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        32,
+        944
+      ],
+      "id": "304e02ee-a8a7-493a-b356-19bedde3bbc6",
+      "name": "Edit Fields"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "c02b94e3-1a1c-49b9-938f-71121a9159c6",
+              "leftValue": "={{ ($json.description.match(/\\p{L}/gu) || []).length }}",
+              "rightValue": 200,
+              "operator": {
+                "type": "number",
+                "operation": "gte"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "looseTypeValidation": "=",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        -192,
+        944
+      ],
+      "id": "1c6528c8-07c7-4072-9fb9-0922a9e9e656",
+      "name": "If1"
+    },
+    {
+      "parameters": {
+        "schema": {
+          "__rl": true,
+          "mode": "list",
+          "value": "public"
+        },
+        "table": {
+          "__rl": true,
+          "value": "job_applications",
+          "mode": "list",
+          "cachedResultName": "job_applications"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "job_offers_id": "={{ $('Edit Fields').item.json.id }}",
+            "company": "={{ $('Edit Fields').item.json.company }}",
+            "recp_email": "={{ $('Edit Fields').item.json.email }}",
+            "title": "={{ $('Edit Fields').item.json.subject }}",
+            "content": "={{ $json.output }}",
+            "sender_name": "={{ $('Edit Fields1').item.json.sender_name }}",
+            "sender_email": "={{ $('Edit Fields1').item.json.sender_email }}"
+          },
+          "matchingColumns": [
+            "id"
+          ],
+          "schema": [
+            {
+              "id": "id",
+              "displayName": "id",
+              "required": false,
+              "defaultMatch": true,
+              "display": true,
+              "type": "number",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "job_offers_id",
+              "displayName": "job_offers_id",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "number",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "sender_name",
+              "displayName": "sender_name",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "sender_email",
+              "displayName": "sender_email",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "recp_name",
+              "displayName": "recp_name",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "recp_email",
+              "displayName": "recp_email",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "company",
+              "displayName": "company",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "title",
+              "displayName": "title",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "content",
+              "displayName": "content",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "created_at",
+              "displayName": "created_at",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "dateTime",
+              "canBeUsedToMatch": true,
+              "removed": true
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.6,
+      "position": [
+        720,
+        944
+      ],
+      "id": "c2598071-838b-47e6-8f35-a95317053523",
+      "name": "Save",
+      "credentials": {
+        "postgres": {
+          "id": "EYfvo1U3cbPB2TYV",
+          "name": "Postgres account"
+        }
+      },
+      "onError": "continueRegularOutput"
+    },
+    {
+      "parameters": {
+        "workflowId": {
+          "__rl": true,
+          "value": "rGIluizJ8qfWnidf",
+          "mode": "list",
+          "cachedResultUrl": "/workflow/rGIluizJ8qfWnidf",
+          "cachedResultName": "Prompt"
+        },
+        "workflowInputs": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "path": "={{ $json.path }}"
+          },
+          "matchingColumns": [
+            "path"
+          ],
+          "schema": [
+            {
+              "id": "path",
+              "displayName": "path",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "canBeUsedToMatch": true,
+              "type": "string",
+              "removed": false
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": true
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.executeWorkflow",
+      "typeVersion": 1.3,
+      "position": [
+        -864,
+        1200
+      ],
+      "id": "c84d755d-d9c6-4f13-b878-61e26a3f2d4a",
+      "name": "Call 'Prompt'"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "e07022ab-97eb-4bca-b856-666d8b89770f",
+              "name": "path",
+              "value": "/home/node/.n8n-files/Prompts/jobs/writer.md",
+              "type": "string"
+            },
+            {
+              "id": "f70e25c3-5601-488d-b752-0be8bd2270ea",
+              "name": "sender_name",
+              "value": "Osiozekhai Aliu",
+              "type": "string"
+            },
+            {
+              "id": "033d6ae4-becb-4798-bbaf-a5afd4fb7b4a",
+              "name": "sender_email",
+              "value": "aliu@dev-hh.de",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        -1088,
+        1200
+      ],
+      "id": "b16009ee-f99b-4211-851b-191392a3bff9",
+      "name": "Edit Fields1"
+    },
+    {
+      "parameters": {
+        "toolDescription": "FastAPI Endpoint for Skills and Experience on the Candidate",
+        "method": "POST",
+        "url": "http://api-backend:8000/api/v1/search",
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "query",
+              "value": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('parameters0_Value', ``, 'string') }}"
+            },
+            {
+              "name": "include_scores",
+              "value": "false"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequestTool",
+      "typeVersion": 4.4,
+      "position": [
+        512,
+        1168
+      ],
+      "id": "75bf4a04-fb0d-4335-a1d0-f0daa2ce5a48",
+      "name": "FastAPI"
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "SELECT * FROM job_offers jo \nWHERE jo.id = $1\n  AND jo.description IS NOT NULL\n  AND LENGTH(jo.description) > 200\n  AND NOT EXISTS (\n      SELECT 1 \n      FROM job_applications ja \n      WHERE ja.job_offers_id = jo.id\n  );",
+        "options": {
+          "queryParameters": {
+            "parameters": [
+              {
+                "name": "job_offers_id",
+                "type": "number",
+                "value": "={{ $input.params.job_offers_id }}"
+              }
+            ]
+          }
+        }
+      },
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.6,
+      "position": [
+        -640,
+        1200
+      ],
+      "id": "c71dc035-3012-4f34-a924-a4284618e034",
+      "name": "Get Offers with Desc without Letter",
+      "credentials": {
+        "postgres": {
+          "id": "EYfvo1U3cbPB2TYV",
+          "name": "Postgres account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "path": "writer",
+        "options": {
+          "responseMode": "lastNode",
+          "rawBody": false
+        }
+      },
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2.1,
+      "position": [
+        -1312,
+        1104
+      ],
+      "id": "19457894-d199-4dfe-b980-b9fb5187df17",
+      "name": "Webhook",
+      "webhookId": "99bfffa2-3111-49dc-9d7b-aef87435d3c4"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Think": {
+      "ai_tool": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "When clicking \u2018Execute workflow\u2019": {
+      "main": [
+        [
+          {
+            "node": "Edit Fields1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "AI Agent": {
+      "main": [
+        [
+          {
+            "node": "Save",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Loop Over Items": {
+      "main": [
+        [
+          {
+            "node": "If1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "CreateDraft email": {
+      "main": [
+        [
+          {
+            "node": "Loop Over Items",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Mistral": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "If": {
+      "main": [
+        [
+          {
+            "node": "CreateDraft email",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Loop Over Items",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Edit Fields": {
+      "main": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "If1": {
+      "main": [
+        [
+          {
+            "node": "Edit Fields",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Loop Over Items",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Save": {
+      "main": [
+        [
+          {
+            "node": "If",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Edit Fields1": {
+      "main": [
+        [
+          {
+            "node": "Call 'Prompt'",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Call 'Prompt'": {
+      "main": [
+        [
+          {
+            "node": "Get Offers with Desc without Letter",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "FastAPI": {
+      "ai_tool": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get Offers with Desc without Letter": {
+      "main": [
+        [
+          {
+            "node": "Loop Over Items",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Webhook": {
+      "main": [
+        [
+          {
+            "node": "Edit Fields1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate",
+    "timeSavedMode": "fixed",
+    "saveDataSuccessExecution": "all",
+    "callerPolicy": "workflowsFromSameOwner",
+    "availableInMCP": false,
+    "saveManualExecutions": true
+  },
+  "versionId": "3e1632d0-7b69-448c-9333-55bd4744cc17",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "b751e283d167317e522f290d63e0b956085524c7c105edc03e657e7409fe8050"
+  },
+  "id": "VKuRwjXo1SdXDOKh",
+  "tags": [
+    {
+      "updatedAt": "2026-03-20T09:53:00.595Z",
+      "createdAt": "2026-03-20T09:53:00.595Z",
+      "id": "lw4tE7ESajawvgkE",
+      "name": "jobs"
+    }
+  ]
+}

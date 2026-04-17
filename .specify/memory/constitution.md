@@ -1,10 +1,10 @@
 # Jobs Constitution
 
 > **Sync Impact Report**
-> - Version: 0.0.0 → 0.1.0
-> - Changed: All placeholders replaced, first ratification with real principles
-> - Added: 5 Core Principles covering SOLID/DRY, Design Patterns, Git Flow, Skills, TDD
-> - Templates: ✅ All templates already aligned (constitution check present in plan-template.md)
+> - Version: 0.1.0 → 0.2.0
+> - Changed: Added Principle VI - n8n Workflow Management
+> - Added: n8nac skill usage requirement for all n8n workflow operations
+> - Templates: ✅ No template changes required
 > - Follow-up: None
 
 ## Core Principles
@@ -68,6 +68,25 @@ For all code implementations (Python, JavaScript, TypeScript):
 
 ---
 
+### V. n8n Workflow Management (MANDATORY)
+
+For all n8n workflow operations, MUST use n8nac CLI and its skills:
+
+- **n8nac skills validate**: Validate workflow JSON/TypeScript before deployment
+- **n8nac skills search**: Search nodes, docs, and examples
+- **n8nac skills node-info**: Get full node schema and documentation
+- **n8nac pull/push**: Sync workflows from/to n8n instance (not local JSON files)
+
+**Workflow Management Rules**:
+- NEVER edit workflows directly in `n8n-workflows/` folder
+- Use `n8nac pull` to fetch workflows from n8n instance
+- Use `n8nac push` to deploy changes to n8n instance
+- Validate with `n8nac skills validate` before push
+
+**Rationale**: Ensures workflows are managed through n8nac for proper validation, sync, and AI-assisted development.
+
+---
+
 ## Additional Constraints
 
 ### Technology Standards
@@ -104,7 +123,7 @@ The Jobs project follows this workflow:
 
 ## Governance
 
-**Version**: 0.1.0 | **Ratified**: 2026-04-17 | **Last Amended**: 2026-04-17
+**Version**: 0.2.0 | **Ratified**: 2026-04-17 | **Last Amended**: 2026-04-18
 
 ### Amendment Procedure
 

@@ -203,3 +203,35 @@ class TestPollingLogic:
         app = mock_response.get("job_applications", [])[0]
         is_completed = bool(app and app.get("content"))
         assert is_completed is False
+
+
+class TestE2ECoverLetterGeneration:
+
+    @pytest.mark.skip(reason="n8n not accessible from container - run from host with curl first")
+    @pytest.mark.asyncio
+    async def test_n8n_webhook_generates_cover_letter(self):
+        import httpx
+        import asyncio
+
+        async with httpx.AsyncClient(timeout=60.0) as client:
+            response = await client.post("http://localhost:5678/webhook/writer?job_offers_id=315")
+            assert response.status_code == 200
+            assert "workflow" in response.text.lower() or "started" in response.text.lower()
+
+        await asyncio.sleep(8)
+
+        async with httpx.AsyncClient() as client:
+            status_response = await client.get("http://localhost:8000/job-offers/315/letter-status")
+            assert status_response.status_code == 200
+            status = status_response.json()
+            assert status.get("letter_generated") is True
+
+    @pytest.mark.asyncio
+    async def test_job_application_saved_with_cover_letter(self):
+        import httpx
+
+        async with httpx.AsyncClient() as client:
+            status_response = await client.get("http://localhost:8000/job-offers/315/letter-status")
+            assert status_response.status_code == 200
+            status = status_response.json()
+            assert status.get("letter_generated") is True, "Letter should be generated for job 315"
