@@ -54,9 +54,9 @@ As a user with multiple job applications, I want a wider popup so that I can see
 - **FR-001**: System MUST display a delete icon next to each job title in the job links list
 - **FR-002**: System MUST call the DELETE API endpoint when the delete icon is clicked to permanently remove the job offer
 - **FR-003**: Users MUST be able to delete a job offer with a single click on the delete icon
-- **FR-004**: System MUST provide user feedback (success or error message) after delete operation
+- **FR-004**: System MUST provide user feedback after delete operation: success shows "Job deleted" message for 3 seconds, error shows "Delete failed. Please try again." message
 - **FR-005**: System MUST refresh the job list after successful deletion
-- **FR-006**: System MUST increase the popup container width by approximately 20%
+- **FR-006**: System MUST increase the popup container width to 576px (±10px tolerance, range 570px-580px)
 - **FR-007**: DELETE endpoint MUST delete from job_offers_process table first due to foreign key constraints, then job_offers table
 - **FR-008**: Implementation MUST use TDD approach - write tests before implementation
 
@@ -70,8 +70,8 @@ As a user with multiple job applications, I want a wider popup so that I can see
 ### Measurable Outcomes
 
 - **SC-001**: Users can delete any job offer in the list with a single click (no confirmation required for speed)
-- **SC-002**: Deleted jobs are removed from the list within 2 seconds of clicking delete
-- **SC-003**: Popup width is visibly larger, approximately 576px (20% increase from 480px)
+- **SC-002**: Deleted jobs are removed from the list within 2 seconds of clicking the delete button (timing starts when button is clicked, ends when UI updates)
+- **SC-003**: Popup width is between 570px and 580px (tolerance: ±10px from target 576px)
 - **SC-004**: Error rate for delete operations is less than 5%
 
 ## Assumptions
