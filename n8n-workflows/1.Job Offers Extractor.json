@@ -29,7 +29,7 @@
           "mode": "list",
           "cachedResultName": "job_offers"
         },
-        "returnAll": true,
+        "limit": 1,
         "sort": {
           "values": [
             {
@@ -712,7 +712,7 @@
     "executionOrder": "v1",
     "binaryMode": "separate"
   },
-  "versionId": "34abd6c5-dcac-4614-87a7-98fb80198253",
+  "versionId": "f8f70f29-4056-4572-8285-1e38cf6766bc",
   "meta": {
     "templateCredsSetupCompleted": true,
     "instanceId": "b751e283d167317e522f290d63e0b956085524c7c105edc03e657e7409fe8050"
