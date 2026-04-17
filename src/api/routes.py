@@ -434,6 +434,11 @@ async def get_letter_status(job_offer_id: int) -> dict:
 
     try:
         letter_generated = await job_offers_service.check_letter_generated(job_offer_id)
+
+        if letter_generated is None:
+            logger.warning(f"[letter-status] not_found job_offer_id={job_offer_id}")
+            raise HTTPException(status_code=404, detail="Job offer not found")
+
         logger.info(
             f"[letter-status] success job_offer_id={job_offer_id} letter_generated={letter_generated}"
         )

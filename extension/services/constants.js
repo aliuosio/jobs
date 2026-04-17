@@ -6,6 +6,7 @@
 // API Configuration
 export const API_ENDPOINT = 'http://localhost:8000';
 export const API_TIMEOUT_MS = 10000;
+
 export const N8N_WEBHOOK_URL = 'http://localhost:5678/webhook/writer';
 
 // SSE Configuration

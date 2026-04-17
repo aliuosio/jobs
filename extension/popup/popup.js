@@ -1169,14 +1169,17 @@ function setupDescModal() {
 }
 
 async function handleClGenerate(jobId) {
+  letterStatusCache.delete(jobId);
   updateClState(jobId, 'generating');
+  
+  const webhookTimeout = 60000;
   
   try {
     await fetch(N8N_WEBHOOK_URL, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ job_offers_id: jobId }),
-      signal: timeoutSignal(API_TIMEOUT_MS)
+      signal: timeoutSignal(webhookTimeout)
     });
     
     const result = await pollForCompletion(jobId, 180000);
@@ -1193,12 +1196,15 @@ async function handleClGenerate(jobId) {
 
 async function pollForCompletion(jobId, timeoutMs) {
   const startTime = Date.now();
+  let consecutiveErrors = 0;
+  const maxErrors = 3;
   
   while (Date.now() - startTime < timeoutMs) {
     await new Promise(r => setTimeout(r, 5000));
     
     try {
       const letterGenerated = await window.apiService.checkLetterStatus(jobId);
+      consecutiveErrors = 0;
       if (letterGenerated) {
         const link = jobLinks.find(l => l.id === jobId);
         if (link) {
@@ -1210,7 +1216,17 @@ async function pollForCompletion(jobId, timeoutMs) {
         return { completed: true };
       }
     } catch (err) {
-      console.warn('pollForCompletion: failed to check letter status:', err);
+      consecutiveErrors++;
+      console.warn(`pollForCompletion: failed attempt ${consecutiveErrors}/${maxErrors}:`, err);
+      if (consecutiveErrors >= maxErrors) {
+        const link = jobLinks.find(l => l.id === jobId);
+        if (link) {
+          link.cl_status = 'error';
+          const filtered = filterJobLinks(jobLinks, showAppliedFilter);
+          renderJobLinksList(filtered);
+        }
+        return { completed: false };
+      }
     }
     
     const link = jobLinks.find(l => l.id === jobId);

@@ -172,7 +172,7 @@ test('Badge text mapping returns correct label', () => {
 
 test('N8n webhook URL is correct format', () => {
   assertEqual(N8N_WEBHOOK_URL.includes('localhost:5678'), true);
-  assertEqual(N8N_WEBHOOK_URL.includes('/webhook/'), true);
+  assertEqual(N8N_WEBHOOK_URL.includes('/webhook/writer'), true);
 });
 
 test('N8n webhook payload includes job_offers_id', () => {

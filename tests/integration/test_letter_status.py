@@ -67,3 +67,12 @@ class TestLetterStatusEndpoint:
             response = await client.get("/job-offers/1/letter-status")
             assert response.status_code == 500
             assert "Internal server error" in response.json()["detail"]
+
+    @pytest.mark.asyncio
+    async def test_letter_status_returns_404_when_job_offer_not_found(self, client):
+        mock_service = AsyncMock()
+        mock_service.check_letter_generated = AsyncMock(return_value=None)
+        with patch("src.services.job_offers.job_offers_service", mock_service):
+            response = await client.get("/job-offers/999/letter-status")
+            assert response.status_code == 404
+            assert "not found" in response.json()["detail"].lower()
