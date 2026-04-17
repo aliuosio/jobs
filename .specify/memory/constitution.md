@@ -37,22 +37,7 @@ For every new problem, the architect MUST:
 
 ---
 
-### III. Git Flow Branching (MANDATORY)
-
-Every new feature/spec MUST use Git Flow branching:
-
-- **Feature branches**: `feature/` prefix followed by spec name (e.g., `feature/user-auth`)
-- **Bugfix branches**: `fix/` prefix (e.g., `fix/login-validation`)
-- **Hotfix branches**: `hotfix/` prefix for production emergencies
-- **Release branches**: `release/` prefix for version releases
-
-Branch naming convention: `{type}/{spec-name-in-kebab-case}`
-
-**Rationale**: Enables parallel development, clean history, and traceable changes per specification.
-
----
-
-### IV. Git Flow Skills (MANDATORY)
+### III. Git Flow Skills (MANDATORY)
 
 Use existing OpenCode skills for Git Flow operations:
 
@@ -66,7 +51,7 @@ The skills are pre-configured in `.specify/extensions.yml` and execute automatic
 
 ---
 
-### V. Test Driven Development (MANDATORY for Code)
+### IV. Test Driven Development (MANDATORY for Code)
 
 For all code implementations (Python, JavaScript, TypeScript):
 
