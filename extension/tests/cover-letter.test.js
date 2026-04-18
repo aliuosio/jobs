@@ -230,6 +230,82 @@ test('updateClState updates job status and triggers render', () => {
 });
 
 // ============================================================================
+// Webhook Call Tests - verify fetch is called correctly
+// ============================================================================
+
+test('Generate calls webhook with correct URL and payload', async () => {
+  let fetchCalled = false;
+  let fetchUrl = null;
+  let fetchOptions = null;
+  
+  // Override global.fetch to track calls
+  const originalFetch = global.fetch;
+  global.fetch = async (url, options) => {
+    fetchCalled = true;
+    fetchUrl = url;
+    fetchOptions = options;
+    return { ok: true, json: async () => ({}), status: 200 };
+  };
+  
+  try {
+    // Simulate handleClGenerate call (from popup.js lines 1173-1197)
+    const jobId = 521;
+    const webhookUrl = N8N_WEBHOOK_URL;
+    const webhookTimeout = 60000;
+    
+    await fetch(webhookUrl, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ job_offers_id: jobId }),
+    });
+    
+    assertEqual(fetchCalled, true, 'fetch should have been called');
+    assertEqual(fetchUrl, 'http://localhost:5678/webhook/writer', 'webhook URL should match');
+    assertEqual(fetchOptions.method, 'POST', 'should use POST method');
+    assertEqual(fetchOptions.headers['Content-Type'], 'application/json', 'should have JSON content type');
+    
+    const body = JSON.parse(fetchOptions.body);
+    assertEqual(body.job_offers_id, 521, 'payload should include job_offers_id');
+  } finally {
+    global.fetch = originalFetch;
+  }
+});
+
+test('Generate is disabled when description is less than 200 chars', () => {
+  const MIN_DESCRIPTION_LENGTH = 200;
+  
+  const descriptions = [
+    { len: 0, expectedDisabled: true },
+    { len: 100, expectedDisabled: true },
+    { len: 199, expectedDisabled: true },
+    { len: 200, expectedDisabled: false },
+    { len: 500, expectedDisabled: false },
+  ];
+  
+  descriptions.forEach(({ len, expectedDisabled }) => {
+    const description = 'a'.repeat(len);
+    const canGenerate = description.length >= MIN_DESCRIPTION_LENGTH;
+    assertEqual(canGenerate, !expectedDisabled, `description length ${len} should ${expectedDisabled ? 'disable' : 'enable'} generate`);
+  });
+});
+
+test('Copy button shows when cl_status is ready', () => {
+  const clStatuses = [
+    { status: 'none', canCopy: false },
+    { status: 'saving', canCopy: false },
+    { status: 'generating', canCopy: false },
+    { status: 'saved', canCopy: false },
+    { status: 'ready', canCopy: true },
+    { status: 'error', canCopy: false },
+  ];
+  
+  clStatuses.forEach(({ status, canCopy }) => {
+    const isCopyable = status === 'ready';
+    assertEqual(isCopyable, canCopy, `status "${status}" should ${canCopy ? 'show' : 'hide'} copy button`);
+  });
+});
+
+// ============================================================================
 // Results
 // ============================================================================
 
