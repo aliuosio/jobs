@@ -52,11 +52,29 @@ A user wants confirmation that the copy action succeeded so they know they can p
 
 ---
 
+### User Story 4 - Trigger webhook to generate cover letter (Priority: P1)
+
+A user clicks the Generate button to trigger n8n workflow that generates a cover letter.
+
+**Why this priority**: This is the core generation functionality - without this, no cover letters can be created.
+
+**Independent Test**: Can be tested by clicking Generate and verifying the webhook is called.
+
+**Acceptance Scenarios**:
+
+1. **Given** a job has description (200+ chars), **When** the user clicks Generate, **Then** a POST request is sent to `http://localhost:5678/webhook/writer` with `{job_offers_id: <id>}`
+2. **Given** the webhook responds successfully, **When** the generate button is clicked, **Then** the UI shows "Generating..." state
+3. **Given** the cover letter is generated, **When** the polling completes, **Then** the copy icon appears next to the job
+
+---
+
 ### Edge Cases
 
 - What happens when the cover letter content is too long for clipboard?
 - How does the system handle clipboard access being denied by the browser?
 - What if multiple jobs have cover letters - does clicking the icon copy the correct one?
+- What happens when the webhook URL is unreachable?
+- What happens when the job has no description - should Generate be disabled?
 
 ## Requirements *(mandatory)*
 
@@ -67,6 +85,9 @@ A user wants confirmation that the copy action succeeded so they know they can p
 - **FR-003**: Clicking the copy icon MUST copy the cover letter content to the system clipboard
 - **FR-004**: After copying, the system MUST provide visual feedback confirming the copy action
 - **FR-005**: The system MUST handle clipboard access failures gracefully with appropriate user feedback
+- **FR-006**: Clicking Generate button MUST send POST request to `http://localhost:5678/webhook/writer` with `job_offers_id` in request body
+- **FR-007**: Generate button MUST be disabled when job description is less than 200 characters
+- **FR-008**: System MUST poll for completion after webhook is triggered and update UI when letter is ready
 
 ### Key Entities *(include if feature involves data)*
 
@@ -87,3 +108,29 @@ A user wants confirmation that the copy action succeeded so they know they can p
 - The extension uses standard browser Clipboard API for copying
 - Visual feedback will be non-intrusive (icon animation or brief toast) to avoid interrupting user workflow
 - The copy functionality works across all Firefox versions supported by the extension
+- The n8n workflow "3.Job Application Writer" must be active for the webhook to respond
+
+## Configuration Requirements
+
+PREREQUISITE: Before testing Generate button, verify in n8n UI that:
+- Workflow "3.Job Application Writer" is active
+- Webhook `http://localhost:5678/webhook/writer` is registered and responds to POST requests
+
+**Testing the webhook:**
+```bash
+# POST should return success (webhook registered for POST)
+curl -X POST http://localhost:5678/webhook/writer -H "Content-Type: application/json" -d '{"job_offers_id": 1}'
+
+# GET also works but is different trigger mode
+curl http://localhost:5678/webhook/writer
+```
+
+If POST returns 404, the workflow is not active or webhook is not registered for POST method.
+
+## Test Coverage
+
+Tests exist in `/extension/tests/cover-letter.test.js`:
+- Webhook URL format verification
+- Webhook payload structure (includes `job_offers_id`)
+- Generate button enabled/disabled based on description length
+- Copy button visibility based on `cl_status`
