@@ -130,6 +130,12 @@ async function init() {
         console.error('[Popup] Background refresh failed:', err)
       );
     }
+    
+    const generatingJob = jobLinks.find(l => l.cl_status === 'generating');
+    if (generatingJob) {
+      startTimerUpdate();
+    }
+    
     console.log('[Popup] init() COMPLETE');
   } catch (e) {
     console.error('[Popup] init() FAILED:', e);
@@ -771,6 +777,7 @@ async function renderJobLinksList(links) {
     const badgeText = getClBadgeText(link, hasLongDescription);
     const canGenerateReason = clStatus === 'ready' ? 'Letter available' : (!hasDescription ? 'Enter a description' : `Description must be at least ${MIN_DESCRIPTION_LENGTH} characters`);
     const isGenerating = clStatus === 'generating';
+    const isReady = clStatus === 'ready';
     const isDeleting = link.delete_pending === true;
     const canCopy = clStatus === 'ready';
     return `
@@ -786,7 +793,7 @@ async function renderJobLinksList(links) {
       <div class="cl-actions">
         ${canCopy ? `<button class="btn btn-xs btn-copy cl-copy-btn" data-job-id="${link.id}" title="Copy cover letter to clipboard">📋</button>` : ''}
         <button class="btn btn-xs btn-secondary cl-save-btn" data-job-id="${link.id}">Save Desc</button>
-        <button class="btn btn-xs btn-primary cl-generate-btn" data-job-id="${link.id}" ${!canGenerate ? 'disabled' : ''} title="${canGenerateReason}">${isGenerating ? 'Generating...' : 'Generate'}</button>
+        <button class="btn btn-xs btn-primary cl-generate-btn" data-job-id="${link.id}" ${!canGenerate || isReady ? 'disabled' : ''} title="${canGenerateReason}">${isGenerating ? 'Generating...' : (isReady ? 'Generated' : 'Generate')}</button>
       </div>
     </div>`;
   }).join('');
@@ -1095,11 +1102,13 @@ function getClBadgeText(link, hasLongDescription) {
     const elapsed = Math.floor((Date.now() - startTime) / 1000);
     const mins = Math.floor(elapsed / 60);
     const secs = elapsed % 60;
+    if (mins >= 60) return '59:59';
     return `${mins}:${secs.toString().padStart(2, '0')}`;
   }
   if (status === 'generating') return 'Generating';
   if (status === 'error') return 'Error';
-  if (status === 'saved' || status === 'ready') return 'Saved';
+  if (status === 'ready') return 'Generated';
+  if (status === 'saved') return 'Saved';
   if (hasLongDescription) return 'Saved';
   return 'No Desc';
 }
@@ -1110,15 +1119,39 @@ function updateClState(jobId, status) {
     link.cl_status = status;
     if (status === 'generating') {
       link.cl_start_time = Date.now();
+      startTimerUpdate();
     } else {
       link.cl_start_time = null;
+      stopTimerUpdate();
     }
+    cacheJobOffers();
     const filtered = filterJobLinks(jobLinks, showAppliedFilter);
     renderJobLinksList(filtered);
   }
 }
 
 let currentClJobId = null;
+let timerInterval = null;
+
+function startTimerUpdate() {
+  if (timerInterval) clearInterval(timerInterval);
+  timerInterval = setInterval(() => {
+    const generatingLink = jobLinks.find(l => l.cl_status === 'generating');
+    if (generatingLink) {
+      const filtered = filterJobLinks(jobLinks, showAppliedFilter);
+      renderJobLinksList(filtered);
+    } else {
+      stopTimerUpdate();
+    }
+  }, 1000);
+}
+
+function stopTimerUpdate() {
+  if (timerInterval) {
+    clearInterval(timerInterval);
+    timerInterval = null;
+  }
+}
 
 function openDescModal(jobId, existingDescription) {
   currentClJobId = jobId;
@@ -1212,6 +1245,7 @@ async function pollForCompletion(jobId, timeoutMs) {
         if (link) {
           link.cl_status = 'ready';
           link.cl_start_time = null;
+          cacheJobOffers();
         }
         const filtered = filterJobLinks(jobLinks, showAppliedFilter);
         renderJobLinksList(filtered);
@@ -1224,6 +1258,7 @@ async function pollForCompletion(jobId, timeoutMs) {
         const link = jobLinks.find(l => l.id === jobId);
         if (link) {
           link.cl_status = 'error';
+          cacheJobOffers();
           const filtered = filterJobLinks(jobLinks, showAppliedFilter);
           renderJobLinksList(filtered);
         }

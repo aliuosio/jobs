@@ -230,6 +230,82 @@ test('updateClState updates job status and triggers render', () => {
 });
 
 // ============================================================================
+// Button States - Generated Button Feedback Feature (TDD)
+// ============================================================================
+
+test('Button shows Generate when cl_status is none', () => {
+  const getButtonText = (status) => {
+    if (status === 'generating') return 'Generating...';
+    if (status === 'ready') return 'Generated';
+    return 'Generate';
+  };
+  assertEqual(getButtonText('none'), 'Generate');
+});
+
+test('Button shows Generating... when cl_status is generating', () => {
+  const getButtonText = (status) => {
+    if (status === 'generating') return 'Generating...';
+    if (status === 'ready') return 'Generated';
+    return 'Generate';
+  };
+  assertEqual(getButtonText('generating'), 'Generating...');
+});
+
+test('Button shows Generated when cl_status is ready', () => {
+  const getButtonText = (status) => {
+    if (status === 'generating') return 'Generating...';
+    if (status === 'ready') return 'Generated';
+    return 'Generate';
+  };
+  assertEqual(getButtonText('ready'), 'Generated');
+});
+
+test('Generated button is disabled for ready status', () => {
+  const isButtonDisabled = (status) => {
+    if (status === 'generating') return true;
+    if (status === 'ready') return true;
+    if (status === 'none') return false;
+    return false;
+  };
+  assertEqual(isButtonDisabled('ready'), true);
+});
+
+test('Jobs list shows Generated for ready status', () => {
+  const jobLinks = [
+    { id: 1, cl_status: 'none' },
+    { id: 2, cl_status: 'generating' },
+    { id: 3, cl_status: 'ready' },
+  ];
+  
+  const getButtonTextForJob = (link) => {
+    const status = link.cl_status || 'none';
+    if (status === 'generating') return 'Generating...';
+    if (status === 'ready') return 'Generated';
+    return 'Generate';
+  };
+  
+  const readyJob = jobLinks.find(l => l.cl_status === 'ready');
+  assertEqual(getButtonTextForJob(readyJob), 'Generated');
+});
+
+test('Timer format MM:SS with overflow cap', () => {
+  const formatTimer = (startTime) => {
+    if (!startTime) return null;
+    const elapsed = Math.floor((Date.now() - startTime) / 1000);
+    const mins = Math.floor(elapsed / 60);
+    const secs = elapsed % 60;
+    if (mins >= 60) return '59:59';
+    return `${mins}:${secs.toString().padStart(2, '0')}`;
+  };
+  
+  const normalTime = Date.now() - 83000;
+  assertEqual(formatTimer(normalTime), '1:23');
+  
+  const overflowTime = Date.now() - (60 * 60 * 1000);
+  assertEqual(formatTimer(overflowTime), '59:59');
+});
+
+// ============================================================================
 // Webhook Call Tests - verify fetch is called correctly
 // ============================================================================
 

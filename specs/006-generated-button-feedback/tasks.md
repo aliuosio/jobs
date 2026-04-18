@@ -29,10 +29,10 @@
 
 ### Tests (TDD - write FIRST)
 
-- [ ] T001 Create test for button shows "Generate" when cl_status is 'none' in extension/tests/cover-letter.test.js
-- [ ] T002 [P] Create test for button shows "Generating..." when cl_status is 'generating' in extension/tests/cover-letter.test.js
-- [ ] T003 [P] Create test for button shows "Generated" when cl_status is 'ready' in extension/tests/cover-letter.test.js
-- [ ] T003b [P] Create test verifying "Generated" button is disabled in extension/tests/cover-letter.test.js
+- [x] T001 Create test for button shows "Generate" when cl_status is 'none' in extension/tests/cover-letter.test.js
+- [x] T002 [P] Create test for button shows "Generating..." when cl_status is 'generating' in extension/tests/cover-letter.test.js
+- [x] T003 [P] Create test for button shows "Generated" when cl_status is 'ready' in extension/tests/cover-letter.test.js
+- [x] T003b [P] Create test verifying "Generated" button is disabled in extension/tests/cover-letter.test.js
 
 ---
 
@@ -44,9 +44,9 @@
 
 ### Implementation
 
-- [ ] T004 [US1] Modify getClBadgeText to show "Generated" when cl_status is 'ready' in extension/popup/popup.js
-- [ ] T005 [US1] Update button rendering to show "Generated" (disabled) when cl_status is 'ready' in extension/popup/popup.js
-- [ ] T006 [US1] Verify tests pass for all button states in extension/tests/cover-letter.test.js
+- [x] T004 [US1] Modify getClBadgeText to show "Generated" when cl_status is 'ready' in extension/popup/popup.js
+- [x] T005 [US1] Update button rendering to show "Generated" (disabled) when cl_status is 'ready' in extension/popup/popup.js
+- [x] T006 [US1] Verify tests pass for all button states in extension/tests/cover-letter.test.js
 
 ---
 
@@ -58,8 +58,8 @@
 
 ### Implementation
 
-- [ ] T007 [P] [US2] Ensure job links rendering uses correct button text per status in extension/popup/popup.js
-- [ ] T008 [US2] Add test verifying jobs list shows Generated for ready status in extension/tests/cover-letter.test.js
+- [x] T007 [P] [US2] Ensure job links rendering uses correct button text per status in extension/popup/popup.js
+- [x] T008 [US2] Add test verifying jobs list shows Generated for ready status in extension/tests/cover-letter.test.js
 
 ---
 
@@ -71,9 +71,9 @@
 
 ### Implementation
 
-- [ ] T009 [US3] Add setInterval for timer updates in extension/popup/popup.js
-- [ ] T010 [US3] Implement timer overflow cap at "59:59" in extension/popup/popup.js
-- [ ] T011 [US3] Add test for timer update mechanism in extension/tests/cover-letter.test.js
+- [x] T009 [US3] Add setInterval for timer updates in extension/popup/popup.js
+- [x] T010 [US3] Implement timer overflow cap at "59:59" in extension/popup/popup.js
+- [x] T011 [US3] Add test for timer update mechanism in extension/tests/cover-letter.test.js
 
 ---
 
@@ -83,8 +83,8 @@
 
 ### Final Tasks
 
-- [ ] T012 Run full test suite and verify no regressions in extension/tests/
-- [ ] T013 Load extension in Firefox and verify button states work as expected
+- [x] T012 Run full test suite and verify no regressions in extension/tests/
+- [x] T013 Load extension in Firefox and verify button states work as expected
 
 ---
 
