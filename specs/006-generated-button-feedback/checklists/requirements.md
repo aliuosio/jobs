@@ -2,6 +2,7 @@
 
 **Purpose**: Validate specification completeness and quality before proceeding to planning
 **Created**: 2026-04-18
+**Updated**: 2026-04-18
 **Feature**: spec.md
 
 ## Content Quality
@@ -31,6 +32,7 @@
 
 ## Notes
 
-- Required TDD tests are documented per Constitution requirements
-- Timer format (seconds vs minutes:seconds) is intentionally left as implementation detail
-- Passive jobs list view follows same rendering logic assumption - can be validated during implementation
+- Spec updated to address new user requirements (remove duplicate Generated button, fix copy to clipboard)
+- Added new User Stories 1 & 2 for the new requirements
+- Updated Functional Requirements (FR-001 to FR-011) and Success Criteria (SC-001 to SC-007)
+- TDD tests expanded to cover copy to clipboard functionality

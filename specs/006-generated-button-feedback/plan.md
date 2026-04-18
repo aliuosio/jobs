@@ -60,10 +60,9 @@ extension/
 ├── services/
 │   └── constants.js          # Contains MIN_DESCRIPTION_LENGTH
 ├── tests/
-│   └── cover-letter.test.js   # Existing tests to extend
+│   └── cover-letter.test.js  # Existing tests to extend
 └── popup/
-    ├── popup.css            # Styles (may need updates)
-    └── ...
+    └── popup.css             # Styles (may need updates)
 ```
 
 **Structure Decision**: Single extension/popup modification - no new directories needed.
