@@ -396,16 +396,6 @@ JOB_DESCRIPTION:{{ $json.description }}
                     type: 'string',
                     canBeUsedToMatch: true,
                 },
-                {
-                    id: 'created_at',
-                    displayName: 'created_at',
-                    required: false,
-                    defaultMatch: false,
-                    display: true,
-                    type: 'dateTime',
-                    canBeUsedToMatch: true,
-                    removed: true,
-                },
             ],
             attemptToConvertTypes: false,
             convertFieldsToString: false,
@@ -543,6 +533,7 @@ WHERE jo.id = CAST({{ $('Capture Query Param').item.json.job_offers_id }} AS int
         position: [-1312, 1168],
     })
     Webhook = {
+        httpMethod: 'POST',
         path: 'writer',
         options: {
             responseMode: 'lastNode',
@@ -563,7 +554,7 @@ WHERE jo.id = CAST({{ $('Capture Query Param').item.json.job_offers_id }} AS int
                 {
                     id: 'job_offers_id',
                     name: 'job_offers_id',
-                    value: "={{ $('Webhook').item.json.query.job_offers_id }}",
+                    value: "={{ $('Webhook').item.json.body.job_offers_id }}",
                     type: 'string',
                 },
             ],
