@@ -113,9 +113,9 @@ async function checkGenerationStatus(jobId) {
   if (!response.ok) throw new Error(`Status check failed: ${response.status}`);
   const data = await response.json();
   const app = data.job_applications?.[0];
-  if (!app) return { status: 'none' };
-  if (app.content) return { status: 'completed' };
-  return { status: 'processing' };
+  if (!app) return { status: 'none', content: null };
+  if (app.content) return { status: 'completed', content: app.content };
+  return { status: 'processing', content: null };
 }
 
 async function checkLetterStatus(jobId) {

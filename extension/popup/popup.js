@@ -772,6 +772,7 @@ async function renderJobLinksList(links) {
     const canGenerateReason = clStatus === 'ready' ? 'Letter available' : (!hasDescription ? 'Enter a description' : `Description must be at least ${MIN_DESCRIPTION_LENGTH} characters`);
     const isGenerating = clStatus === 'generating';
     const isDeleting = link.delete_pending === true;
+    const canCopy = clStatus === 'ready';
     return `
     <div class="job-link-item${isVisited ? ' job-link-visited' : ''}${isLastClicked ? ' job-link-highlight' : ''}" data-job-id="${link.id}">
       <span class="job-status-indicator ${link.applied ? 'job-status-applied' : 'job-status-new'}${link.pending ? ' job-status-pending' : ''}" 
@@ -783,6 +784,7 @@ async function renderJobLinksList(links) {
       <button class="btn-delete" data-action="delete" data-job-id="${link.id}" title="Delete job" ${isDeleting ? 'disabled' : ''}>${isDeleting ? '...' : '×'}</button>
       <span class="cl-badge ${badgeClass}">${badgeText}</span>
       <div class="cl-actions">
+        ${canCopy ? `<button class="btn btn-xs btn-copy cl-copy-btn" data-job-id="${link.id}" title="Copy cover letter to clipboard">📋</button>` : ''}
         <button class="btn btn-xs btn-secondary cl-save-btn" data-job-id="${link.id}">Save Desc</button>
         <button class="btn btn-xs btn-primary cl-generate-btn" data-job-id="${link.id}" ${!canGenerate ? 'disabled' : ''} title="${canGenerateReason}">${isGenerating ? 'Generating...' : 'Generate'}</button>
       </div>
@@ -1246,6 +1248,27 @@ function setupClEventListeners() {
       e.preventDefault();
       const jobId = parseInt(btn.dataset.jobId, 10);
       handleClSave(jobId);
+    };
+  });
+
+  document.querySelectorAll('.cl-copy-btn').forEach(btn => {
+    btn.onclick = async (e) => {
+      e.preventDefault();
+      const jobId = parseInt(btn.dataset.jobId, 10);
+      try {
+        const status = await window.apiService.checkGenerationStatus(jobId);
+        if (status.status === 'completed' && status.content) {
+          await navigator.clipboard.writeText(status.content);
+          btn.textContent = '✓';
+          btn.classList.add('copied');
+          setTimeout(() => {
+            btn.textContent = '📋';
+            btn.classList.remove('copied');
+          }, 2000);
+        }
+      } catch (err) {
+        console.error('Failed to copy cover letter:', err);
+      }
     };
   });
   
