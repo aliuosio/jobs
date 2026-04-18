@@ -155,6 +155,17 @@ body {
   background-color: #d1d5db;
 }
 
+.btn-generated {
+  background-color: #22c55e;
+  color: white;
+  opacity: 0.7;
+  cursor: not-allowed;
+}
+
+.btn-generated:hover {
+  background-color: #16a34a;
+}
+
 /* Fields List */
 .fields-section {
   max-height: 200px;

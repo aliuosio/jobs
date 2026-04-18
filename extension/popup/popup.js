@@ -793,7 +793,7 @@ async function renderJobLinksList(links) {
       <div class="cl-actions">
         ${canCopy ? `<button class="btn btn-xs btn-copy cl-copy-btn" data-job-id="${link.id}" title="Copy cover letter to clipboard">📋</button>` : ''}
         <button class="btn btn-xs btn-secondary cl-save-btn" data-job-id="${link.id}">Save Desc</button>
-        <button class="btn btn-xs btn-primary cl-generate-btn" data-job-id="${link.id}" ${!canGenerate || isReady ? 'disabled' : ''} title="${canGenerateReason}">${isGenerating ? 'Generating...' : (isReady ? 'Generated' : 'Generate')}</button>
+        <button class="btn btn-xs ${isReady ? 'btn-generated btn-primary' : 'btn-primary'} cl-generate-btn" data-job-id="${link.id}" ${!canGenerate || isReady ? 'disabled' : ''} title="${canGenerateReason}">${isGenerating ? 'Generating...' : (isReady ? 'Generated' : 'Generate')}</button>
       </div>
     </div>`;
   }).join('');
@@ -1090,8 +1090,8 @@ function getClBadgeClass(link, hasLongDescription) {
   const status = link.cl_status || 'none';
   if (status === 'generating') return 'cl-badge-generating';
   if (status === 'error') return 'cl-badge-error';
-  if (status === 'saved' || status === 'ready') return 'cl-badge-ready';
-  if (hasLongDescription) return 'cl-badge-ready';
+  if (status === 'ready') return '';
+  if (status === 'saved' || hasLongDescription) return 'cl-badge-ready';
   return 'cl-badge-no-desc';
 }
 
@@ -1107,7 +1107,7 @@ function getClBadgeText(link, hasLongDescription) {
   }
   if (status === 'generating') return 'Generating';
   if (status === 'error') return 'Error';
-  if (status === 'ready') return 'Generated';
+  if (status === 'ready') return '';
   if (status === 'saved') return 'Saved';
   if (hasLongDescription) return 'Saved';
   return 'No Desc';
