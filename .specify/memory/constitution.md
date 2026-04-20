@@ -37,21 +37,7 @@ For every new problem, the architect MUST:
 
 ---
 
-### III. Git Flow Skills (MANDATORY)
-
-Use existing OpenCode skills for Git Flow operations:
-
-- **`speckit.git.feature`**: Create feature branch before specification
-- **`speckit.git.validate`**: Validate branch follows naming conventions
-- **`speckit.git.commit`**: Auto-commit changes at workflow boundaries
-
-The skills are pre-configured in `.specify/extensions.yml` and execute automatically based on workflow hooks.
-
-**Rationale**: Reduces manual git operations, ensures consistent branch workflow across all specs.
-
----
-
-### IV. Test Driven Development (MANDATORY for Code)
+### III. Test Driven Development (MANDATORY for Code)
 
 For all code implementations (Python, JavaScript, TypeScript):
 
@@ -68,7 +54,7 @@ For all code implementations (Python, JavaScript, TypeScript):
 
 ---
 
-### V. n8n Workflow Management (MANDATORY)
+### IV. n8n Workflow Management (MANDATORY)
 
 For all n8n workflow operations, MUST use n8nac CLI and its skills:
 
