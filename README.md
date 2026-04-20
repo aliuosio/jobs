@@ -1,8 +1,10 @@
 # Jobs
 
-**Version 0.7.1**
+**Version 0.9.3**
 
 An AI-powered system for job application management: automatically fills job application forms using resume data (RAG pipeline) and tracks job postings with application status. The extension provides a Job Links Manager to monitor applied, in-progress, and pending job applications with local caching, real-time sync, and instant UI rendering.
+
+✅ **Fixed in this version:** Job offer delete now correctly handles entries with generated cover letters (resolves foreign key constraint failure).
 
 ## Overview
 
@@ -17,7 +19,7 @@ Job Forms Helper consists of four main components:
 4. **Test Suite** - Comprehensive testing including unit, integration, end-to-end, and load tests
 
 Git repository: `git@github.com:aliuosio/jobs.git`
-Latest commit: `49c7ed81b4991fee77e21d447a6782571a56353a`
+Latest commit: `c7d6556356af0216b71e0a29af25b4e5f2c62aed`
 
 **Knowledge Graph Sync:** This project architecture is fully mapped in Memory-MCP graph with 13 entities and 17 relations tracking modules, dependencies, and directory structure.
 
@@ -95,6 +97,7 @@ n8n workflows include:
 - Job Skills Import
 - Job Application Writer
 - Jobs Fit Chat
+- Cover Letter Generation Workflow
 
 ### 3. Verify Services
 
