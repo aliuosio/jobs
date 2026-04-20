@@ -19,6 +19,8 @@ Job Forms Helper consists of four main components:
 Git repository: `git@github.com:aliuosio/jobs.git`
 Latest commit: `49c7ed81b4991fee77e21d447a6782571a56353a`
 
+**Knowledge Graph Sync:** This project architecture is fully mapped in Memory-MCP graph with 13 entities and 17 relations tracking modules, dependencies, and directory structure.
+
 ## Architecture
 
 ```
@@ -80,6 +82,7 @@ docker compose logs -f n8n # wait for the workflows to be imported
 ```
 
 This starts:
+
 - **Qdrant** (vector database) on ports 6333/6334
 - **PostgreSQL** (persistent database) on port 5432
 - **Redis** (cache layer) on port 6379
@@ -87,10 +90,11 @@ This starts:
 - **Backend API** on port 8000
 
 n8n workflows include:
-  - Job Offers Extractor
-  - Job Skills Import
-  - Job Application Writer
-  - Jobs Fit Chat
+
+- Job Offers Extractor
+- Job Skills Import
+- Job Application Writer
+- Jobs Fit Chat
 
 ### 3. Verify Services
 
