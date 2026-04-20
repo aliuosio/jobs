@@ -430,6 +430,11 @@ class JobOffersService:
                     return False
 
                 await conn.execute(
+                    "DELETE FROM job_applications WHERE job_offers_id = $1",
+                    job_offer_id,
+                )
+
+                await conn.execute(
                     "DELETE FROM job_offers_process WHERE job_offers_id = $1",
                     job_offer_id,
                 )
@@ -439,7 +444,7 @@ class JobOffersService:
                     job_offer_id,
                 )
 
-        logger.info(f"Deleted job_offer_id={job_offer_id} and its process data")
+        logger.info(f"Deleted job_offer_id={job_offer_id} and all related data")
         return True
 
 
