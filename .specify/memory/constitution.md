@@ -1,9 +1,11 @@
 # Jobs Constitution
 
 > **Sync Impact Report**
-> - Version: 0.1.0 → 0.2.0
-> - Changed: Added Principle VI - n8n Workflow Management
-> - Added: n8nac skill usage requirement for all n8n workflow operations
+>
+> - Version: 0.2.0 → 0.3.0
+> - Changed: Bump constitution version 0.2.0 → 0.3.0, update last amended date to 2026-04-20
+>   - Revise workflow: mark clarify step optional, reorder stages, add checklist step
+>   - Clean up previous version change entries from the sync impact report header
 > - Templates: ✅ No template changes required
 > - Follow-up: None
 
@@ -64,6 +66,7 @@ For all n8n workflow operations, MUST use n8nac CLI and its skills:
 - **n8nac pull/push**: Sync workflows from/to n8n instance (not local JSON files)
 
 **Workflow Management Rules**:
+
 - NEVER edit workflows directly in `n8n-workflows/` folder
 - Use `n8nac pull` to fetch workflows from n8n instance
 - Use `n8nac push` to deploy changes to n8n instance
@@ -98,18 +101,18 @@ The Jobs project follows this workflow:
 1. **Idea** → User describes feature requirement
 2. **Branch** → `speckit.git.feature` creates `feature/{name}` branch
 3. **Specify** → `/speckit.specify` creates spec with user stories
-4. **Clarify** → `/speckit.clarify` identifies gaps
+4. **Clarify** → `/speckit.clarify` identifies gaps (optional)
 5. **Plan** → `/speckit.plan` creates implementation plan with Constitution Check
-6. **Tasks** → `/speckit.tasks` generates task list
-7. **Implement** → Code with TDD for code files
+6. **Checklist** → `/speckit.checlist` creates checklist
+7. **Tasks** → `/speckit.tasks` generates task list
 8. **Review** → `speckit.analyze` validates consistency
-9. **Archive** → `/speckit.archive` completes the change
+9. **Implement** →`speckit.implement`Code with TDD for code files
 
 ---
 
 ## Governance
 
-**Version**: 0.2.0 | **Ratified**: 2026-04-17 | **Last Amended**: 2026-04-18
+**Version**: 0.3.0 | **Ratified**: 2026-04-17 | **Last Amended**: 2026-04-20
 
 ### Amendment Procedure
 
