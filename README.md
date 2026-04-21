@@ -10,6 +10,10 @@ An AI-powered system for job application management: automatically fills job app
 
 Job Forms Helper consists of four main components:
 
+![Product Screenshot](product.png)
+
+![Product Screenshot 2](product-2.png)
+
 1. **Backend API** - A FastAPI service that processes form field labels and generates answers based on resume data stored in a vector database. Built with FastAPI and Pydantic v2, uses vector embeddings, reranking, and hybrid search.
 2. **Browser Extension** - A Chrome/Firefox extension with two main features:
    - **Job Forms Helper** - Detects form fields on job application pages and fills them using the backend API
