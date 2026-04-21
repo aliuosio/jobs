@@ -87,9 +87,10 @@
     },
     {
       "parameters": {
-        "model": "mistral-small-latest",
+        "model": "magistral-small-latest",
         "options": {
-          "temperature": 0.2
+          "temperature": 0.1,
+          "topP": 0.9
         }
       },
       "id": "740866be-a8b2-4aba-8239-64b09a3adf07",
@@ -796,7 +797,7 @@
     "availableInMCP": false,
     "saveManualExecutions": true
   },
-  "versionId": "ae27d541-33c8-4f18-802c-908f73fd43cf",
+  "versionId": "9c1023d7-7a1d-415c-bba5-85d651437e24",
   "meta": {
     "templateCredsSetupCompleted": true,
     "instanceId": "b751e283d167317e522f290d63e0b956085524c7c105edc03e657e7409fe8050"
