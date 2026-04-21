@@ -5,14 +5,14 @@
       "parameters": {
         "description": "Use this tool to decompose the job offer and plan the narrative strategy. Mandatory for analyzing the required tech stack, company tone, and core responsibilities before searching the Vector Store. Use it to ensure the final application is grounded in logic and matches the specific requirements of the role without using forbidden buzzwords."
       },
+      "id": "78a02e53-86a3-45b3-8e5f-45790aa92739",
+      "name": "Think",
       "type": "@n8n/n8n-nodes-langchain.toolThink",
       "typeVersion": 1,
       "position": [
-        384,
+        608,
         1168
-      ],
-      "id": "78a02e53-86a3-45b3-8e5f-45790aa92739",
-      "name": "Think"
+      ]
     },
     {
       "parameters": {
@@ -22,25 +22,25 @@
           "systemMessage": "={{ $('Call \\'Prompt\\'').item.json.prompt }}"
         }
       },
+      "id": "d3de9c59-d7bf-4b55-9659-db3b446f9bd6",
+      "name": "AI Agent",
       "type": "@n8n/n8n-nodes-langchain.agent",
       "typeVersion": 3.1,
       "position": [
-        320,
+        544,
         944
-      ],
-      "id": "d3de9c59-d7bf-4b55-9659-db3b446f9bd6",
-      "name": "AI Agent"
+      ]
     },
     {
       "parameters": {},
+      "id": "b174299f-021b-46d6-a877-ba54e3d546cf",
+      "name": "When clicking ‘Execute workflow’",
       "type": "n8n-nodes-base.manualTrigger",
       "typeVersion": 1,
       "position": [
-        -1312,
-        1296
-      ],
-      "id": "b174299f-021b-46d6-a877-ba54e3d546cf",
-      "name": "When clicking ‘Execute workflow’"
+        -1088,
+        1344
+      ]
     },
     {
       "parameters": {
@@ -57,14 +57,14 @@
         "to": "={{ $('Edit Fields').item.json.email }}",
         "text": "={{ $json.content }}"
       },
+      "id": "fd5e2f01-e5c5-4d76-b521-1bfca932e670",
+      "name": "CreateDraft email",
       "type": "n8n-nodes-imap-enhanced.imapEnhanced",
       "typeVersion": 1,
       "position": [
-        1168,
-        1152
+        1968,
+        1072
       ],
-      "id": "fd5e2f01-e5c5-4d76-b521-1bfca932e670",
-      "name": "CreateDraft email",
       "credentials": {
         "imapApi": {
           "id": "PJbxZj5iTcAXhLz2",
@@ -76,14 +76,14 @@
       "parameters": {
         "options": {}
       },
+      "id": "552f5efa-da27-4591-90d4-0bffc264d574",
+      "name": "Loop Over Items",
       "type": "n8n-nodes-base.splitInBatches",
       "typeVersion": 3,
       "position": [
-        -416,
-        992
-      ],
-      "id": "552f5efa-da27-4591-90d4-0bffc264d574",
-      "name": "Loop Over Items"
+        -192,
+        1248
+      ]
     },
     {
       "parameters": {
@@ -92,14 +92,14 @@
           "temperature": 0.2
         }
       },
+      "id": "740866be-a8b2-4aba-8239-64b09a3adf07",
+      "name": "Mistral",
       "type": "@n8n/n8n-nodes-langchain.lmChatMistralCloud",
       "typeVersion": 1,
       "position": [
-        256,
+        480,
         1168
       ],
-      "id": "740866be-a8b2-4aba-8239-64b09a3adf07",
-      "name": "Mistral",
       "credentials": {
         "mistralCloudApi": {
           "id": "GDArvIq99nR7iVjE",
@@ -132,14 +132,14 @@
         "looseTypeValidation": true,
         "options": {}
       },
+      "id": "020e4d97-df59-4646-a834-023ee7221e0a",
+      "name": "If",
       "type": "n8n-nodes-base.if",
       "typeVersion": 2.3,
       "position": [
-        944,
-        1072
-      ],
-      "id": "020e4d97-df59-4646-a834-023ee7221e0a",
-      "name": "If"
+        1744,
+        944
+      ]
     },
     {
       "parameters": {
@@ -185,14 +185,14 @@
         },
         "options": {}
       },
+      "id": "304e02ee-a8a7-493a-b356-19bedde3bbc6",
+      "name": "Edit Fields",
       "type": "n8n-nodes-base.set",
       "typeVersion": 3.4,
       "position": [
-        32,
+        256,
         944
-      ],
-      "id": "304e02ee-a8a7-493a-b356-19bedde3bbc6",
-      "name": "Edit Fields"
+      ]
     },
     {
       "parameters": {
@@ -219,14 +219,14 @@
         "looseTypeValidation": "=",
         "options": {}
       },
+      "id": "1c6528c8-07c7-4072-9fb9-0922a9e9e656",
+      "name": "If1",
       "type": "n8n-nodes-base.if",
       "typeVersion": 2.3,
       "position": [
-        -192,
+        32,
         944
-      ],
-      "id": "1c6528c8-07c7-4072-9fb9-0922a9e9e656",
-      "name": "If1"
+      ]
     },
     {
       "parameters": {
@@ -338,16 +338,6 @@
               "display": true,
               "type": "string",
               "canBeUsedToMatch": true
-            },
-            {
-              "id": "created_at",
-              "displayName": "created_at",
-              "required": false,
-              "defaultMatch": false,
-              "display": true,
-              "type": "dateTime",
-              "canBeUsedToMatch": true,
-              "removed": true
             }
           ],
           "attemptToConvertTypes": false,
@@ -355,14 +345,14 @@
         },
         "options": {}
       },
+      "id": "c2598071-838b-47e6-8f35-a95317053523",
+      "name": "Save",
       "type": "n8n-nodes-base.postgres",
       "typeVersion": 2.6,
       "position": [
-        720,
+        1296,
         944
       ],
-      "id": "c2598071-838b-47e6-8f35-a95317053523",
-      "name": "Save",
       "credentials": {
         "postgres": {
           "id": "EYfvo1U3cbPB2TYV",
@@ -405,14 +395,14 @@
         },
         "options": {}
       },
+      "id": "c84d755d-d9c6-4f13-b878-61e26a3f2d4a",
+      "name": "Call 'Prompt'",
       "type": "n8n-nodes-base.executeWorkflow",
       "typeVersion": 1.3,
       "position": [
-        -864,
-        1200
-      ],
-      "id": "c84d755d-d9c6-4f13-b878-61e26a3f2d4a",
-      "name": "Call 'Prompt'"
+        -640,
+        1248
+      ]
     },
     {
       "parameters": {
@@ -440,14 +430,14 @@
         },
         "options": {}
       },
+      "id": "b16009ee-f99b-4211-851b-191392a3bff9",
+      "name": "Edit Fields1",
       "type": "n8n-nodes-base.set",
       "typeVersion": 3.4,
       "position": [
-        -1088,
-        1200
-      ],
-      "id": "b16009ee-f99b-4211-851b-191392a3bff9",
-      "name": "Edit Fields1"
+        -864,
+        1248
+      ]
     },
     {
       "parameters": {
@@ -469,29 +459,29 @@
         },
         "options": {}
       },
+      "id": "75bf4a04-fb0d-4335-a1d0-f0daa2ce5a48",
+      "name": "FastAPI",
       "type": "n8n-nodes-base.httpRequestTool",
       "typeVersion": 4.4,
       "position": [
-        512,
+        736,
         1168
-      ],
-      "id": "75bf4a04-fb0d-4335-a1d0-f0daa2ce5a48",
-      "name": "FastAPI"
+      ]
     },
     {
       "parameters": {
         "operation": "executeQuery",
-        "query": "SELECT * FROM job_offers jo \nWHERE (jo.email IS NOT NULL OR jo.description IS NOT NULL)\n  AND LENGTH(jo.description) > 200\n  AND NOT EXISTS (\n      SELECT 1 \n      FROM job_applications ja \n      WHERE ja.job_offers_id = jo.id\n  );",
+        "query": "SELECT * FROM job_offers jo \nWHERE jo.id = CAST({{ $('Capture Query Param').item.json.job_offers_id }} AS integer)\n  AND jo.description IS NOT NULL\n  AND LENGTH(jo.description) > 200\n  AND NOT EXISTS (\n      SELECT 1 \n      FROM job_applications ja \n      WHERE ja.job_offers_id = jo.id\n  );",
         "options": {}
       },
+      "id": "c71dc035-3012-4f34-a924-a4284618e034",
+      "name": "Get Offers with Desc without Letter",
       "type": "n8n-nodes-base.postgres",
       "typeVersion": 2.6,
       "position": [
-        -640,
-        1200
+        -416,
+        1248
       ],
-      "id": "c71dc035-3012-4f34-a924-a4284618e034",
-      "name": "Get Offers with Desc without Letter",
       "credentials": {
         "postgres": {
           "id": "EYfvo1U3cbPB2TYV",
@@ -501,47 +491,82 @@
     },
     {
       "parameters": {
+        "httpMethod": "POST",
         "path": "writer",
-        "options": {}
+        "options": {
+          "rawBody": false
+        }
       },
+      "id": "19457894-d199-4dfe-b980-b9fb5187df17",
+      "webhookId": "99bfffa2-3111-49dc-9d7b-aef87435d3c4",
+      "name": "Webhook",
       "type": "n8n-nodes-base.webhook",
       "typeVersion": 2.1,
       "position": [
         -1312,
-        1104
-      ],
-      "id": "19457894-d199-4dfe-b980-b9fb5187df17",
-      "name": "Webhook",
-      "webhookId": "99bfffa2-3111-49dc-9d7b-aef87435d3c4"
+        1152
+      ]
     },
     {
       "parameters": {
-        "respondWith": "allIncomingItems",
+        "assignments": {
+          "assignments": [
+            {
+              "id": "job_offers_id",
+              "name": "job_offers_id",
+              "value": "={{ $('Webhook').item.json.body.job_offers_id }}",
+              "type": "string"
+            }
+          ]
+        },
         "options": {}
       },
-      "type": "n8n-nodes-base.respondToWebhook",
-      "typeVersion": 1.5,
+      "id": "capture-query-param",
+      "name": "Capture Query Param",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
       "position": [
-        -192,
-        752
+        -1088,
+        1152
+      ]
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=Draft for revision:\n{{ $json.output }}",
+        "messages": {
+          "messageValues": [
+            {
+              "message": "=**Role:** Act as an expert Career Coach and Executive Copywriter.  \n\n**Task:** Revise the following cover letter draft or text segment.  \n\n**Guidelines:**  \n1. **Language Consistency:** Always respond in the same language as the provided draft (e.g., if the input is in German, the output must be in German). 2. **Radical Brevity:** Remove all redundant adjectives and generic AI \"filler\" phrases (e.g., \"passionate professional,\" \"valuable expertise,\" \"synergy,\" \"excited for the opportunity\"). \n3. **Fact-First Approach:** Prioritize hard facts, certifications (e.g., ISO, ITIL, AWS), and measurable achievements. \n4. **Structure:** Use bullet points for core competencies to maximize scannability. \n5. **Tone:** Professional, direct, and confident. Eliminate the subjunctive mood (e.g., change \"I would like to\" to \"I will\"). 6. **Target Audience:**HR and Software Engineers "
+            }
+          ]
+        },
+        "batching": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.chainLlm",
+      "typeVersion": 1.9,
+      "position": [
+        944,
+        944
       ],
-      "id": "a989ffa7-751e-4107-a11c-5a542d4cdfbf",
-      "name": "Respond to Webhook"
+      "id": "0ccfd626-6321-4701-ab50-f4afd4692e46",
+      "name": "Anti Fluff"
+    },
+    {
+      "parameters": {},
+      "type": "n8n-nodes-base.wait",
+      "typeVersion": 1.1,
+      "position": [
+        1520,
+        944
+      ],
+      "id": "37b6103c-3e33-4a16-aec8-71ffc94ad559",
+      "name": "Wait 5s",
+      "webhookId": "d3306cef-d7ef-4ae0-a514-a37b58e506cc"
     }
   ],
   "pinData": {},
   "connections": {
-    "Think": {
-      "ai_tool": [
-        [
-          {
-            "node": "AI Agent",
-            "type": "ai_tool",
-            "index": 0
-          }
-        ]
-      ]
-    },
     "When clicking ‘Execute workflow’": {
       "main": [
         [
@@ -557,7 +582,7 @@
       "main": [
         [
           {
-            "node": "Save",
+            "node": "Anti Fluff",
             "type": "main",
             "index": 0
           }
@@ -566,13 +591,7 @@
     },
     "Loop Over Items": {
       "main": [
-        [
-          {
-            "node": "Respond to Webhook",
-            "type": "main",
-            "index": 0
-          }
-        ],
+        [],
         [
           {
             "node": "If1",
@@ -588,17 +607,6 @@
           {
             "node": "Loop Over Items",
             "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
-    "Mistral": {
-      "ai_languageModel": [
-        [
-          {
-            "node": "AI Agent",
-            "type": "ai_languageModel",
             "index": 0
           }
         ]
@@ -655,7 +663,7 @@
       "main": [
         [
           {
-            "node": "If",
+            "node": "Wait 5s",
             "type": "main",
             "index": 0
           }
@@ -684,17 +692,6 @@
         ]
       ]
     },
-    "FastAPI": {
-      "ai_tool": [
-        [
-          {
-            "node": "AI Agent",
-            "type": "ai_tool",
-            "index": 0
-          }
-        ]
-      ]
-    },
     "Get Offers with Desc without Letter": {
       "main": [
         [
@@ -710,7 +707,78 @@
       "main": [
         [
           {
+            "node": "Capture Query Param",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Capture Query Param": {
+      "main": [
+        [
+          {
             "node": "Edit Fields1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Mistral": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_languageModel",
+            "index": 0
+          },
+          {
+            "node": "Anti Fluff",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Think": {
+      "ai_tool": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "FastAPI": {
+      "ai_tool": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Anti Fluff": {
+      "main": [
+        [
+          {
+            "node": "Save",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Wait 5s": {
+      "main": [
+        [
+          {
+            "node": "If",
             "type": "main",
             "index": 0
           }
@@ -718,7 +786,7 @@
       ]
     }
   },
-  "active": false,
+  "active": true,
   "settings": {
     "executionOrder": "v1",
     "binaryMode": "separate",
@@ -728,7 +796,7 @@
     "availableInMCP": false,
     "saveManualExecutions": true
   },
-  "versionId": "3e1632d0-7b69-448c-9333-55bd4744cc17",
+  "versionId": "ae27d541-33c8-4f18-802c-908f73fd43cf",
   "meta": {
     "templateCredsSetupCompleted": true,
     "instanceId": "b751e283d167317e522f290d63e0b956085524c7c105edc03e657e7409fe8050"
