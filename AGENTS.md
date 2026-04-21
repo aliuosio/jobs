@@ -1,8 +1,8 @@
 # PROJECT KNOWLEDGE BASE
 
-**Generated:** 2026-04-20
-**Commit:** 2af4c33
-**Branch:** 008-fix-job-delete-cover-letter
+**Generated:** 2026-04-21
+**Commit:** 4b0bd7b
+**Branch:** main
 
 ## OVERVIEW
 
@@ -117,7 +117,7 @@ pytest tests/
 
 - Multi-language monorepo: Python (backend) + JavaScript (extension)
 - Dependencies: Qdrant, PostgreSQL, Redis, n8n, Mistral API
-- No existing AGENTS.md files - first generation
+- Root + 4 subdirectory AGENTS.md files exist (src/, src/services/, extension/, tests/)
 
 ## Active Technologies
 - JavaScript (ES Modules), Node.js for tests + Browser extension APIs, n8n webhook, Clipboard API (005-copy-cover-letter)
