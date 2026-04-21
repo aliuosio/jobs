@@ -5,14 +5,15 @@
       "parameters": {
         "description": "Use this tool to decompose the job offer and plan the narrative strategy. Mandatory for analyzing the required tech stack, company tone, and core responsibilities before searching the Vector Store. Use it to ensure the final application is grounded in logic and matches the specific requirements of the role without using forbidden buzzwords."
       },
-      "id": "78a02e53-86a3-45b3-8e5f-45790aa92739",
+      "id": "04b3b871-de32-4afe-8176-26b81b0c64b4",
       "name": "Think",
       "type": "@n8n/n8n-nodes-langchain.toolThink",
       "typeVersion": 1,
       "position": [
-        1056,
-        944
-      ]
+        400,
+        592
+      ],
+      "rewireOutputLogTo": "ai_tool"
     },
     {
       "parameters": {
@@ -22,24 +23,24 @@
           "systemMessage": "={{ $('Call \\'Prompt\\'').item.json.prompt }}"
         }
       },
-      "id": "d3de9c59-d7bf-4b55-9659-db3b446f9bd6",
+      "id": "74381c1c-cc36-41da-83d2-c5d0ac7af7b9",
       "name": "AI Agent",
       "type": "@n8n/n8n-nodes-langchain.agent",
       "typeVersion": 3.1,
       "position": [
-        992,
-        720
+        336,
+        368
       ]
     },
     {
       "parameters": {},
-      "id": "b174299f-021b-46d6-a877-ba54e3d546cf",
+      "id": "c95b7d0a-e04f-4259-8cd1-2d6a4f5ec381",
       "name": "When clicking ‘Execute workflow’",
       "type": "n8n-nodes-base.manualTrigger",
       "typeVersion": 1,
       "position": [
-        -1088,
-        1120
+        -1296,
+        784
       ]
     },
     {
@@ -57,18 +58,18 @@
         "to": "={{ $('Edit Fields').item.json.email }}",
         "text": "={{ $json.content }}"
       },
-      "id": "fd5e2f01-e5c5-4d76-b521-1bfca932e670",
+      "id": "55b8c0bc-f3f9-483c-a380-12878068ac42",
       "name": "CreateDraft email",
       "type": "n8n-nodes-imap-enhanced.imapEnhanced",
       "typeVersion": 1,
       "position": [
-        1840,
-        848
+        1184,
+        576
       ],
       "credentials": {
         "imapApi": {
-          "id": "PJbxZj5iTcAXhLz2",
-          "name": "IMAP Credentials account"
+          "id": "RAQOJvVV6FYYNPgC",
+          "name": "DEVHH"
         }
       }
     },
@@ -76,30 +77,29 @@
       "parameters": {
         "options": {}
       },
-      "id": "552f5efa-da27-4591-90d4-0bffc264d574",
+      "id": "0a1642c7-d0cf-436a-8ea8-0890d32bb09f",
       "name": "Loop Over Items",
       "type": "n8n-nodes-base.splitInBatches",
       "typeVersion": 3,
       "position": [
-        256,
-        1024
+        -400,
+        688
       ]
     },
     {
       "parameters": {
         "model": "magistral-small-latest",
         "options": {
-          "temperature": 0.1,
-          "topP": 0.9
+          "temperature": 0.1
         }
       },
-      "id": "740866be-a8b2-4aba-8239-64b09a3adf07",
+      "id": "3c2d37ca-6111-4fd1-ab9e-3091df3f54ea",
       "name": "Mistral",
       "type": "@n8n/n8n-nodes-langchain.lmChatMistralCloud",
       "typeVersion": 1,
       "position": [
-        928,
-        944
+        272,
+        592
       ],
       "credentials": {
         "mistralCloudApi": {
@@ -133,13 +133,13 @@
         "looseTypeValidation": true,
         "options": {}
       },
-      "id": "020e4d97-df59-4646-a834-023ee7221e0a",
+      "id": "74305e25-949f-4825-abf3-556148f110e6",
       "name": "If",
       "type": "n8n-nodes-base.if",
       "typeVersion": 2.3,
       "position": [
-        1616,
-        720
+        960,
+        496
       ]
     },
     {
@@ -186,13 +186,13 @@
         },
         "options": {}
       },
-      "id": "304e02ee-a8a7-493a-b356-19bedde3bbc6",
+      "id": "4685bf99-0ef9-405f-8847-b4454589e295",
       "name": "Edit Fields",
       "type": "n8n-nodes-base.set",
       "typeVersion": 3.4,
       "position": [
-        704,
-        720
+        48,
+        368
       ]
     },
     {
@@ -220,13 +220,13 @@
         "looseTypeValidation": "=",
         "options": {}
       },
-      "id": "1c6528c8-07c7-4072-9fb9-0922a9e9e656",
+      "id": "562f74ac-d6e5-44ea-bcf0-78f086bc1e48",
       "name": "If1",
       "type": "n8n-nodes-base.if",
       "typeVersion": 2.3,
       "position": [
-        480,
-        720
+        -176,
+        368
       ]
     },
     {
@@ -346,13 +346,13 @@
         },
         "options": {}
       },
-      "id": "c2598071-838b-47e6-8f35-a95317053523",
+      "id": "32c939c8-bf30-4788-afa0-752c2353e4d2",
       "name": "Save",
       "type": "n8n-nodes-base.postgres",
       "typeVersion": 2.6,
       "position": [
-        1392,
-        720
+        736,
+        368
       ],
       "credentials": {
         "postgres": {
@@ -396,13 +396,13 @@
         },
         "options": {}
       },
-      "id": "c84d755d-d9c6-4f13-b878-61e26a3f2d4a",
+      "id": "6aac8392-3f6c-4226-ba93-447edf0f149d",
       "name": "Call 'Prompt'",
       "type": "n8n-nodes-base.executeWorkflow",
       "typeVersion": 1.3,
       "position": [
-        -640,
-        1024
+        -848,
+        688
       ]
     },
     {
@@ -431,13 +431,13 @@
         },
         "options": {}
       },
-      "id": "b16009ee-f99b-4211-851b-191392a3bff9",
+      "id": "eb2f2d67-00d5-4b59-9026-4750f0209b01",
       "name": "Edit Fields1",
       "type": "n8n-nodes-base.set",
       "typeVersion": 3.4,
       "position": [
-        -864,
-        1024
+        -1072,
+        688
       ]
     },
     {
@@ -460,14 +460,36 @@
         },
         "options": {}
       },
-      "id": "75bf4a04-fb0d-4335-a1d0-f0daa2ce5a48",
+      "id": "071903fa-f3ce-4f3e-a4de-0722899e8b66",
       "name": "FastAPI",
       "type": "n8n-nodes-base.httpRequestTool",
       "typeVersion": 4.4,
       "position": [
-        1184,
-        944
-      ]
+        528,
+        592
+      ],
+      "rewireOutputLogTo": "ai_tool"
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "SELECT * FROM job_offers jo \nWHERE jo.id = CAST({{ $('Capture Query Param').item.json.job_offers_id }} AS integer)\n  AND jo.description IS NOT NULL\n  AND LENGTH(jo.description) > 200\n  AND NOT EXISTS (\n      SELECT 1 \n      FROM job_applications ja \n      WHERE ja.job_offers_id = jo.id\n  );",
+        "options": {}
+      },
+      "id": "8f1f9c4f-a98c-41d0-b637-84082f73a083",
+      "name": "Get Offers with Desc without Letter",
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.6,
+      "position": [
+        -624,
+        688
+      ],
+      "credentials": {
+        "postgres": {
+          "id": "EYfvo1U3cbPB2TYV",
+          "name": "Postgres account"
+        }
+      }
     },
     {
       "parameters": {
@@ -477,14 +499,14 @@
           "rawBody": false
         }
       },
-      "id": "19457894-d199-4dfe-b980-b9fb5187df17",
+      "id": "f27010b8-4b6c-4978-b2b3-f2bc2f275b6d",
       "webhookId": "99bfffa2-3111-49dc-9d7b-aef87435d3c4",
       "name": "Webhook",
       "type": "n8n-nodes-base.webhook",
       "typeVersion": 2.1,
       "position": [
-        -1312,
-        928
+        -1520,
+        592
       ]
     },
     {
@@ -493,115 +515,48 @@
           "assignments": [
             {
               "id": "job_offers_id",
-              "name": "sql",
-              "value": "=SELECT * FROM job_offers jo \nWHERE jo.id = CAST({{ $('Capture Query Param').item.json.job_offers_id }} AS integer)\n  AND jo.description IS NOT NULL\n  AND LENGTH(jo.description) > 200\n  AND NOT EXISTS (\n      SELECT 1 \n      FROM job_applications ja \n      WHERE ja.job_offers_id = jo.id\n  )",
+              "name": "job_offers_id",
+              "value": "={{ $('Webhook').item.json.body.job_offers_id }}",
               "type": "string"
             }
           ]
         },
         "options": {}
       },
-      "id": "capture-query-param",
+      "id": "bed8fcb9-81b2-4502-befd-610013d6391b",
       "name": "Capture Query Param",
       "type": "n8n-nodes-base.set",
       "typeVersion": 3.4,
       "position": [
-        -1088,
-        928
+        -1296,
+        592
       ]
-    },
-    {
-      "parameters": {
-        "operation": "executeQuery",
-        "query": "SELECT * FROM job_offers jo \nWHERE jo.id = CAST({{ $('Capture Query Param').item.json.job_offers_id }} AS integer)\n  AND jo.description IS NOT NULL\n  AND LENGTH(jo.description) > 200\n  AND NOT EXISTS (\n      SELECT 1 \n      FROM job_applications ja \n      WHERE ja.job_offers_id = jo.id\n  );",
-        "options": {}
-      },
-      "id": "c71dc035-3012-4f34-a924-a4284618e034",
-      "name": "Get Offers With ID",
-      "type": "n8n-nodes-base.postgres",
-      "typeVersion": 2.6,
-      "position": [
-        32,
-        928
-      ],
-      "credentials": {
-        "postgres": {
-          "id": "EYfvo1U3cbPB2TYV",
-          "name": "Postgres account"
-        }
-      }
-    },
-    {
-      "parameters": {
-        "operation": "executeQuery",
-        "query": "SELECT * FROM job_offers jo \nWHERE jo.description IS NOT NULL\n  AND LENGTH(jo.description) > 200\n  AND NOT EXISTS (\n      SELECT 1 \n      FROM job_applications ja \n      WHERE ja.job_offers_id = jo.id\n  )",
-        "options": {}
-      },
-      "id": "09328213-3298-4cd7-8090-15adf4f2648d",
-      "name": "Get Offers Without ID",
-      "type": "n8n-nodes-base.postgres",
-      "typeVersion": 2.6,
-      "position": [
-        32,
-        1120
-      ],
-      "credentials": {
-        "postgres": {
-          "id": "EYfvo1U3cbPB2TYV",
-          "name": "Postgres account"
-        }
-      }
-    },
-    {
-      "parameters": {
-        "jsCode": "const jobOffersId = $input.first().json.job_offers_id;\n\nreturn [{\n  json: {\n    has_job_offers_id: jobOffersId != null && jobOffersId !== ''\n  }\n}];"
-      },
-      "type": "n8n-nodes-base.code",
-      "typeVersion": 2,
-      "position": [
-        -416,
-        1024
-      ],
-      "id": "d3d126fd-240c-469f-9d04-2382134fd500",
-      "name": "PreSwitch"
-    },
-    {
-      "parameters": {
-        "conditions": {
-          "options": {
-            "caseSensitive": true,
-            "leftValue": "",
-            "typeValidation": "strict",
-            "version": 3
-          },
-          "conditions": [
-            {
-              "id": "9417348a-52fb-4751-acda-0d19fa81ea12",
-              "leftValue": "={{ $json.has_job_offers_id }}",
-              "rightValue": "",
-              "operator": {
-                "type": "boolean",
-                "operation": "true",
-                "singleValue": true
-              }
-            }
-          ],
-          "combinator": "and"
-        },
-        "options": {}
-      },
-      "type": "n8n-nodes-base.if",
-      "typeVersion": 2.3,
-      "position": [
-        -192,
-        1024
-      ],
-      "id": "55c69049-8f6a-40f4-a086-73efc319b951",
-      "name": "If2"
     }
   ],
   "pinData": {},
   "connections": {
+    "Think": {
+      "ai_tool": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "AI Agent": {
+      "main": [
+        [
+          {
+            "node": "Save",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
     "When clicking ‘Execute workflow’": {
       "main": [
         [
@@ -613,11 +568,11 @@
         ]
       ]
     },
-    "AI Agent": {
+    "CreateDraft email": {
       "main": [
         [
           {
-            "node": "Save",
+            "node": "Loop Over Items",
             "type": "main",
             "index": 0
           }
@@ -636,12 +591,12 @@
         ]
       ]
     },
-    "CreateDraft email": {
-      "main": [
+    "Mistral": {
+      "ai_languageModel": [
         [
           {
-            "node": "Loop Over Items",
-            "type": "main",
+            "node": "AI Agent",
+            "type": "ai_languageModel",
             "index": 0
           }
         ]
@@ -705,6 +660,17 @@
         ]
       ]
     },
+    "Call 'Prompt'": {
+      "main": [
+        [
+          {
+            "node": "Get Offers with Desc without Letter",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
     "Edit Fields1": {
       "main": [
         [
@@ -716,11 +682,22 @@
         ]
       ]
     },
-    "Call 'Prompt'": {
+    "FastAPI": {
+      "ai_tool": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get Offers with Desc without Letter": {
       "main": [
         [
           {
-            "node": "PreSwitch",
+            "node": "Loop Over Items",
             "type": "main",
             "index": 0
           }
@@ -748,90 +725,6 @@
           }
         ]
       ]
-    },
-    "Mistral": {
-      "ai_languageModel": [
-        [
-          {
-            "node": "AI Agent",
-            "type": "ai_languageModel",
-            "index": 0
-          }
-        ]
-      ]
-    },
-    "Think": {
-      "ai_tool": [
-        [
-          {
-            "node": "AI Agent",
-            "type": "ai_tool",
-            "index": 0
-          }
-        ]
-      ]
-    },
-    "FastAPI": {
-      "ai_tool": [
-        [
-          {
-            "node": "AI Agent",
-            "type": "ai_tool",
-            "index": 0
-          }
-        ]
-      ]
-    },
-    "Get Offers With ID": {
-      "main": [
-        [
-          {
-            "node": "Loop Over Items",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
-    "Get Offers Without ID": {
-      "main": [
-        [
-          {
-            "node": "Loop Over Items",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
-    "PreSwitch": {
-      "main": [
-        [
-          {
-            "node": "If2",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
-    "If2": {
-      "main": [
-        [
-          {
-            "node": "Get Offers With ID",
-            "type": "main",
-            "index": 0
-          }
-        ],
-        [
-          {
-            "node": "Get Offers Without ID",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
     }
   },
   "active": true,
@@ -841,9 +734,10 @@
     "timeSavedMode": "fixed",
     "callerPolicy": "workflowsFromSameOwner",
     "availableInMCP": false,
-    "saveDataSuccessExecution": "all"
+    "saveDataSuccessExecution": "all",
+    "saveManualExecutions": true
   },
-  "versionId": "d681fdc1-5572-4521-931c-5d349083680a",
+  "versionId": "36bceb99-6eed-4f48-a8e0-ca23ff81918d",
   "meta": {
     "templateCredsSetupCompleted": true,
     "instanceId": "b751e283d167317e522f290d63e0b956085524c7c105edc03e657e7409fe8050"
