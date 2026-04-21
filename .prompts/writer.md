@@ -61,7 +61,8 @@ RULES
 - Output only the final letter (no explanations, no reasoning)
 
 OUTPUT:
-plain text not markdown
+- plain text not markdown
+- output in input language
 ---
 ```
 
