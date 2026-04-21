@@ -1,8 +1,9 @@
 # src/services/
 
-Core business logic services for RAG pipeline and form filling.
+Core business logic for RAG pipeline and form filling.
 
 ## WHERE TO LOOK
+
 | Service | File | Role |
 |---------|------|------|
 | Retriever | `retriever.py` | Vector search + HyDE + reranking |
@@ -12,14 +13,21 @@ Core business logic services for RAG pipeline and form filling.
 | Fill Form | `fill_form.py` | Auto-fill logic |
 | Job Offers | `job_offers.py` | PostgreSQL CRUD |
 | Validation | `validation.py` | Input validation |
+| Reranker | `reranker.py` | Result reranking (BM25, dense, sparse) |
+| HyDE | `hyde.py` | Hypothetical Document Embeddings |
+| Broadcast | `broadcast.py` | SSE broadcasting |
+| CSV Export | `csv_export.py` | Job data export |
 
 ## CONVENTIONS
-- Service classes with clear responsibilities
-- Async/await patterns throughout
-- Heavy use of Qdrant vector search
-- HyDE (Hypothetical Document Embeddings) for retrieval
 
-## GENERATOR RULES
+- Service classes as global singletons
+- All methods: `async def` / `await`
+- asyncpg for PostgreSQL
+- AsyncOpenAI client for Mistral API
+- HyDE (Hypothetical Document Embeddings) for retrieval improvement
+
+## ANTI-PATTERNS
+
 - NEVER fabricate experience not in resume
 - NEVER infer values not in context
-- DO NOT add explanatory text for simple fields
+- Do NOT add explanatory text for simple fields

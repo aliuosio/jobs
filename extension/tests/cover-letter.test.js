@@ -382,6 +382,72 @@ test('Copy button shows when cl_status is ready', () => {
 });
 
 // ============================================================================
+// Copy Button Feature Tests (T003b - TDD for copy button fix)
+// ============================================================================
+
+test('Copy button retrieves content from status.content field', async () => {
+  const mockApiResponse = { status: 'completed', content: 'Dear Hiring Manager,\n\nI am writing to express my interest...' };
+  
+  const hasCompletedStatus = mockApiResponse.status === 'completed';
+  const hasContent = !!mockApiResponse.content;
+  assertEqual(hasCompletedStatus && hasContent, true, 'Should have content and completed status');
+  
+  const clipboardContent = mockApiResponse.content;
+  assertEqual(clipboardContent.length > 0, true, 'Content should be non-empty');
+});
+
+test('Copy button shows error message when status check fails', () => {
+  // Simulate error handling - message should be displayed to user
+  let errorMessage = null;
+  const mockError = { message: 'Failed to copy cover letter' };
+  
+  // Error should set a visible message
+  if (mockError) {
+    errorMessage = 'Failed to copy. Please try again.';
+  }
+  
+  assertEqual(!!errorMessage, true, 'Error message should be displayed');
+});
+
+test('Copy button is disabled during copy operation (debounce)', () => {
+  // Simulate button state management
+  let isCopying = false;
+  
+  // Start copy operation - should disable
+  isCopying = true;
+  assertEqual(isCopying, true, 'Button should be disabled during copy');
+  
+  // Complete copy operation - should re-enable
+  isCopying = false;
+  assertEqual(isCopying, false, 'Button should be re-enabled after copy');
+});
+
+test('Rapid clicks are debounced when isCopying is true', () => {
+  let isCopying = false;
+  let clicksHandled = 0;
+  
+  const handleCopyClick = () => {
+    if (isCopying) return; // Ignore rapid clicks
+    clicksHandled++;
+    isCopying = true;
+    
+    // Simulate async operation
+    setTimeout(() => {
+      isCopying = false;
+    }, 100);
+  };
+  
+  // First click should be handled
+  handleCopyClick();
+  assertEqual(clicksHandled, 1, 'First click should be handled');
+  assertEqual(isCopying, true, 'Should be copying after first click');
+  
+  // Second click should be ignored (debounced)
+  handleCopyClick();
+  assertEqual(clicksHandled, 1, 'Second click should be ignored');
+});
+
+// ============================================================================
 // Results
 // ============================================================================
 

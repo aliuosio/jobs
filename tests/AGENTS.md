@@ -1,39 +1,40 @@
 # tests/
 
-Python test suite with unit, integration, e2e, and load tests.
+Python test suite: unit, integration, e2e, and load tests.
 
 ## STRUCTURE
+
 ```
 tests/
-├── unit/         # Unit tests
-├── integration/  # Integration tests
-├── e2e/         # End-to-end tests
-└── load/        # Load tests
+├── unit/         # Unit tests (pytest)
+├── integration/  # Integration tests (pytest + Docker services)
+├── e2e/         # End-to-end tests (Playwright)
+└── load/        # Load tests (playwright + locust)
 ```
 
 ## WHERE TO LOOK
+
 | Test Type | Location | Notes |
 |----------|----------|-------|
-| Unit | `tests/unit/` | Individual components |
-| Integration | `tests/integration/` | Service interactions |
-| E2E | `tests/e2e/` | Full workflows |
-| Load | `tests/load/` | Performance |
+| Unit | `tests/unit/` | Individual components, fixtures |
+| Integration | `tests/integration/` | Docker services (Qdrant, PostgreSQL) |
+| E2E | `tests/e2e/` | Playwright browser tests |
+| Load | `tests/load/` | locust + Playwright |
 
 ## RUN
-```bash
-pytest tests/
-```
 
-## CONVENTIONS
-- Do NOT delete failing tests to pass - fix the code
-- Follow existing test patterns in each directory
-- Docker-First: Run tests via `docker compose exec api-backend pytest`
-
-## RUN
 ```bash
 # Via Docker (recommended)
 docker compose exec api-backend pytest tests/
 
-# Or local venv
+# Local venv
 .venv/bin/pytest tests/
 ```
+
+## CONVENTIONS
+
+- Do NOT delete failing tests to pass - fix the code
+- Integration tests require Docker services
+- conftest.py per subdirectory
+- fixtures in conftest.py
+- Playwright for e2e/load tests

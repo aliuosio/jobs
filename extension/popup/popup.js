@@ -1082,8 +1082,8 @@ function showToggleError(message) {
   const msgEl = document.createElement('div');
   msgEl.className = 'message message-error toggle-error';
   msgEl.textContent = message;
-  elements.jobLinksList.parentElement.insertBefore(msgEl, elements.jobLinksList);
-  setTimeout(() => msgEl.remove(), 3000);
+  elements.jobLinksList.parentElement.appendChild(msgEl);
+  setTimeout(() => msgEl.remove(), 2000);
 }
 
 function getClBadgeClass(link, hasLongDescription) {
@@ -1277,6 +1277,67 @@ async function pollForCompletion(jobId, timeoutMs) {
   return { completed: false };
 }
 
+/**
+ * Reset copy button to default state after operation
+ * @param {HTMLButtonElement} btn 
+ * @param {Object} state 
+ * @param {string[]} extraClasses 
+ */
+function resetCopyButtonState(btn, state, extraClasses = []) {
+  setTimeout(() => {
+    btn.textContent = '📋';
+    btn.classList.remove('copying', 'copied', 'copy-error', ...extraClasses);
+    state.isCopying = false;
+    btn.disabled = false;
+  }, 2000);
+}
+
+/**
+ * Handle copy button click with proper error handling
+ * @param {number} jobId 
+ * @param {HTMLButtonElement} btn 
+ * @param {Map<number, Object>} copyButtonState 
+ */
+async function handleCopyClick(jobId, btn, copyButtonState) {
+  const state = copyButtonState.get(jobId);
+  
+  // Guards
+  if (!state || state.isCopying) return;
+
+  state.isCopying = true;
+  btn.disabled = true;
+  btn.classList.add('copying');
+
+  try {
+    // Secure context check (clipboard API requirement)
+    if (!window.isSecureContext) {
+      throw new Error('Clipboard access requires HTTPS. Please use a secure connection.');
+    }
+
+    const status = await window.apiService.checkGenerationStatus(jobId);
+
+    if (status.status === 'completed' && status.content) {
+      await navigator.clipboard.writeText(status.content);
+      btn.textContent = '✓';
+      btn.classList.add('copied');
+      resetCopyButtonState(btn, state, []);
+    } else if (status.status === 'processing') {
+      showToggleError('Cover letter is still generating. Please wait.');
+      btn.textContent = '⏳';
+      resetCopyButtonState(btn, state, []);
+    } else {
+      showToggleError('Cover letter not available. Generate it first.');
+      btn.textContent = '❌';
+      resetCopyButtonState(btn, state, []);
+    }
+  } catch (err) {
+    console.error('Failed to copy cover letter:', err);
+    showToggleError(err.message || 'Copy failed. Please try again.');
+    btn.classList.add('copy-error');
+    resetCopyButtonState(btn, state, []);
+  }
+}
+
 function setupClEventListeners() {
   document.querySelectorAll('.cl-save-btn').forEach(btn => {
     btn.onclick = (e) => {
@@ -1286,24 +1347,14 @@ function setupClEventListeners() {
     };
   });
 
+  const copyButtonState = new Map();
   document.querySelectorAll('.cl-copy-btn').forEach(btn => {
-    btn.onclick = async (e) => {
+    const jobId = parseInt(btn.dataset.jobId, 10);
+    copyButtonState.set(jobId, { isCopying: false });
+    btn.onclick = (e) => {
       e.preventDefault();
       const jobId = parseInt(btn.dataset.jobId, 10);
-      try {
-        const status = await window.apiService.checkGenerationStatus(jobId);
-        if (status.status === 'completed' && status.content) {
-          await navigator.clipboard.writeText(status.content);
-          btn.textContent = '✓';
-          btn.classList.add('copied');
-          setTimeout(() => {
-            btn.textContent = '📋';
-            btn.classList.remove('copied');
-          }, 2000);
-        }
-      } catch (err) {
-        console.error('Failed to copy cover letter:', err);
-      }
+      handleCopyClick(jobId, btn, copyButtonState);
     };
   });
   
