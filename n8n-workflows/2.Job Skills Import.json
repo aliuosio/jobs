@@ -50,12 +50,12 @@
       "type": "@n8n/n8n-nodes-langchain.lmChatMistralCloud",
       "typeVersion": 1,
       "position": [
-        2328,
+        2336,
         1088
       ],
       "credentials": {
         "mistralCloudApi": {
-          "id": "NtmdihjvK8CE1c3p",
+          "id": "GDArvIq99nR7iVjE",
           "name": "Mistral Cloud account"
         }
       }
@@ -165,7 +165,7 @@
             {
               "id": "dc393da6-21c8-4647-adc3-810db96b54e8",
               "name": "resume-path",
-              "value": "/home/node/.n8n-files/.shared/resume-all.md",
+              "value": "/home/node/.n8n-files/.shared/resume-en.md",
               "type": "string"
             }
           ]
@@ -237,7 +237,7 @@
       ],
       "credentials": {
         "qdrantApi": {
-          "id": "LpARdplXXiOGSJ8o",
+          "id": "mPiokoPREmsuLJpC",
           "name": "Qdrant account"
         }
       }
@@ -271,7 +271,7 @@
       ],
       "credentials": {
         "mistralCloudApi": {
-          "id": "NtmdihjvK8CE1c3p",
+          "id": "GDArvIq99nR7iVjE",
           "name": "Mistral Cloud account"
         }
       }
@@ -287,9 +287,24 @@
         },
         "workflowInputs": {
           "mappingMode": "defineBelow",
-          "value": {},
-          "matchingColumns": [],
-          "schema": [],
+          "value": {
+            "path": "={{ $json.path }}"
+          },
+          "matchingColumns": [
+            "path"
+          ],
+          "schema": [
+            {
+              "id": "path",
+              "displayName": "path",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "canBeUsedToMatch": true,
+              "type": "string",
+              "removed": false
+            }
+          ],
           "attemptToConvertTypes": false,
           "convertFieldsToString": true
         },
@@ -480,10 +495,10 @@
     "callerPolicy": "workflowsFromSameOwner",
     "availableInMCP": false
   },
-  "versionId": "d220255d-a5c8-46a9-8d9b-d9058870fa6a",
+  "versionId": "ef6b55e7-0fc4-4835-8c73-a233aebcf754",
   "meta": {
     "templateCredsSetupCompleted": true,
-    "instanceId": "e6141a4b4c9a583f1eec0a06afb1ffde3ec3dbb6c7b0ed0bd0331c0e44cad2d1"
+    "instanceId": "b751e283d167317e522f290d63e0b956085524c7c105edc03e657e7409fe8050"
   },
   "id": "SMcBZC552RHqRGga",
   "tags": [
