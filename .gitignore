@@ -115,3 +115,4 @@ package.json
 .shared/*
 !.shared/.gitkeep
 scripts/ingest_profile.py
+!specs/.specify
