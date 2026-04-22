@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Job Forms Helper</title>
+  <link rel="stylesheet" href="popup.css">
+</head>
+<body>
+  <script>console.log('[HTML] Inline script ran');</script>
+  <!-- Description Input Modal -->
+  <div id="desc-modal" class="modal" style="display: none;">
+    <div class="modal-content">
+      <h3>Enter Job Description</h3>
+      <p class="modal-hint">Paste the job description from the job posting</p>
+      <textarea id="desc-textarea" rows="10" placeholder="Paste job description here..."></textarea>
+      <div class="modal-actions">
+        <button id="desc-cancel-btn" class="btn btn-secondary">Cancel</button>
+        <button id="desc-save-btn" class="btn btn-primary">Save</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="popup-container">
+    <!-- Tab Navigation -->
+    <div class="tabs-header">
+      <button class="tab-btn active" data-tab="links" id="tab-links">
+        Job Links
+      </button>
+      <button class="tab-btn" data-tab="forms" id="tab-forms">
+        Job Forms Helper
+      </button>
+    </div>
+
+    <!-- Tab Content -->
+    <div class="tab-content">
+        <!-- Job Links Tab -->
+      <div class="tab-panel active" id="panel-links">
+        <div id="stale-indicator" class="stale-indicator" style="display: none;">
+          Data may be outdated. Click refresh to update.
+        </div>
+        <div class="section job-links-section">
+          <div id="job-links-loading" class="job-links-loading" style="display: none;">
+            <div class="job-link-skeleton"></div>
+            <div class="job-link-skeleton"></div>
+            <div class="job-link-skeleton"></div>
+          </div>
+          <div id="job-links-error" class="job-links-error" style="display: none;">
+            <p class="error-message">Failed to load jobs</p>
+            <button id="retry-btn" class="btn btn-secondary">Retry</button>
+          </div>
+          <div id="job-links-list" class="job-links-list">
+            <p class="no-links">No job links available.</p>
+          </div>
+        </div>
+        
+        <div class="section refresh-section">
+          <label class="filter-checkbox">
+            <input type="checkbox" id="show-applied-toggle">
+            <span>Show Applied</span>
+          </label>
+          <div class="refresh-buttons">
+            <button id="export-applied-btn" class="btn btn-secondary btn-small">Export Applied</button>
+            <button id="refresh-links-btn" class="btn btn-primary btn-small">Refresh Jobs</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Job Forms Helper Tab -->
+      <div class="tab-panel" id="panel-forms">
+        <div class="section">
+          <button id="scan-btn" class="btn btn-primary">Scan Page</button>
+          <button id="fill-all-btn" class="btn btn-primary" disabled>Fill All Fields</button>
+        </div>
+        
+        <div class="section fields-section">
+          <h3>Detected Fields</h3>
+          <div id="fields-list" class="fields-list">
+            <p class="no-fields">No fields detected. Click "Scan Page" to detect form fields.</p>
+          </div>
+        </div>
+        
+        <div class="section progress-section" id="progress-section" style="display: none;">
+          <h3>Progress</h3>
+          <div class="progress-bar">
+            <div id="progress-fill" class="progress-fill" style="width: 0%"></div>
+          </div>
+          <div id="progress-text" class="progress-text">Filling 0/0 fields...</div>
+        </div>
+        
+        <div class="section actions-section">
+          <button id="clear-btn" class="btn btn-secondary">Clear Indicators</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script type="module" src="../services/api-service.js"></script>
+  <script type="module" src="popup.js"></script>
+</body>
+</html>
