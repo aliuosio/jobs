@@ -1,0 +1,148 @@
+/**
+ * Content Script Styles for Job Forms Helper
+ * Provides visual feedback for form field states
+ */
+
+/* Field highlighting for detected form fields */
+.jfh-field-detected {
+  outline: 2px dashed #3b82f6;
+  outline-offset: 2px;
+}
+
+/* Field successfully filled */
+.jfh-field-filled {
+  outline: 2px solid #22c55e;
+  outline-offset: 2px;
+  background-color: rgba(34, 197, 94, 0.05);
+}
+
+/* Field with no data from API */
+.jfh-field-no-data {
+  outline: 2px solid #f59e0b;
+  outline-offset: 2px;
+  background-color: rgba(245, 158, 11, 0.05);
+}
+
+/* Field skipped (readonly, disabled, hidden, password) */
+.jfh-field-skipped {
+  outline: 2px dotted #9ca3af;
+  outline-offset: 2px;
+  opacity: 0.7;
+}
+
+/* Field fill error */
+.jfh-field-error {
+  outline: 2px solid #ef4444;
+  outline-offset: 2px;
+  background-color: rgba(239, 68, 68, 0.05);
+}
+
+/* Warning icon container for truncated values */
+.jfh-warning-icon {
+  display: inline-flex;
+  align-items: center;
+  margin-left: 4px;
+  color: #f59e0b;
+  font-size: 14px;
+  cursor: help;
+}
+
+.jfh-warning-icon::after {
+  content: "\\26A0";
+}
+
+/* No data indicator badge */
+.jfh-no-data-badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 2px 8px;
+  margin-left: 4px;
+  background-color: #fef3c7;
+  color: #92400e;
+  font-size: 11px;
+  font-weight: 500;
+  border-radius: 4px;
+  white-space: nowrap;
+}
+
+/* Toast notification styles (for batch fill errors) */
+.jfh-toast {
+  position: fixed;
+  bottom: 20px;
+  right: 20px;
+  padding: 12px 16px;
+  background-color: #1f2937;
+  color: #f9fafb;
+  border-radius: 8px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  font-size: 14px;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  z-index: 2147483647;
+  animation: jfh-toast-in 0.3s ease-out;
+}
+
+.jfh-toast.jfh-toast-error {
+  background-color: #dc2626;
+}
+
+.jfh-toast.jfh-toast-success {
+  background-color: #16a34a;
+}
+
+.jfh-toast.jfh-toast-warning {
+  background-color: #d97706;
+}
+
+@keyframes jfh-toast-in {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Progress indicator during batch fill */
+.jfh-progress-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(0, 0, 0, 0.3);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 2147483646;
+}
+
+.jfh-progress-box {
+  background: white;
+  padding: 24px 32px;
+  border-radius: 12px;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
+  text-align: center;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+}
+
+.jfh-progress-text {
+  font-size: 16px;
+  color: #374151;
+  margin-bottom: 12px;
+}
+
+.jfh-progress-bar {
+  width: 200px;
+  height: 6px;
+  background-color: #e5e7eb;
+  border-radius: 3px;
+  overflow: hidden;
+}
+
+.jfh-progress-fill {
+  height: 100%;
+  background-color: #3b82f6;
+  transition: width 0.2s ease-out;
+}
