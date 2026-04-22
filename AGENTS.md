@@ -75,7 +75,7 @@ jobs/
 ## CONSTITUTION
 
 - **TDD Required**: Write failing tests first, then implementation
-- **Docker-First**: Always use Docker for backend operations
+- **Docker-First**: Always use Docker for operations
 - **No Unnecessary Comments**: Only essential docstrings
 - **No Type Suppression**: No `as any`, no empty catch blocks
 
@@ -92,6 +92,78 @@ docker compose exec api-backend pytest tests/
 # Extension (Firefox)
 # Load extension from extension/ directory as temporary add-on
 ```
+
+## MCP REGISTRY
+
+Only declared MCPs may be used. No implicit tools.
+
+### Rules
+
+- Deterministic inputs/outputs required
+- No implicit context, memory, or tool discovery
+- Minimize side effects; ensure idempotency
+- Validate all MCP outputs
+
+---
+
+### firecrawl
+
+Use: external web retrieval  
+Rules: explicit queries only; no recursive/broad crawling  
+
+---
+
+### sequential-thinking
+
+Use: complex multi-step reasoning  
+Rules: explicit, ordered steps; no hidden chains  
+
+---
+
+### memory
+
+Use: persistence across runs only  
+Rules: explicit reads/writes; avoid for core logic  
+
+---
+
+### github
+
+Use: GitHub API (issues, PRs, repos)  
+Rules: idempotent; must align with spec lifecycle  
+
+---
+
+### postgres
+
+Use: DB queries  
+Rules: explicit SQL; prefer read-only; trace mutations  
+
+---
+
+### typescript (LSP)
+
+Use: type checking + diagnostics  
+Rules: prefer over inference when available  
+
+---
+
+## TOOL SELECTION
+
+- Web → firecrawl  
+- Reasoning → sequential-thinking  
+- Persistence → memory  
+- GitHub → github  
+- DB → postgres  
+- Code → typescript  
+
+Prefer minimal, deterministic path. Avoid unnecessary chaining.
+
+---
+
+## GUARANTEE
+
+Same input + state ⇒ same output. Non-deterministic MCP use is disallowed.
 
 ## NOTES
 
