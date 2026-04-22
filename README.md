@@ -4,14 +4,13 @@
 
 An AI-powered system for job application management: automatically fills job application forms using resume data (RAG pipeline), generates tailored cover letters, and tracks job postings with application status. The extension provides a Job Links Manager to monitor applied and pending job applications with local caching, real-time sync, and instant UI rendering.
 
+![Product Screenshot](product.png)
+
+![Product Screenshot 2](product-2.png)
 
 ## Overview
 
 Job Forms Helper consists of four main components:
-
-![Product Screenshot](product.png)
-
-![Product Screenshot 2](product-2.png)
 
 1. **Backend API** - A FastAPI service that processes form field labels and generates answers based on resume data stored in a vector database. Built with FastAPI and Pydantic v2, uses vector embeddings, reranking, and hybrid search.
 2. **Browser Extension** - A Chrome/Firefox extension with two main features:
