@@ -1,7 +1,7 @@
 # PROJECT KNOWLEDGE BASE
 
-**Generated:** 2026-04-21
-**Commit:** 5ceb8cc
+**Generated:** 2026-04-22
+**Commit:** 563b251
 **Branch:** 010-fix-copy-clipboard-button
 
 ## OVERVIEW
@@ -16,12 +16,22 @@ jobs/
 │   ├── api/               # Routes + Pydantic schemas
 │   ├── services/          # Core business logic
 │   └── utils/             # Cache utilities
-├── extension/             # Firefox extension (JS/TypeScript)
+├── extension-old/         # Legacy Firefox extension (JS/TypeScript)
 │   ├── background/       # Background scripts
 │   ├── content/          # Content scripts (form detection)
 │   ├── popup/            # Popup UI
 │   ├── services/         # Extension services
 │   └── tests/            # Extension tests
+├── extension/            # Modernized React extension
+│   ├── src/
+│   │   ├── components/  # React UI components
+│   │   ├── hooks/        # TanStack Query hooks
+│   │   ├── services/     # API services
+│   │   ├── content/      # Content script entry
+│   │   ├── background/   # Background script
+│   │   └── types/        # TypeScript types
+│   ├── public/            # Static assets
+│   └── dist/             # Build output
 ├── tests/                # Python test suite
 │   ├── unit/
 │   ├── integration/
@@ -91,5 +101,10 @@ docker compose exec api-backend pytest tests/
 
 <!-- SPECKIT START -->
 For additional context about technologies to be used, project structure,
-shell commands, and other important information, read the current plan
+shell commands, and other important information, read the current plan:
+- Extension Modernization: specs/010-extension-modernization/plan.md
+- Dockerfile to Compose: specs/011-dockerfile-to-compose/plan.md
+- Feature Spec: specs/010-extension-modernization/spec.md
+- Research: specs/010-extension-modernization/research.md
+- Data Model: specs/010-extension-modernization/data-model.md
 <!-- SPECKIT END -->

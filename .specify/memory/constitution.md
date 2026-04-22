@@ -2,10 +2,8 @@
 
 > **Sync Impact Report**
 >
-> - Version: 0.2.0 → 0.3.0
-> - Changed: Bump constitution version 0.2.0 → 0.3.0, update last amended date to 2026-04-20
->   - Revise workflow: mark clarify step optional, reorder stages, add checklist step
->   - Clean up previous version change entries from the sync impact report header
+> - Version: 0.3.0 → 0.4.0
+> - Changed: Added Docker-Based Deployment principle (Section V)
 > - Templates: ✅ No template changes required
 > - Follow-up: None
 
@@ -76,6 +74,20 @@ For all n8n workflow operations, MUST use n8nac CLI and its skills:
 
 ---
 
+### V. Docker-Based Deployment (MANDATORY)
+
+The entire stack runs via Docker Compose. All Docker containers MUST be defined in `docker-compose.yml`:
+
+- **Container Reuse**: Reuse existing containers by extending them when possible
+- **New Services**: Create new containers only when extending would require more effort than creating a new one
+- **Service Dependencies**: All inter-service dependencies MUST be documented in docker-compose.yml
+- **Local Development**: Developers MUST use `docker-compose up` for local development
+- **Environment Variables**: All environment-specific configuration MUST use `.env` files loaded by docker-compose
+
+**Rationale**: Ensures consistent, reproducible deployments across all environments. Centralizes service definition and dependency management.
+
+---
+
 ## Additional Constraints
 
 ### Technology Standards
@@ -112,7 +124,7 @@ The Jobs project follows this workflow:
 
 ## Governance
 
-**Version**: 0.3.0 | **Ratified**: 2026-04-17 | **Last Amended**: 2026-04-20
+**Version**: 0.4.0 | **Ratified**: 2026-04-17 | **Last Amended**: 2026-04-22
 
 ### Amendment Procedure
 
