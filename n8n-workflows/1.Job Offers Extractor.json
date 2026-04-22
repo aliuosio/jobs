@@ -157,7 +157,7 @@
     },
     {
       "parameters": {
-        "model": "magistral-small-latest",
+        "model": "mistral-small-latest",
         "options": {
           "temperature": 0.1
         }
@@ -715,7 +715,7 @@
     "callerPolicy": "workflowsFromSameOwner",
     "availableInMCP": false
   },
-  "versionId": "cda863ad-d2a3-47d2-90b0-25e839cef1db",
+  "versionId": "3e56c7b5-c3dd-46ca-b7c1-88524377c0f5",
   "meta": {
     "templateCredsSetupCompleted": true,
     "instanceId": "b751e283d167317e522f290d63e0b956085524c7c105edc03e657e7409fe8050"

@@ -493,7 +493,8 @@
     "executionOrder": "v1",
     "binaryMode": "separate",
     "callerPolicy": "workflowsFromSameOwner",
-    "availableInMCP": false
+    "availableInMCP": false,
+    "timeSavedMode": "fixed"
   },
   "versionId": "ef6b55e7-0fc4-4835-8c73-a233aebcf754",
   "meta": {

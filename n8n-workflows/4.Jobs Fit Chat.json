@@ -50,33 +50,6 @@
     },
     {
       "parameters": {
-        "mode": "retrieve-as-tool",
-        "toolDescription": "# Qdrant Vector Store – Kandidaten-Skills\n\n**Beschreibung:**  \nDer Qdrant Vector Store speichert **repräsentative Vektor-Embeddings von Kandidatenprofilen**, insbesondere deren **technische Skills, Projekterfahrungen und Tool-Expertise**. Jeder Kandidat wird als **hochdimensionaler Vektor** abgebildet, sodass **ähnliche Kandidaten oder relevante Skills schnell und präzise gefunden** werden können.  \n\n**Zweck im Recruiting-Prompt:**  \n- Ermöglicht dem Modell, vor jeder Analyse **relevante Kandidateninformationen** zu laden.  \n- Unterstützt das **Think Tool** bei der aktiven Bewertung von Jobanforderungen gegenüber Kandidaten-Skills.  \n- Macht das Matching zwischen Job und Kandidat **datenbasiert, nachvollziehbar und reproduzierbar**.  \n\n**Beispielhafte Inhalte:**  \n- Programmiersprachen (PHP, Python, JavaScript)  \n- Frameworks (Magento, Symfony, Laravel)  \n- APIs / Schnittstellen (REST, GraphQL)  \n- Frontend / Backend / Fullstack Expertise  \n- Projektbezogene Erfahrungen (E-Commerce, CI/CD, Cloud)  \n\n**Hinweis:**  \nDer Vector Store dient **ausschließlich als interner Referenzspeicher für Kandidateninformationen**. Das Modell **greift automatisch auf die relevanten Vektoren zu**, bevor es Job-Matching oder fachliche Analysen erstellt.\n",
-        "qdrantCollection": {
-          "__rl": true,
-          "value": "resume",
-          "mode": "list",
-          "cachedResultName": "resume"
-        },
-        "options": {}
-      },
-      "type": "@n8n/n8n-nodes-langchain.vectorStoreQdrant",
-      "typeVersion": 1.3,
-      "position": [
-        1056,
-        224
-      ],
-      "id": "8ca99255-fb1b-49c7-a782-c583d2f565ba",
-      "name": "Qdrant Vector Store",
-      "credentials": {
-        "qdrantApi": {
-          "id": "5zLckKlW4WMSmDEm",
-          "name": "QdrantApi account"
-        }
-      }
-    },
-    {
-      "parameters": {
         "model": "mistral-large-latest",
         "options": {
           "temperature": 0.1
@@ -92,7 +65,7 @@
       "name": "Mistral",
       "credentials": {
         "mistralCloudApi": {
-          "id": "mNGknH3RPQM36hPs",
+          "id": "GDArvIq99nR7iVjE",
           "name": "Mistral Cloud account"
         }
       }
@@ -112,7 +85,7 @@
       "name": "Memory",
       "credentials": {
         "postgres": {
-          "id": "g5e3W2e5yHEjzZoI",
+          "id": "EYfvo1U3cbPB2TYV",
           "name": "Postgres account"
         }
       }
@@ -131,7 +104,7 @@
       "name": "Embeddings Mistral Cloud",
       "credentials": {
         "mistralCloudApi": {
-          "id": "mNGknH3RPQM36hPs",
+          "id": "GDArvIq99nR7iVjE",
           "name": "Mistral Cloud account"
         }
       }
@@ -158,46 +131,6 @@
       ],
       "id": "6f84b7e3-e317-45d8-a489-3ef25f95cc10",
       "name": "Edit Fields"
-    },
-    {
-      "parameters": {
-        "model": {
-          "__rl": true,
-          "value": "glm-5",
-          "mode": "list",
-          "cachedResultName": "glm-5"
-        },
-        "responsesApiEnabled": false,
-        "options": {}
-      },
-      "type": "@n8n/n8n-nodes-langchain.lmChatOpenAi",
-      "typeVersion": 1.3,
-      "position": [
-        0,
-        640
-      ],
-      "id": "c8b22b83-c0da-44b6-9cda-d3c8dc238275",
-      "name": "Z.ai",
-      "alwaysOutputData": true,
-      "disabled": true,
-      "onError": "continueRegularOutput"
-    },
-    {
-      "parameters": {
-        "model": "qwen/qwen3-4b:free",
-        "options": {
-          "temperature": 0.2
-        }
-      },
-      "type": "@n8n/n8n-nodes-langchain.lmChatOpenRouter",
-      "typeVersion": 1,
-      "position": [
-        0,
-        432
-      ],
-      "id": "4aacdc8c-cab3-4d5c-b9a2-4ddd28426752",
-      "name": "OpenRouter",
-      "disabled": true
     },
     {
       "parameters": {
@@ -239,6 +172,33 @@
       ],
       "id": "fc145d9c-5806-45cd-9fc6-5667ee5e6cb6",
       "name": "Call 'Prompt'"
+    },
+    {
+      "parameters": {
+        "mode": "retrieve-as-tool",
+        "toolDescription": "Get The Candiates SKills ",
+        "qdrantCollection": {
+          "__rl": true,
+          "value": "resume",
+          "mode": "list",
+          "cachedResultName": "resume"
+        },
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.vectorStoreQdrant",
+      "typeVersion": 1.3,
+      "position": [
+        1056,
+        224
+      ],
+      "id": "270688ee-52ec-47c1-a03f-8a170c8bc431",
+      "name": "Qdrant Vector Store",
+      "credentials": {
+        "qdrantApi": {
+          "id": "ggpGHrgSvaRusHWR",
+          "name": "Qdrant account 3"
+        }
+      }
     }
   ],
   "pinData": {},
@@ -260,17 +220,6 @@
           {
             "node": "Edit Fields",
             "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
-    "Qdrant Vector Store": {
-      "ai_tool": [
-        [
-          {
-            "node": "Jobs Fit",
-            "type": "ai_tool",
             "index": 0
           }
         ]
@@ -330,6 +279,17 @@
           }
         ]
       ]
+    },
+    "Qdrant Vector Store": {
+      "ai_tool": [
+        [
+          {
+            "node": "Jobs Fit",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
     }
   },
   "active": false,
@@ -337,9 +297,10 @@
     "executionOrder": "v1",
     "binaryMode": "separate"
   },
-  "versionId": "78190a7f-186b-45b6-922c-dac21bd4af1b",
+  "versionId": "516dcfae-0877-4ea7-bdf1-6c4c4614424c",
   "meta": {
-    "instanceId": "b751e283d167317e522f290d63e0b956085524c7c105edc03e657e7409fe8050"
+    "instanceId": "b751e283d167317e522f290d63e0b956085524c7c105edc03e657e7409fe8050",
+    "templateCredsSetupCompleted": true
   },
   "id": "cUlm7RlyYrLtMe54",
   "tags": [
