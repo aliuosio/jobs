@@ -1,7 +1,5 @@
 # Jobs
 
-**Version 0.9.3**
-
 An AI-powered system for job application management: automatically fills job application forms using resume data (RAG pipeline), generates tailored cover letters, and tracks job postings with application status. The extension provides a Job Links Manager to monitor applied and pending job applications with local caching, real-time sync, and instant UI rendering.
 
 ![Product Screenshot](product.png)
