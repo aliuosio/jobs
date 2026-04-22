@@ -18,11 +18,6 @@ Job Forms Helper consists of four main components:
 3. **n8n Automation Workflows** - No-code automation pipelines for job offers extraction, skills import, application writer, and job fit chat
 4. **Test Suite** - Comprehensive testing including unit, integration, end-to-end, and load tests
 
-Git repository: `git@github.com:aliuosio/jobs.git`
-Latest commit: `c7d6556356af0216b71e0a29af25b4e5f2c62aed`
-
-**Knowledge Graph Sync:** This project architecture is fully mapped in Memory-MCP graph with 13 entities and 17 relations tracking modules, dependencies, and directory structure.
-
 ## Architecture
 
 ```
@@ -97,8 +92,6 @@ n8n workflows include:
 - Job Skills Import
 - Job Application Writer
 - Jobs Fit Chat
-- Cover Letter Generation Workflow
-
 ### 3. Verify Services
 
 ```bash
