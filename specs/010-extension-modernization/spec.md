@@ -11,21 +11,20 @@
 
 - Q: Scope of Porting - Which parts of the extension should be migrated to React in extension? → A: All components (Popup UI, Content Scripts, Background Scripts)
 - Q: API Endpoints - Should the migration use the existing API endpoints from the legacy extension, or are new endpoints expected? → A: Both (progressive migration) - Start with existing, migrate to new as needed
-- Q: Observability - Should the new extension include observability features (logging, error tracking, metrics)? → A: Full observability with error tracking - Requires additional dependencies; production-ready
+- Q: Observability - Should the new extension include observability features (logging, error tracking, metrics)? → A: Console-based logging with level filtering (debug/info/warn/error) for observability
 - Q: Popup ↔ Content Script Communication - How will the Popup UI communicate with Content Scripts for form detection/filling? → A: chrome.runtime.sendMessage - Direct message passing between popup and content scripts
 - Q: Testing Strategy - How should testing be approached given extension complexity? → A: Hybrid - Vitest for React components/hooks + manual extension verification in Firefox
-- Q: Logging Framework - What observability implementation should be used? → A: Custom logger with levels (debug, info, warn, error) + chrome.storage for persistence
+- Q: Logging Framework - What observability implementation should be used? → A: Console-based logging with level filtering (debug, info, warn, error) - simple, no persistence needed
 - Q: Cache Limits - What TanStack Query cache configuration should be used? → A: Minimal - staleTime: 1min, gcTime: 1hr to conserve extension memory
 - Q: Accessibility - What accessibility requirements should the extension support? → A: Minimal - React default accessibility (basic ARIA, keyboard support)
 - Q: Security Model - What security model should the extension use? → A: Unauthenticated local tool - No auth required, extension runs locally with browser permissions
 - Q: Data Scale - What is the expected scale of job data the extension should handle? → A: Light use - Up to 100 job links, infrequent API calls
 - Q: Out-of-Scope - What features should NOT be included in this migration? → A: Migration only - No new features beyond /extension parity
 - Q: User Personas - Are there different user types for this extension? → A: Single user - Individual job seeker
-- Q: A1 - CRX plugin import fails in Docker - How to resolve? → A: Fix Docker volume/permission to enable CRX plugin in container
-- Q: A2 - TDD tests not implemented - Constitution III violation? → A: Implement Vitest tests with TDD cycle before Phase 7
-- Q: A3 - Only one final verification task - too coarse? → A: Add granular verification per user story acceptance criteria
-- Q: A4 - CR-1 DEFERRED unclear timeline? → A: Resolve before Phase 7 with concrete timeline
-- Q: Cache Timing Format - Human-readable or machine-readable? → A: Change to 60000ms (machine format)
+- Q: Browser Target - Should the extension support Chrome as well as Firefox? → A: Firefox-only (no Chrome support) - simplifies build process
+- Q: Build System - Should we use @crxjs/vite-plugin for extension builds? → A: No - use simple Vite build with custom script to copy manifest.json to dist/ (Firefox-only doesn't need Chrome tooling)
+- Q: TDD tests not implemented - Constitution III violation? → A: Implement Vitest tests with TDD cycle before Phase 7
+- Q: Only one final verification task - too coarse? → A: Add granular verification per user story acceptance criteria
 - Q: Dockerfile Setup - Custom Dockerfile or pure docker-compose? → A: No custom Dockerfile - use docker-compose command
 
 ### User Personas
@@ -123,10 +122,9 @@ As a developer, I want the new extension service running in Docker so that it in
 
 ### Logging & Observability
 
-- **Logger**: Custom logger with levels (debug, info, warn, error)
-- **Storage**: Errors and logs persisted to chrome.storage.local
-- **Log retention**: Max 1000 entries, FIFO eviction
-- **Error tracking**: Uncaught errors logged with stack traces and context
+- **Logger**: Console-based logger with levels (debug, info, warn, error)
+- **Storage**: No persistence required (simple logging only)
+- **Error tracking**: Uncaught errors logged with stack traces and context via console.error
 
 ### Security
 
@@ -227,6 +225,9 @@ As a developer, I want the new extension service running in Docker so that it in
 - Developers have Docker and Docker Compose installed
 - TypeScript is acceptable for the new codebase (as recommended in the feature description)
 - The migration will be done incrementally, maintaining backward compatibility with the original extension
+- **Firefox-only extension** (Chrome compatibility not required) - simplifies build process
+- Build uses simple Vite build with custom script to copy manifest (no @crxjs/vite-plugin needed)
+- Console-based logging with level filtering for observability (no persistence required)
 
 ---
 
@@ -240,7 +241,6 @@ As a developer, I want the new extension service running in Docker so that it in
 
 | ID | Issue | Constitution Violation | Fix Required | Status |
 |----|-------|---------------------|---------------------|---------------|--------|
-| CR-1 | T005: @crxjs/vite-plugin import error in Docker | V. Docker-Based: Build must work in container | Defer - requires Docker volume fix | ⏳ PENDING |
 | CR-2 | T039: staleTime is 60min instead of 1min | II. Design Pattern: Follow documented spec | Fix staleTime to 60000ms in queryClient.ts | ✅ RESOLVED |
 | CR-3 | queryClient retry is 1, spec requires 3 | II. Design Pattern: Follow spec retry: 3 | Change retry: 1 to retry: 3 in queryClient.ts | 🔴 TO FIX |
 

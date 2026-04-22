@@ -25,7 +25,7 @@ description: "Task list for Extension Modernization feature"
 **Purpose**: Initialize extension project structure
 
 - [x] T001 Create extension directory structure in jobs/extension/ with src/, public/, dist/, tests/ subdirectories
-- [x] T002 [P] Initialize package.json with dependencies: react, react-dom, @tanstack/react-query, vite, typescript, @crxjs/vite-plugin, @tailwindcss/vite, tailwindcss, autoprefixer, web-ext
+- [x] T002 [P] Initialize package.json with dependencies: react, react-dom, @tanstack/react-query, vite, typescript, @tailwindcss/vite, tailwindcss, autoprefixer, web-ext (Firefox-only: no @crxjs/vite-plugin needed)
 - [x] T003 [P] Configure TypeScript in extension/tsconfig.json with React 19, DOM, extension environment
 - [x] T004 [P] Configure ESLint in extension/.eslintrc.cjs for React/TypeScript extension development
 
@@ -37,10 +37,10 @@ description: "Task list for Extension Modernization feature"
 
 **⚠️ CRITICAL**: No user story work begins until Phase 2 is complete
 
-- [x] T005 [P] Create Vite config in extension/vite.config.ts with @crxjs/vite-plugin (Constitution V. Docker-Based: enable CRX packaging) - ⏳ INCOMPATIBLE: @crxjs/vite-plugin does not support {{chrome}}/{{firefox}} templating pattern - using standard Vite build that produces valid extension
+- [x] T005 [P] [US1] Create Vite config in extension/vite.config.ts (Firefox-only: simple Vite build, no @crxjs needed)
 - [x] T006 [P] Configure Tailwind CSS in extension/tailwind.config.ts with safelist for dynamic classes
 - [x] T007 Set up QueryClient in extension/src/lib/queryClient.ts with extension-appropriate environment (staleTime: 1min, gcTime: 1hr)
-- [x] T008 Create manifest.json in extension/public/manifest.json with Manifest V3, {{chrome}} and {{firefox}} prefixes
+- [x] T008 [P] Create manifest.json in extension/public/manifest.json with Manifest V3, Firefox-specific settings (browser_specific_settings for gecko, no Chrome prefixes)
 - [x] T009 Create extension types in extension/src/types/index.ts for JobLink, FormField, UserProfile, APIResponse
 
 **Checkpoint**: Foundation ready - user story implementation can now begin in parallel
@@ -102,7 +102,7 @@ description: "Task list for Extension Modernization feature"
 - [x] T028 [P] [US3] Create useProfileQuery hook in extension/src/hooks/useProfileQuery.ts
 - [x] T029 [P] [US3] Create useDetectFields mutation in extension/src/hooks/useDetectFields.ts
 - [x] T030 [P] [US3] Create useFillFields mutation in extension/src/hooks/useFillFields.ts
-- [x] T031 [US3] Create custom logger in extension/src/lib/logger.ts with debug/info/warn/error levels
+- [x] T031 [US3] Create simple console-based logger in extension/src/lib/logger.ts with debug/info/warn/error levels (no persistence)
 - [x] T032 [US3] Implement chrome.storage.local persistence for QueryClient
 - [x] T033 [US3] Connect TanStack Query hooks to UI components
 - [x] T034 [US3] Add loading and error states to all components
@@ -164,7 +164,7 @@ description: "Task list for Extension Modernization feature"
 
 #### Logger Tests
 
-- [x] T052 [P] [US3] Write failing test for logger utility in extension/tests/lib/logger.test.ts
+- [x] T052 [P] [US3] Write failing test for logger utility in extension/tests/lib/logger.test.ts (console-based, no persistence)
 - [x] T053 [US3] Implement logger levels to pass test in extension/src/lib/logger.ts (T052)
 
 #### QueryClient Tests

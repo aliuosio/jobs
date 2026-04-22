@@ -82,7 +82,7 @@ extension/
 |-----------|------------|-------------------------------------|
 | TanStack Query | Automatic caching, retry, loading states - reduces bugs | Direct fetch requires manual cache management |
 | React Router | Smooth view transitions without page reload | Single HTML file requires page reload |
-| @crxjs/vite-plugin | Standard for FF/Chrome extension builds | WXT/Plasmo add abstraction overhead |
+| Simple Vite Build | Firefox-only extension - no Chrome packaging needed | N/A - simplest solution for Firefox |
 
 ---
 
@@ -142,23 +142,19 @@ chrome.runtime.sendMessage({ type: 'FIELDS_DETECTED', fields: [...] })
 
 ---
 
-## Decision: Custom Logger with chrome.storage Persistence
+## Decision: Console-Based Logger
 
 **Rationale**:
-- Levels: debug, info, warn, error
-- Max 1000 entries with FIFO eviction
-- Errors logged with stack traces and context
+- Simple console logging with levels (debug, info, warn, error)
+- No persistence required - viewable in browser devtools
+- Minimal overhead
 
 **Implementation**:
 ```typescript
-// src/lib/logger.ts
-type LogLevel = 'debug' | 'info' | 'warn' | 'error'
-interface LogEntry {
-  level: LogLevel
-  message: string
-  timestamp: string
-  stack?: string
-}
+// Simple console-based logger
+const log = (level: 'debug' | 'info' | 'warn' | 'error', ...args: unknown[]) => {
+  console[level](`[JobFormsHelper]`, ...args);
+};
 ```
 
 ---
