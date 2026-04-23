@@ -5,6 +5,9 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Job Forms Helper</title>
   <link rel="stylesheet" href="popup.css">
+  <script src="https://unpkg.com/react@18/umd/react.production.min.js" crossorigin></script>
+  <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js" crossorigin></script>
+  <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
 </head>
 <body>
   <script>console.log('[HTML] Inline script ran');</script>
@@ -40,6 +43,7 @@
           Data may be outdated. Click refresh to update.
         </div>
         <div class="section job-links-section">
+          <div id="job-links-root"></div>
           <div id="job-links-loading" class="job-links-loading" style="display: none;">
             <div class="job-link-skeleton"></div>
             <div class="job-link-skeleton"></div>
@@ -96,6 +100,7 @@
   </div>
 
   <script type="module" src="../services/api-service.js"></script>
+  <script type="text/babel" src="job-links-react.js"></script>
   <script type="module" src="popup.js"></script>
 </body>
 </html>
