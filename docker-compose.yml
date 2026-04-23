@@ -138,16 +138,12 @@ services:
   extension:
     image: node:24-alpine3.23
     container_name: ${NAMESPACE}_extension
-    user: "${UID}:${GID}"
     pull_policy: never
     working_dir: /app
-    command: sh -c "apk add --no-cache curl git && npm install && npm run dev"
+    command: sh -c "npm install -g http-server && npx http-server . -p 80 -c-1"
     ports:
-      - "5173:5173"
+      - "5173:80"
     volumes:
-      - ./extension:/app
-      - /app/node_modules
+      - ./extension:/app:ro
     extra_hosts:
       - "host.docker.internal:host-gateway"
-    environment:
-      - NODE_ENV=development

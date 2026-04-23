@@ -78,6 +78,7 @@ jobs/
 - **Docker-First**: Always use Docker for operations
 - **No Unnecessary Comments**: Only essential docstrings
 - **No Type Suppression**: No `as any`, no empty catch blocks
+- **No Inline Scripts**: External scripts only; inline `<script>` tags are forbidden unless absolutely necessary (e.g., Tailwind config object)
 
 ## COMMANDS
 
