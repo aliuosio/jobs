@@ -136,7 +136,7 @@ services:
       start_period: 30s
 
   extension:
-    image: node:24-alpine3.23
+    image: node:24.15.0-alpine3.23
     container_name: ${NAMESPACE}_extension
     user: "${UID}:${GID}"
     pull_policy: never
