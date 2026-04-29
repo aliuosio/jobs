@@ -74,54 +74,6 @@ class JobOffersService:
                 logger.warning("SSE queue full, dropping message")
         logger.debug(f"Broadcast to {len(self._subscribers)} subscribers")
 
-    async def get_all_job_offers_for_broadcast(self) -> list[dict[str, Any]]:
-        """Get all job offers for broadcasting.
-
-        Returns:
-            List of job offers with process data (same format as get_job_offers).
-        """
-        if not self._pool:
-            raise RuntimeError("Database pool not initialized")
-
-        query = """
-            SELECT
-                jo.id,
-                jo.title,
-                jo.url,
-                jo.description,
-                jop.id as process_id,
-                jop.job_offers_id,
-                jop.research,
-                jop.research_email,
-                jop.applied
-            FROM job_offers jo
-            LEFT JOIN job_offers_process jop ON jo.id = jop.job_offers_id
-            ORDER BY jo.id ASC
-        """
-
-        async with self._pool.acquire() as conn:
-            rows = await conn.fetch(query)
-
-        result = []
-        for row in rows:
-            row_dict = dict(row)
-            process_data = {
-                "process_id": row_dict.pop("process_id"),
-                "job_offers_id": row_dict.pop("job_offers_id"),
-                "research": row_dict.pop("research"),
-                "research_email": row_dict.pop("research_email"),
-                "applied": row_dict.pop("applied"),
-            }
-            job_offer = {
-                "id": row_dict.pop("id"),
-                "title": row_dict.pop("title"),
-                "url": row_dict.pop("url"),
-                "process": process_data if process_data["job_offers_id"] is not None else None,
-            }
-            result.append(job_offer)
-
-        return result
-
     async def close(self) -> None:
         """Close database connection pool."""
         if self._pool:
@@ -129,21 +81,11 @@ class JobOffersService:
             logger.info("Closed PostgreSQL connection pool")
 
     async def get_job_offers(
-        self, limit: int | None = None, offset: int | None = None
+        self,
+        limit: int | None = None,
+        offset: int | None = None,
+        include_description: bool = False,
     ) -> list[dict[str, Any]]:
-        """Retrieve job offers with process data.
-
-        Args:
-            limit: Maximum number of records to return (None = all records).
-            offset: Number of records to skip (None = start from beginning).
-
-        Returns:
-            List of job offer dictionaries with nested process data.
-
-        Raises:
-            RuntimeError: If database pool not initialized.
-            asyncpg.PostgresError: Database query failure.
-        """
         if not self._pool:
             raise RuntimeError("Database pool not initialized")
 
@@ -185,9 +127,12 @@ class JobOffersService:
                 "id": row_dict.pop("id"),
                 "title": row_dict.pop("title"),
                 "url": row_dict.pop("url"),
-                "description": row_dict.pop("description"),
-                "process": process_data if process_data["job_offers_id"] is not None else None,
             }
+            if include_description:
+                job_offer["description"] = row_dict.pop("description")
+            else:
+                row_dict.pop("description", None)
+            job_offer["process"] = process_data if process_data["job_offers_id"] is not None else None
             result.append(job_offer)
 
         logger.info(f"Retrieved {len(result)} job offers")
@@ -280,7 +225,7 @@ class JobOffersService:
         )
         if result:
             # Broadcast full state after any update
-            all_offers = await self.get_all_job_offers_for_broadcast()
+            all_offers = await self.get_job_offers(include_description=False)
             await self.broadcast(all_offers)
         return result
 

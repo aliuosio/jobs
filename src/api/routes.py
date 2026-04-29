@@ -61,133 +61,15 @@ async def search_resume(search_req: SearchRequest) -> SearchResponse:
     - HyDE (Hypothetical Document Embeddings)
     - Cross-encoder and LLM rubric reranking
     """
-    from src.services.embedder import embedder
-    from src.services.retriever import retriever
-
-    logger.info(
-        f"[search] query={search_req.query!r} use_hyde={search_req.use_hyde} use_reranking={search_req.use_reranking}"
-    )
+    from src.services.retrieval_pipeline import pipeline
 
     try:
-        query_vector = await embedder.embed(search_req.query)
-
-        if search_req.use_reranking:
-            chunks = await retriever.search_with_reranking(
-                search_req.query, query_vector, k=search_req.top_k
-            )
-        else:
-            chunks = await retriever.hybrid_search(
-                search_req.query, query_vector, k=search_req.top_k
-            )
-
-        results = []
-        for chunk in chunks:
-            payload = chunk.get("payload", {})
-            content = payload.get("text", "") or payload.get("content", "")
-
-            scores = None
-            if search_req.include_scores:
-                scores = SearchScores(
-                    vector_score=chunk.get("vector_score") or chunk.get("score"),
-                    bm25_score=chunk.get("bm25_score"),
-                    rerank_score=chunk.get("rerank_score") or chunk.get("llm_score"),
-                )
-
-            result = SearchResult(
-                content=content,
-                score=chunk.get("score", 0),
-                source=payload.get("t", "resume"),
-                scores=scores,
-            )
-            results.append(result)
-
-        logger.info(f"[search] returned {len(results)} results")
-
-        generated_answer = None
-        confidence = None
-        field_type = None
-
-        if search_req.generate:
-            from src.services.fill_form import (
-                assemble_context,
-                calculate_confidence,
-                combine_confidence,
-                classify_field_type,
-                extract_direct_field_value,
-            )
-            from src.services.generator import generator
-
-            try:
-                profile_chunk = await retriever.get_profile_chunk()
-                if profile_chunk:
-                    chunks.insert(0, profile_chunk)
-            except Exception as e:
-                logger.warning(f"[search] profile_chunk_fetch_failed: {e}")
-
-            if search_req.signals and any(search_req.signals.values()):
-                field_type_detected = classify_field_type(search_req.signals)
-                if field_type_detected:
-                    field_value = extract_direct_field_value(chunks, field_type_detected)
-                    if field_value:
-                        logger.info(
-                            f"[search] direct_extraction field_type={field_type_detected.value} "
-                            f"field_value={field_value[:20]}..."
-                        )
-                        return SearchResponse(
-                            results=results,
-                            query=search_req.query,
-                            total_retrieved=len(results),
-                            generated_answer=field_value,
-                            confidence=ConfidenceLevel.HIGH,
-                            field_type=field_type_detected.value,
-                        )
-
-            if chunks:
-                avg_score = sum(c.get("score", 0) for c in chunks) / len(chunks)
-                retrieval_confidence = calculate_confidence(avg_score, len(chunks))
-                context = assemble_context(chunks)
-
-                classification = await generator.classify_and_extract(
-                    context=context,
-                    label=search_req.query,
-                    signals=search_req.signals,
-                )
-
-                llm_conf_str = classification.confidence.lower()
-                if llm_conf_str == "high":
-                    llm_conf = ConfidenceLevel.HIGH
-                elif llm_conf_str == "medium":
-                    llm_conf = ConfidenceLevel.MEDIUM
-                elif llm_conf_str == "low":
-                    llm_conf = ConfidenceLevel.LOW
-                else:
-                    llm_conf = ConfidenceLevel.NONE
-
-                confidence = combine_confidence(
-                    retrieval_confidence, llm_conf, classification.field_value
-                )
-                generated_answer = classification.answer
-                field_type = classification.field_type
-
-                logger.info(
-                    f"[search] generated answer: {generated_answer[:50]}... conf={confidence.value}"
-                )
-
-        return SearchResponse(
-            results=results,
-            query=search_req.query,
-            total_retrieved=len(results),
-            generated_answer=generated_answer,
-            confidence=confidence,
-            field_type=field_type,
-        )
-
+        return await pipeline.search(search_req)
     except (ConnectionError, RuntimeError) as e:
         if "not connected" in str(e).lower():
             logger.error("[search] connection_error: Qdrant not connected")
             raise HTTPException(status_code=503, detail="Service temporarily unavailable")
         raise
-
     except Exception as e:
         logger.error(f"[search] unexpected_error: {e}", exc_info=True)
         raise HTTPException(status_code=500, detail="Internal server error")
@@ -472,7 +354,7 @@ async def stream_job_offers():
 
         try:
             # Send initial state immediately
-            initial_data = await job_offers_service.get_all_job_offers_for_broadcast()
+            initial_data = await job_offers_service.get_job_offers(include_description=False)
             yield f"data: {json.dumps(initial_data)}\n\n"
 
             # Keep connection alive with periodic heartbeat
