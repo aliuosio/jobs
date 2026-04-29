@@ -16,12 +16,6 @@ jobs/
 │   ├── api/               # Routes + Pydantic schemas
 │   ├── services/          # Core business logic
 │   └── utils/             # Cache utilities
-├── extension-old/         # Legacy Firefox extension (JS/TypeScript)
-│   ├── background/       # Background scripts
-│   ├── content/          # Content scripts (form detection)
-│   ├── popup/            # Popup UI
-│   ├── services/         # Extension services
-│   └── tests/            # Extension tests
 ├── extension/            # Modernized React extension
 │   ├── src/
 │   │   ├── components/  # React UI components
@@ -102,6 +96,7 @@ docker compose exec api-backend pytest tests/
 <!-- SPECKIT START -->
 For additional context about technologies to be used, project structure,
 shell commands, and other important information, read the current plan:
+
 - Extension Modernization: specs/010-extension-modernization/plan.md
 - Dockerfile to Compose: specs/011-dockerfile-to-compose/plan.md
 - Feature Spec: specs/010-extension-modernization/spec.md
