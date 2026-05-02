@@ -59,6 +59,7 @@ RULES
 - FastAPI = single source of truth
 - Do not exceed 320 words
 - Output only the final letter (no explanations, no reasoning)
+- AVOID AI FLUFF. Deep and Short
 
 OUTPUT:
 - plain text not markdown
