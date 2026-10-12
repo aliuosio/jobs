@@ -3,7 +3,8 @@ volumes:
   postgres_data:
 
 networks:
-  ${NAMESPACE}:
+  default:
+    name: ${NAMESPACE}
 
 services:
   n8n:

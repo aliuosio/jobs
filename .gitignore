@@ -115,3 +115,22 @@ package.json
 !.shared/.gitkeep
 scripts/ingest_profile.py
 !specs/.specify
+
+# Added by GitGuard (Node.js, Python, FastAPI)
+# Development environment secrets should not be shared
+.env.development.local
+# Production secrets must never be committed to version control
+.env.production.local
+coverage/
+# Any environment file may contain sensitive configuration
+*.env
+.ipynb_checkpoints/
+# SQLite database files may contain sensitive data
+*.sqlite3
+# Django default SQLite database should not be committed
+db.sqlite3
+*.db
+# Secrets file should never be committed
+secrets.json
+# Local settings often contain secrets and should not be committed
+local_settings.py
